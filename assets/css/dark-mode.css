@@ -1,0 +1,102 @@
+/**
+ * Archive System - Dark Mode Styles
+ * Quezon City Public Library
+ */
+
+body.dark-mode {
+    --bg-color: #121212;
+    --bg-light: #1E1E1E;
+    --bg-white: #252525;
+    --bg-card: #2D2D2D;
+
+    --text-primary: #E0E0E0;
+    --text-secondary: #BDBDBD;
+    --text-muted: #757575;
+
+    --border-color: #424242;
+    --border-light: #333333;
+}
+
+body.dark-mode .sidebar {
+    background-color: #1A1A1A;
+}
+
+body.dark-mode .card,
+body.dark-mode .stat-card,
+body.dark-mode .table-container,
+body.dark-mode .settings-section,
+body.dark-mode .search-filter-card {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .table thead th {
+    background-color: var(--bg-light);
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+    background-color: var(--bg-light);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+    background-color: var(--bg-card);
+}
+
+body.dark-mode .btn-secondary {
+    background-color: var(--bg-light);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-mode .upload-area {
+    background-color: var(--bg-light);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .modal-content {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    border-color: var(--border-color);
+}
+
+body.dark-mode .nav-tabs-custom .nav-link {
+    background-color: var(--bg-light);
+    color: var(--text-secondary);
+}
+
+body.dark-mode .dropdown-menu {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .dropdown-item {
+    color: var(--text-primary);
+}
+
+body.dark-mode .dropdown-item:hover {
+    background-color: var(--bg-light);
+}
+
+body.dark-mode .alert-banner.warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+body.dark-mode .page-link {
+    background-color: var(--bg-light);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-mode .settings-section.danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+}
