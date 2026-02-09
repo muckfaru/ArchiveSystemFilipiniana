@@ -171,14 +171,19 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between;">
             <div>
-                <h1 class="page-title">Settings</h1>
-                <p class="page-subtitle">Manage system preferences and configurations</p>
+                <h1 class="page-title"
+                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Playfair Display', Georgia, serif;">
+                    Settings</h1>
+                <p class="page-subtitle" style="color: #888; margin: 0;">Manage system preferences and administrative
+                    configurations</p>
             </div>
-            <div class="page-actions">
-                <button type="button" class="btn btn-secondary" onclick="location.reload()">Cancel</button>
-                <button type="submit" form="profileForm" class="btn btn-primary">
+            <div class="page-actions" style="display: flex; gap: 12px;">
+                <button type="button" class="btn" onclick="location.reload()"
+                    style="background: white; border: 1px solid #ddd; color: #333; padding: 10px 24px; border-radius: 8px; font-weight: 500;">Cancel</button>
+                <button type="submit" form="profileForm" class="btn"
+                    style="background: #4C3939; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-check2 me-2"></i>Save Changes
                 </button>
             </div>
@@ -195,67 +200,78 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         <div class="row g-4">
             <!-- Profile Settings -->
             <div class="col-lg-8">
-                <div class="settings-section">
-                    <div class="settings-section-title">
-                        <i class="bi bi-person"></i>
-                        PROFILE SETTINGS
+                <div class="settings-card"
+                    style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div class="settings-card-header"
+                        style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+                        <i class="bi bi-person" style="color: #666;"></i>
+                        <span
+                            style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px;">Profile
+                            Settings</span>
                     </div>
 
                     <form method="POST" enctype="multipart/form-data" id="profileForm">
                         <input type="hidden" name="action" value="update_profile">
 
-                        <div class="row">
-                            <div class="col-md-3 text-center">
-                                <div class="profile-photo-wrapper mx-auto">
+                        <div style="display: flex; gap: 30px; align-items: flex-start;">
+                            <!-- Profile Photo -->
+                            <div style="text-align: center;">
+                                <div style="position: relative; width: 100px; height: 100px; margin: 0 auto;">
                                     <?php if ($currentUser['profile_photo']): ?>
-                                        <img src="<?= APP_URL ?>/<?= $currentUser['profile_photo'] ?>" class="profile-photo"
-                                            alt="Profile">
+                                        <img src="<?= APP_URL ?>/<?= $currentUser['profile_photo'] ?>"
+                                            style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;"
+                                            alt="Profile" class="profile-photo">
                                     <?php else: ?>
                                         <div
-                                            class="profile-photo bg-secondary d-flex align-items-center justify-content-center">
-                                            <i class="bi bi-person text-white" style="font-size: 48px;"></i>
+                                            style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #f5f0ed 0%, #e8e0db 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #f0f0f0;">
+                                            <i class="bi bi-person" style="font-size: 40px; color: #999;"></i>
                                         </div>
                                     <?php endif; ?>
-                                    <label class="profile-photo-edit" for="profilePhotoInput">
-                                        <i class="bi bi-pencil"></i>
+                                    <label for="profilePhotoInput"
+                                        style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #f0f0f0;">
+                                        <i class="bi bi-camera" style="font-size: 14px; color: #666;"></i>
                                     </label>
                                     <input type="file" id="profilePhotoInput" name="profile_photo" class="d-none"
                                         accept=".jpg,.jpeg,.png">
                                 </div>
-                                <div class="mt-2">
-                                    <label for="profilePhotoInput"
-                                        class="btn btn-link btn-sm p-0 text-primary">UPLOAD</label>
-                                    <?php if ($currentUser['profile_photo']): ?>
-                                        <button type="submit" name="action" value="remove_photo"
-                                            class="btn btn-link btn-sm p-0 text-danger ms-2"
-                                            formaction="<?= $_SERVER['PHP_SELF'] ?>">REMOVE</button>
-                                    <?php endif; ?>
-                                </div>
+                                <label for="profilePhotoInput"
+                                    style="display: block; margin-top: 12px; font-size: 12px; font-weight: 600; color: #C08B5C; cursor: pointer; text-transform: uppercase;">Upload
+                                    New</label>
                             </div>
-                            <div class="col-md-9">
+
+                            <!-- Form Fields -->
+                            <div style="flex: 1;">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">FULL NAME</label>
+                                    <div class="col-6">
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;">Full
+                                            Name</label>
                                         <input type="text" class="form-control" name="full_name"
-                                            value="<?= htmlspecialchars($currentUser['full_name']) ?>" required>
+                                            value="<?= htmlspecialchars($currentUser['full_name']) ?>" required
+                                            style="background: #f8f6f5; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px;">
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">USERNAME</label>
+                                    <div class="col-6">
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;">Username</label>
                                         <input type="text" class="form-control" name="username"
                                             value="<?= htmlspecialchars($currentUser['username']) ?>"
-                                            style="background-color: #e9ecef;" readonly>
+                                            style="background: #f8f6f5; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px;"
+                                            readonly>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">EMAIL ADDRESS</label>
+                                    <div class="col-12">
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;">Email
+                                            Address</label>
                                         <input type="email" class="form-control" name="email"
                                             value="<?= htmlspecialchars($currentUser['email']) ?>"
-                                            style="background-color: #e9ecef;" readonly>
+                                            style="background: #f8f6f5; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px;"
+                                            readonly>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">&nbsp;</label>
-                                        <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal"
-                                            data-bs-target="#changePasswordModal">
-                                            <i class="bi bi-key me-2"></i>CHANGE PASSWORD
+                                    <div class="col-12">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#changePasswordModal"
+                                            style="background: transparent; border: 1px solid #ddd; color: #333; padding: 10px 20px; border-radius: 8px; font-size: 13px;">
+                                            <i class="bi bi-arrow-repeat me-2"></i>Change Password
                                         </button>
                                     </div>
                                 </div>
@@ -263,74 +279,84 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                         </div>
                     </form>
                 </div>
+
+                <!-- Danger Zone -->
+                <div class="settings-card danger-zone"
+                    style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-top: 20px; border-left: 4px solid #dc3545;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <div
+                                style="width: 40px; height: 40px; background: #fff5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-exclamation-triangle" style="color: #dc3545; font-size: 18px;"></i>
+                            </div>
+                            <div>
+                                <span
+                                    style="font-size: 12px; font-weight: 600; color: #dc3545; text-transform: uppercase; letter-spacing: 0.5px;">Danger
+                                    Zone</span>
+                                <h5 style="font-weight: 600; color: #333; margin: 4px 0;">Delete Account</h5>
+                                <p style="color: #888; font-size: 13px; margin: 0;">Once you delete your account, there
+                                    is no going back. All associated data will be purged.</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#deleteAccountModal"
+                            style="background: transparent; border: 2px solid #dc3545; color: #dc3545; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Delete<br>Account
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Appearance & Storage -->
+            <!-- Right Sidebar -->
             <div class="col-lg-4">
                 <!-- Appearance -->
-                <div class="settings-section">
-                    <div class="settings-section-title">
-                        <i class="bi bi-palette"></i>
-                        APPEARANCE
+                <div class="settings-card"
+                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <i class="bi bi-moon" style="color: #666;"></i>
+                        <span
+                            style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px;">Appearance</span>
                     </div>
 
                     <form method="POST">
                         <input type="hidden" name="action" value="update_appearance">
-
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <strong>DARK MODE</strong>
-                                <p class="text-muted small mb-0">Reduces eye strain in low-light environments</p>
+                                <strong style="font-size: 14px; color: #333;">Dark Mode</strong>
+                                <p style="color: #888; font-size: 12px; margin: 0;">Reduces eye strain in low-light</p>
                             </div>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="darkModeToggle" name="dark_mode"
-                                    <?= $darkMode === '1' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <?= $darkMode === '1' ? 'checked' : '' ?> onchange="this.form.submit()"
+                                    style="width: 44px; height: 24px; cursor: pointer;">
                             </div>
                         </div>
                     </form>
                 </div>
 
                 <!-- Storage -->
-                <div class="settings-section">
-                    <div class="settings-section-title">
-                        <i class="bi bi-hdd"></i>
-                        STORAGE
+                <div class="settings-card"
+                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <i class="bi bi-folder" style="color: #666;"></i>
+                        <span
+                            style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px;">Storage</span>
                     </div>
 
                     <form method="POST">
                         <input type="hidden" name="action" value="update_storage">
-
-                        <label class="form-label">STORAGE PATH</label>
-                        <div class="input-group">
+                        <label
+                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Storage
+                            Path</label>
+                        <div style="display: flex; gap: 8px;">
                             <input type="text" class="form-control" name="storage_path"
                                 value="<?= htmlspecialchars($storagePath) ?>"
-                                style="background-color: #424242; color: #fff;">
-                            <button type="submit" class="btn btn-secondary">
-                                <i class="bi bi-folder"></i>
+                                style="background: #4C3939; color: white; border: none; padding: 12px 16px; border-radius: 8px; font-size: 13px; flex: 1;">
+                            <button type="submit" class="btn"
+                                style="background: #f0f0f0; border: none; padding: 12px 16px; border-radius: 8px;">
+                                <i class="bi bi-folder" style="color: #666;"></i>
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
-
-            <!-- Danger Zone -->
-            <div class="col-12">
-                <div class="settings-section danger">
-                    <div class="settings-section-title danger-title">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        DANGER ZONE
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>DELETE ACCOUNT</strong>
-                            <p class="text-muted small mb-0">Once you delete your account, there is no going back</p>
-                        </div>
-                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
-                            data-bs-target="#deleteAccountModal">
-                            Delete Account
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -338,34 +364,69 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <!-- Change Password Modal -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Change Password</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div
+                            style="width: 40px; height: 40px; background: #f5f5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-arrow-repeat" style="font-size: 20px; color: #666;"></i>
+                        </div>
+                        <h5 class="modal-title" style="font-weight: 700; color: #2C1810; margin: 0;">CHANGE PASSWORD
+                        </h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
                 </div>
-                <form method="POST">
-                    <div class="modal-body">
+                <form method="POST" id="changePasswordForm">
+                    <div class="modal-body px-4 py-3">
                         <input type="hidden" name="action" value="change_password">
 
                         <div class="mb-3">
-                            <label class="form-label">Current Password</label>
-                            <input type="password" class="form-control" name="current_password" required>
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Current
+                                Password</label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control" name="current_password" id="currentPassword"
+                                    placeholder="Enter current password" required
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
+                                <i class="bi bi-eye-slash position-absolute" id="toggleCurrentPassword"
+                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">New Password</label>
-                            <input type="password" class="form-control" name="new_password" required minlength="6">
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">New
+                                Password</label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control" name="new_password" id="newPassword"
+                                    placeholder="Enter new password" required minlength="6"
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
+                                <i class="bi bi-eye-slash position-absolute" id="toggleNewPassword"
+                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" name="confirm_password" required minlength="6">
+                        <div class="mb-4">
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Confirm
+                                Password</label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control" name="confirm_password"
+                                    id="confirmNewPassword" placeholder="Re-type new password" required minlength="6"
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
+                                <i class="bi bi-eye-slash position-absolute" id="toggleConfirmNewPassword"
+                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-link text-decoration-none" data-bs-dismiss="modal"
+                            style="color: #888; font-weight: 600; font-size: 14px;">CANCEL</button>
+                        <button type="submit" class="btn px-4 py-2"
+                            style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">UPDATE
+                            PASSWORD</button>
                     </div>
                 </form>
             </div>
@@ -420,6 +481,29 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                 reader.readAsDataURL(this.files[0]);
             }
         });
+
+        // Password toggle for Change Password modal
+        function setupPasswordToggle(toggleId, inputId) {
+            const toggle = document.getElementById(toggleId);
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    const input = document.getElementById(inputId);
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.classList.remove('bi-eye-slash');
+                        this.classList.add('bi-eye');
+                    } else {
+                        input.type = 'password';
+                        this.classList.remove('bi-eye');
+                        this.classList.add('bi-eye-slash');
+                    }
+                });
+            }
+        }
+
+        setupPasswordToggle('toggleCurrentPassword', 'currentPassword');
+        setupPasswordToggle('toggleNewPassword', 'newPassword');
+        setupPasswordToggle('toggleConfirmNewPassword', 'confirmNewPassword');
     </script>
 </body>
 

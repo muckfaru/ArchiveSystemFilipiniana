@@ -142,13 +142,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="page-header"
+            style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 25px;">
             <div>
-                <h1 class="page-title">Users</h1>
-                <p class="page-subtitle">Create, edit, and manage system user accounts</p>
+                <h1 class="page-title"
+                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Playfair Display', Georgia, serif;">
+                    Users</h1>
+                <p class="page-subtitle" style="color: #888; margin: 0;">Create, edit, and manage system user accounts
+                </p>
             </div>
             <div class="page-actions">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#createUserModal"
+                    style="background: #4C3939; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-person-plus me-2"></i>Create Account
                 </button>
             </div>
@@ -165,108 +170,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Stats Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-title">Total Admins</span>
-                        <i class="bi bi-people stat-card-icon"></i>
+                <div
+                    style="background: white; border-radius: 16px; padding: 20px 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative;">
+                    <span style="font-size: 13px; color: #888;">Total Admins</span>
+                    <div style="font-size: 36px; font-weight: 600; color: #333; margin-top: 5px;"><?= $totalAdmins ?>
                     </div>
-                    <div class="stat-card-value">
-                        <?= $totalAdmins ?>
+                    <div
+                        style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background: #f5f5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-people" style="font-size: 18px; color: #666;"></i>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-title">Active Accounts</span>
-                        <i class="bi bi-broadcast stat-card-icon"></i>
+                <div
+                    style="background: white; border-radius: 16px; padding: 20px 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative;">
+                    <span style="font-size: 13px; color: #888;">Active Accounts</span>
+                    <div style="font-size: 36px; font-weight: 600; color: #333; margin-top: 5px;"><?= $activeAdmins ?>
                     </div>
-                    <div class="stat-card-value">
-                        <?= $activeAdmins ?>
+                    <div
+                        style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background: #e8f5e9; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-broadcast" style="font-size: 18px; color: #4caf50;"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Search & Filter -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <form method="GET" class="d-flex gap-2">
-                    <div class="search-input-wrapper flex-grow-1">
-                        <i class="bi bi-search"></i>
-                        <input type="text" class="form-control" name="search"
-                            placeholder="Search by username, email or role..." value="<?= htmlspecialchars($search) ?>">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Search</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <div class="d-flex gap-2 justify-content-end">
-                    <select class="form-select" style="width: auto;" name="role"
-                        onchange="location.href='?role='+this.value">
-                        <option value="">CATEGORIES</option>
-                        <option value="admin" <?= $roleFilter === 'admin' ? 'selected' : '' ?>>Admin</option>
-                        <option value="super_admin" <?= $roleFilter === 'super_admin' ? 'selected' : '' ?>>Super Admin
-                        </option>
-                    </select>
-                    <select class="form-select" style="width: auto;" name="sort"
-                        onchange="location.href='?sort='+this.value">
-                        <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
-                        <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
-                    </select>
+        <div
+            style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px;">
+            <form method="GET" style="display: flex; align-items: center; gap: 15px;">
+                <div style="flex: 1; position: relative;">
+                    <i class="bi bi-search"
+                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                    <input type="text" class="form-control" name="search"
+                        placeholder="Search by username, email or role..." value="<?= htmlspecialchars($search) ?>"
+                        style="padding: 12px 15px 12px 42px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
                 </div>
-            </div>
+                <button type="submit" class="btn"
+                    style="background: #4C3939; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 500;">Search</button>
+                <select class="form-select" name="sort" onchange="this.form.submit()"
+                    style="width: auto; padding: 12px 35px 12px 15px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                    <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest ↓</option>
+                    <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest ↑</option>
+                </select>
+            </form>
         </div>
 
         <!-- Users Table -->
-        <div class="table-container">
-            <table class="table">
+        <div style="background: white; border-radius: 16px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); overflow: hidden;">
+            <table class="table" style="margin: 0;">
                 <thead>
-                    <tr>
-                        <th>USERNAME</th>
-                        <th>ROLE</th>
-                        <th>STATUS</th>
-                        <th>LAST LOGIN</th>
-                        <th>ACTIONS</th>
+                    <tr style="background: #fafafa;">
+                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Username</th>
+                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Role</th>
+                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Status</th>
+                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Last Login</th>
+                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none; text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="5" class="text-center py-4">No users found.</td>
+                            <td colspan="5" class="text-center py-4" style="border: none;">No users found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $user): ?>
-                            <tr>
-                                <td>
-                                    <?= htmlspecialchars($user['username']) ?>
+                            <tr style="border-bottom: 1px solid #f0f0f0;">
+                                <td style="padding: 15px 20px; border: none;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 32px; height: 32px; background: #C08B5C; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-person-fill" style="color: white; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-weight: 500; color: #333;"><?= htmlspecialchars($user['username']) ?></span>
+                                    </div>
                                 </td>
-                                <td>
-                                    <?= ucwords(str_replace('_', ' ', $user['role'])) ?>
+                                <td style="padding: 15px 20px; border: none; color: #666;">
+                                    <?= ($user['role'] === 'super_admin') ? 'Admin' : 'Admin' ?>
                                 </td>
-                                <td>
-                                    <span class="badge <?= $user['status'] === 'active' ? 'badge-active' : 'badge-inactive' ?>">
+                                <td style="padding: 15px 20px; border: none;">
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; color: <?= $user['status'] === 'active' ? '#4caf50' : '#999' ?>; font-size: 13px;">
+                                        <span style="width: 6px; height: 6px; background: <?= $user['status'] === 'active' ? '#4caf50' : '#999' ?>; border-radius: 50%;"></span>
                                         <?= ucfirst($user['status']) ?>
                                     </span>
                                 </td>
-                                <td>
+                                <td style="padding: 15px 20px; border: none; color: #666; font-size: 13px;">
                                     <?= $user['last_login'] ? formatDate($user['last_login']) : 'Never' ?>
                                 </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-icon btn-secondary" data-bs-toggle="modal"
-                                        data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>'>
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <?php if ($user['id'] !== $currentUser['id']): ?>
-                                        <form method="POST" class="d-inline"
-                                            onsubmit="return confirm('Are you sure you want to delete this user?')">
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                            <button type="submit" class="btn btn-sm btn-icon btn-outline-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
+                                <td style="padding: 15px 20px; border: none; text-align: right;">
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>'
+                                            style="width: 36px; height: 36px; background: #f5f5f5; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-pencil" style="color: #666;"></i>
+                                        </button>
+                                        <?php if ($user['id'] !== $currentUser['id']): ?>
+                                            <form method="POST" class="d-inline"
+                                                onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                                                <button type="submit" class="btn"
+                                                    style="width: 36px; height: 36px; background: #fff5f5; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-trash" style="color: #dc3545;"></i>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -316,47 +324,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Create User Modal -->
     <div class="modal fade" id="createUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Account</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <div>
+                        <h4 class="modal-title"
+                            style="color: #2C1810; font-size: 26px; font-weight: 600; font-family: 'Playfair Display', Georgia, serif;">
+                            Create New Account</h4>
+                        <p style="color: #888; font-size: 14px; margin: 0;">Add a new user to the Archive System</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
                 </div>
-                <form method="POST">
-                    <div class="modal-body">
+                <form method="POST" id="createAccountForm">
+                    <div class="modal-body px-4 py-3">
                         <input type="hidden" name="action" value="create">
 
                         <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" class="form-control" name="username" required>
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Full
+                                Name</label>
+                            <input type="text" class="form-control" name="full_name" placeholder="Enter Full name"
+                                required
+                                style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" name="full_name" required>
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Email
+                                Address</label>
+                            <input type="email" class="form-control" name="email" placeholder="Enter Email Address"
+                                required
+                                style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" name="email" required>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label"
+                                    style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Username</label>
+                                <input type="text" class="form-control" name="username" placeholder="Username" required
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label"
+                                    style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Role</label>
+                                <select class="form-select" name="role" required
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                                    <option value="" selected disabled>Select Role</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" name="password" required minlength="6">
+                        <div class="mb-3 position-relative">
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control" name="password" id="createPassword" required
+                                    minlength="6"
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
+                                <i class="bi bi-eye-slash position-absolute" id="toggleCreatePassword"
+                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Role</label>
-                            <select class="form-select" name="role" required>
-                                <option value="admin">Admin</option>
-                                <option value="super_admin">Super Admin</option>
-                            </select>
+                        <div class="mb-4 position-relative">
+                            <label class="form-label"
+                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Confirm
+                                Password</label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control" name="confirm_password" id="confirmPassword"
+                                    required minlength="6"
+                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
+                                <i class="bi bi-eye-slash position-absolute" id="toggleConfirmPassword"
+                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-link text-decoration-none" data-bs-dismiss="modal"
+                            style="color: #888; font-weight: 600; font-size: 14px;">CANCEL</button>
+                        <button type="submit" class="btn px-4 py-2"
+                            style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Create
+                            Account</button>
                     </div>
                 </form>
             </div>
@@ -364,52 +414,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <!-- Edit User Modal -->
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal fade" id="editUserModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.25);">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h4 class="modal-title"
+                        style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Playfair Display', Georgia, serif; font-style: italic;">
+                        Edit User</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
                 </div>
-                <form method="POST">
-                    <div class="modal-body">
+                <form method="POST" id="editUserForm">
+                    <div class="modal-body px-4 py-3">
                         <input type="hidden" name="action" value="edit">
                         <input type="hidden" name="user_id" id="editUserId">
 
                         <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" class="form-control" id="editUsername" disabled>
+                            <label class="form-label"
+                                style="font-size: 12px; font-weight: 600; color: #333;">Username</label>
+                            <input type="text" class="form-control" id="editUsername" disabled
+                                style="background: linear-gradient(135deg, #e8d5c4 0%, #dcc9b8 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px; color: #666;">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" name="full_name" id="editFullName" required>
+                            <label class="form-label" style="font-size: 12px; font-weight: 600; color: #333;">Full
+                                Name</label>
+                            <input type="text" class="form-control" name="full_name" id="editFullName" required
+                                style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" name="email" id="editEmail" required>
+                            <label class="form-label"
+                                style="font-size: 12px; font-weight: 600; color: #333;">Email</label>
+                            <input type="email" class="form-control" name="email" id="editEmail" required
+                                style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Role</label>
-                            <select class="form-select" name="role" id="editRole" required>
-                                <option value="admin">Admin</option>
-                                <option value="super_admin">Super Admin</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" name="status" id="editStatus" required>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label"
+                                    style="font-size: 12px; font-weight: 600; color: #333;">Role</label>
+                                <select class="form-select" name="role" id="editRole" required
+                                    style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label"
+                                    style="font-size: 12px; font-weight: 600; color: #333;">Status</label>
+                                <select class="form-select" name="status" id="editStatus" required
+                                    style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0 justify-content-center gap-3">
+                        <button type="button" class="btn px-4 py-2" data-bs-dismiss="modal"
+                            style="background: white; border: 1px solid #ddd; color: #333; border-radius: 8px; font-weight: 500; font-size: 14px;">Cancel</button>
+                        <button type="submit" class="btn px-4 py-2"
+                            style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Save
+                            Changes</button>
                     </div>
                 </form>
             </div>
@@ -419,6 +485,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include __DIR__ . '/../layouts/footer.php'; ?>
 
     <script>
+        // Password toggle for Create Account modal
+        document.getElementById('toggleCreatePassword')?.addEventListener('click', function () {
+            const input = document.getElementById('createPassword');
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.remove('bi-eye-slash');
+                this.classList.add('bi-eye');
+            } else {
+                input.type = 'password';
+                this.classList.remove('bi-eye');
+                this.classList.add('bi-eye-slash');
+            }
+        });
+
+        document.getElementById('toggleConfirmPassword')?.addEventListener('click', function () {
+            const input = document.getElementById('confirmPassword');
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.remove('bi-eye-slash');
+                this.classList.add('bi-eye');
+            } else {
+                input.type = 'password';
+                this.classList.remove('bi-eye');
+                this.classList.add('bi-eye-slash');
+            }
+        });
+
+        // Legacy toggle function for other modals
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+
         // Edit user modal
         document.getElementById('editUserModal').addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;

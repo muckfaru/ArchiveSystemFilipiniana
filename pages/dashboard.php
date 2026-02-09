@@ -10,7 +10,8 @@ require_once __DIR__ . '/../includes/auth.php';
 $totalArchives = countArchives();
 $totalIssues = countIssues();
 $yearsCovered = getYearsCovered();
-$totalCategories = countCategories();
+// Only count categories if there are archives, otherwise show 0 as requested
+$totalCategories = ($totalArchives > 0) ? countCategories() : 0;
 
 // Get categories and languages for filters
 $categories = getCategories();
@@ -111,7 +112,6 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                     <div class="stat-card-value">
                         <?= number_format($totalArchives) ?>
                     </div>
-                    <div class="stat-card-info">+2.4% from last month</div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
@@ -123,7 +123,6 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                     <div class="stat-card-value">
                         <?= number_format($totalIssues) ?>
                     </div>
-                    <div class="stat-card-info">+3.6% since monday</div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
@@ -213,19 +212,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                     </div>
                 </div>
 
-                <!-- Recent Tags -->
-                <div class="recent-tags">
-                    <span class="text-muted me-2" style="font-size: 12px;">RECENTS</span>
-                    <span class="recent-tag">
-                        Philstar <i class="bi bi-x remove"></i>
-                    </span>
-                    <span class="recent-tag">
-                        New York Times <i class="bi bi-x remove"></i>
-                    </span>
-                    <span class="recent-tag">
-                        Daily Post <i class="bi bi-x remove"></i>
-                    </span>
-                </div>
+                <!-- Recent Tags removed as requested -->
             </form>
         </div>
 

@@ -1,50 +1,79 @@
 <?php
 /**
- * Login Page
+ * Forgot Password Page
  * Archive System - Quezon City Public Library
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/email.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
     redirect(APP_URL . '/pages/dashboard.php');
 }
 
-$error = '';
+// Create password_resets table if not exists
+try {
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            token VARCHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used TINYINT DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ");
+} catch (PDOException $e) {
+    // Table might already exist, continue
+}
+
+$showSuccessModal = false;
 $showErrorModal = false;
+$errorMessage = '';
 
-// Handle login form submission
+// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = sanitize($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $email = sanitize($_POST['email'] ?? '');
 
-    if (empty($username) || empty($password)) {
-        $error = 'Please enter both username and password.';
+    if (empty($email)) {
         $showErrorModal = true;
+        $errorMessage = 'Please enter your email address.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $showErrorModal = true;
+        $errorMessage = 'Please enter a valid email address.';
     } else {
-        // Check user credentials
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND status = 'active'");
-        $stmt->execute([$username]);
+        // Check if email exists
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND status = 'active'");
+        $stmt->execute([$email]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password'])) {
-            // Login successful
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_role'] = $user['role'];
+        if ($user) {
+            // Create reset token
+            $token = createPasswordResetToken($pdo, $user['id']);
 
-            // Update last login
-            $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
-            $stmt->execute([$user['id']]);
+            if ($token) {
+                // Generate reset link
+                $resetLink = APP_URL . '/reset-password.php?token=' . $token;
 
-            // Log activity
-            logActivity($user['id'], 'login', $user['username']);
+                // Send email
+                $result = sendPasswordResetEmail($user['email'], $user['full_name'], $resetLink);
 
-            redirect(APP_URL . '/pages/dashboard.php');
+                if ($result['success']) {
+                    $showSuccessModal = true;
+                } else {
+                    $showErrorModal = true;
+                    $errorMessage = 'Failed to send email. Please try again later.';
+                }
+            } else {
+                $showErrorModal = true;
+                $errorMessage = 'An error occurred. Please try again.';
+            }
         } else {
-            $error = 'Invalid username or password.';
-            $showErrorModal = true;
+            // For security, show success even if email doesn't exist
+            $showSuccessModal = true;
         }
     }
 }
@@ -55,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - <?= APP_NAME ?></title>
+    <title>Forgot Password - <?= APP_NAME ?></title>
 
     <!-- Google Fonts -->
     <link
@@ -79,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             overflow: hidden;
         }
 
-        .login-wrapper {
+        .forgot-wrapper {
             position: relative;
             min-height: 100vh;
             display: flex;
@@ -87,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
         }
 
-        .login-bg {
+        .forgot-bg {
             position: absolute;
             top: 0;
             left: 0;
@@ -97,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             z-index: -1;
         }
 
-        .login-overlay {
+        .forgot-overlay {
             position: absolute;
             top: 0;
             left: 0;
@@ -107,43 +136,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             z-index: -1;
         }
 
-        .login-card {
+        .forgot-card {
             background: #fff;
             border-radius: 20px;
-            padding: 45px 40px 40px;
+            padding: 45px 35px 40px;
             width: 100%;
             max-width: 420px;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
         }
 
-        .login-logo {
-            width: 120px;
-            height: auto;
+        .lock-icon {
+            width: 70px;
+            height: 70px;
             margin: 0 auto 20px;
-            display: block;
         }
 
-        .login-title {
+        .lock-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .forgot-title {
             font-family: 'Playfair Display', Georgia, serif;
             font-size: 22px;
             font-weight: 700;
-            text-align: center;
-            margin-bottom: 6px;
-            letter-spacing: 1px;
             color: #2C1810;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        .login-title span {
-            font-weight: 800;
-        }
-
-        .login-subtitle {
+        .forgot-subtitle {
             font-size: 13px;
             color: #666;
-            text-align: center;
             margin-bottom: 30px;
-            font-weight: 400;
+            line-height: 1.5;
         }
 
         .form-label {
@@ -174,47 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #aaa;
         }
 
-        .password-wrapper {
-            position: relative;
-        }
-
-        .show-password {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            /* Right aligned */
-            gap: 6px;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #444;
-        }
-
-        .show-password input[type="checkbox"] {
-            width: 15px;
-            height: 15px;
-            accent-color: #4C3939;
-            cursor: pointer;
-        }
-
-        .show-password label {
-            cursor: pointer;
-        }
-
-        .forgot-password {
-            display: block;
-            color: #444;
-            font-size: 12px;
-            margin-top: 15px;
-            text-decoration: underline;
-            text-align: left;
-            /* Left aligned */
-        }
-
-        .forgot-password:hover {
-            color: #4C3939;
-        }
-
-        .login-btn {
+        .submit-btn {
             width: 100%;
             padding: 14px;
             background-color: #4C3939;
@@ -227,12 +216,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 20px;
             transition: all 0.3s ease;
             cursor: pointer;
+            text-transform: uppercase;
         }
 
-        .login-btn:hover {
+        .submit-btn:hover {
             background-color: #3D2D2D;
             transform: translateY(-1px);
             box-shadow: 0 4px 15px rgba(76, 57, 57, 0.3);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #444;
+            font-size: 13px;
+            margin-top: 25px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #4C3939;
+        }
+
+        .back-link i {
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .back-link:hover i {
+            transform: translateX(-3px);
         }
 
         /* Modal Styles */
@@ -256,6 +270,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             margin: 0 auto 20px;
             font-size: 40px;
+        }
+
+        .modal-icon.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
         }
 
         .modal-icon.error {
@@ -289,6 +308,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: inline-block;
         }
 
+        .modal-btn.primary {
+            background-color: #4C3939;
+            color: #fff;
+        }
+
+        .modal-btn.primary:hover {
+            background-color: #3D2D2D;
+        }
+
         .modal-btn.secondary {
             background-color: #f5f5f5;
             color: #333;
@@ -300,16 +328,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /* Responsive */
         @media (max-width: 480px) {
-            .login-card {
+            .forgot-card {
                 margin: 20px;
                 padding: 35px 25px;
             }
 
-            .login-logo {
-                width: 100px;
-            }
-
-            .login-title {
+            .forgot-title {
                 font-size: 18px;
             }
         }
@@ -317,38 +341,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <div class="login-wrapper">
-        <div class="login-bg"></div>
-        <div class="login-overlay"></div>
+    <div class="forgot-wrapper">
+        <div class="forgot-bg"></div>
+        <div class="forgot-overlay"></div>
 
-        <div class="login-card">
-            <img src="<?= APP_URL ?>/assets/images/logo.png" alt="QCPL Logo" class="login-logo">
-            <h1 class="login-title"><span>QUEZON CITY PUBLIC LIBRARY</span></h1>
-            <p class="login-subtitle">Please log in to Continue</p>
+        <div class="forgot-card">
+            <div class="lock-icon">
+                <img src="<?= APP_URL ?>/assets/images/lock-icon.png" alt="Lock">
+            </div>
+            <h1 class="forgot-title">FORGOT PASSWORD</h1>
+            <p class="forgot-subtitle">Enter your Email Address and we'll send you a link to reset your password</p>
 
             <form method="POST" action="">
-                <div class="mb-3 text-start">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter Username"
-                        value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter Email Address"
+                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
                 </div>
 
-                <div class="mb-2 text-start">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Enter Password" required>
-                    </div>
-                    <div class="show-password">
-                        <input type="checkbox" id="showPassword">
-                        <label for="showPassword">Show Password</label>
-                    </div>
-                </div>
-
-                <a href="<?= APP_URL ?>/forgot-password.php" class="forgot-password">Forgot Password?</a>
-
-                <button type="submit" class="login-btn">LOGIN</button>
+                <button type="submit" class="submit-btn">Send Reset Link</button>
             </form>
+
+            <a href="<?= APP_URL ?>/index.php" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Login
+            </a>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-icon success">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <h3 class="modal-title-custom">Email Sent!</h3>
+                    <p class="modal-message">
+                        We've sent a password reset link to your email address.<br>
+                        Please check your inbox and click the link to reset your password.
+                    </p>
+                    <a href="<?= APP_URL ?>/index.php" class="modal-btn primary">Back to Login</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -360,8 +395,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="modal-icon error">
                         <i class="bi bi-x-lg"></i>
                     </div>
-                    <h3 class="modal-title-custom">Login Failed</h3>
-                    <p class="modal-message"><?= $error ?></p>
+                    <h3 class="modal-title-custom">Error</h3>
+                    <p class="modal-message"><?= $errorMessage ?></p>
                     <button type="button" class="modal-btn secondary" data-bs-dismiss="modal">Try Again</button>
                 </div>
             </div>
@@ -371,13 +406,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle password visibility with checkbox
-        const passwordInput = document.getElementById('password');
-        const showPasswordCheckbox = document.getElementById('showPassword');
-
-        showPasswordCheckbox.addEventListener('change', function () {
-            passwordInput.type = this.checked ? 'text' : 'password';
-        });
+        <?php if ($showSuccessModal): ?>
+            document.addEventListener('DOMContentLoaded', function () {
+                new bootstrap.Modal(document.getElementById('successModal')).show();
+            });
+        <?php endif; ?>
 
         <?php if ($showErrorModal): ?>
             document.addEventListener('DOMContentLoaded', function () {

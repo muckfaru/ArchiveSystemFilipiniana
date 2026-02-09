@@ -12,13 +12,24 @@ define('DB_PASS', '');
 
 // Application settings
 define('APP_NAME', 'Quezon City Public Library');
-define('APP_URL', 'http://localhost/AchiveSystemFilipiniana');
+define('APP_URL', 'http://localhost/qcpl/ArchiveSystemFilipiniana');
 define('APP_VERSION', '1.0.0');
 
 // File upload settings
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('MAX_UPLOAD_SIZE', 100 * 1024 * 1024); // 100MB
 define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png', 'tiff', 'tif']);
+
+// Email SMTP Settings (Gmail)
+// To use Gmail SMTP, you need to:
+// 1. Enable 2-Step Verification in your Google Account
+// 2. Generate an App Password at https://myaccount.google.com/apppasswords
+// 3. Replace the values below with your Gmail and App Password
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USERNAME', 'archivesystemfilipiniana@gmail.com');  // Replace with your Gmail
+define('SMTP_PASSWORD', 'folx ljgj qnub zjxn');      // Replace with your App Password
+define('SMTP_FROM_NAME', 'Archive System Filipiniana');
 
 // Session settings
 define('SESSION_LIFETIME', 3600); // 1 hour
