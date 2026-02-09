@@ -20,6 +20,12 @@ define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('MAX_UPLOAD_SIZE', 100 * 1024 * 1024); // 100MB
 define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png', 'tiff', 'tif']);
 
+// Calibre ebook-convert path (for MOBI to EPUB conversion)
+// Update this path to match your Calibre installation
+// Default Windows path: C:\Program Files\Calibre2\ebook-convert.exe
+// Default Mac path: /Applications/calibre.app/Contents/MacOS/ebook-convert
+define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\tools\\calibre\\CalibrePortable\\Calibre\\ebook-convert.exe');
+
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:
 // 1. Enable 2-Step Verification in your Google Account

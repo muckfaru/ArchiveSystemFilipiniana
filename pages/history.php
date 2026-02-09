@@ -100,6 +100,24 @@ function getActionClass($action)
     ];
     return $classes[$action] ?? '';
 }
+
+function getActionLabel($action)
+{
+    $labels = [
+        'create_user' => 'Create User',
+        'edit_user' => 'Edited',
+        'delete_user' => 'Delete',
+        'upload' => 'Create',
+        'edit' => 'Edited',
+        'delete' => 'Delete',
+        'restore' => 'Create',
+        'permanent_delete' => 'Delete',
+        'login' => 'Login',
+        'logout' => 'Logout',
+        'settings_update' => 'Edited'
+    ];
+    return $labels[$action] ?? ucwords(str_replace('_', ' ', $action));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -125,13 +143,14 @@ function getActionClass($action)
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="page-title">History</h1>
-                <p class="page-subtitle">Audit trails for administrative actions and system events</p>
+                <h1 class="page-title" style="font-weight: 700; color: #4C3939;">History</h1>
+                <p class="text-muted small">Audit trails for administrative actions and system events</p>
             </div>
             <div class="page-actions">
-                <a href="?export=csv" class="btn btn-primary">
+                <a href="?export=csv" class="btn"
+                    style="background-color: #4C3939; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-download me-2"></i>Export to CSV
                 </a>
             </div>
@@ -145,81 +164,129 @@ function getActionClass($action)
             </div>
         <?php endif; ?>
 
-        <!-- Search & Filter -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <form method="GET" class="d-flex gap-2">
-                    <div class="search-input-wrapper flex-grow-1">
-                        <i class="bi bi-search"></i>
-                        <input type="text" class="form-control" name="search" placeholder="Search deleted items..."
-                            value="<?= htmlspecialchars($search) ?>">
+        <!-- Search & Filter Card -->
+        <div class="mb-4" style="background: #F8F5F2; padding: 20px; border-radius: 12px; border: 1px solid #E6D5C9;">
+            <div class="row align-items-end g-3">
+                <!-- Search -->
+                <div class="col-md-5">
+                    <div class="search-input-wrapper position-relative"
+                        style="background: #EBE8E4; border: 1px solid #D7D3CE; border-radius: 8px;">
+                        <i class="bi bi-search position-absolute text-muted"
+                            style="top: 50%; left: 15px; transform: translateY(-50%); font-size: 16px;"></i>
+                        <form method="GET" class="w-100">
+                            <input type="text" class="form-control" name="search" placeholder="Search deleted items ..."
+                                value="<?= htmlspecialchars($search) ?>"
+                                style="background: transparent; border: none; padding: 10px 10px 10px 45px; box-shadow: none; font-size: 14px;">
+                        </form>
                     </div>
-                    <button type="submit" class="btn btn-primary">Search</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <div class="d-flex gap-2 justify-content-end">
-                    <select class="form-select" style="width: auto;" onchange="location.href='?category='+this.value">
-                        <option value="">Categories</option>
-                        <option value="create_user" <?= $categoryFilter === 'create_user' ? 'selected' : '' ?>>Create User
-                        </option>
-                        <option value="edit_user" <?= $categoryFilter === 'edit_user' ? 'selected' : '' ?>>Edit User
-                        </option>
-                        <option value="delete_user" <?= $categoryFilter === 'delete_user' ? 'selected' : '' ?>>Delete User
-                        </option>
-                        <option value="upload" <?= $categoryFilter === 'upload' ? 'selected' : '' ?>>Upload</option>
-                        <option value="edit" <?= $categoryFilter === 'edit' ? 'selected' : '' ?>>Edit</option>
-                        <option value="delete" <?= $categoryFilter === 'delete' ? 'selected' : '' ?>>Delete</option>
-                        <option value="restore" <?= $categoryFilter === 'restore' ? 'selected' : '' ?>>Restore</option>
-                        <option value="login" <?= $categoryFilter === 'login' ? 'selected' : '' ?>>Login</option>
-                        <option value="logout" <?= $categoryFilter === 'logout' ? 'selected' : '' ?>>Logout</option>
-                    </select>
-                    <select class="form-select" style="width: auto;" onchange="location.href='?role='+this.value">
-                        <option value="">Role</option>
-                        <option value="admin" <?= $roleFilter === 'admin' ? 'selected' : '' ?>>Admin</option>
-                        <option value="super_admin" <?= $roleFilter === 'super_admin' ? 'selected' : '' ?>>Super Admin
-                        </option>
-                    </select>
-                    <select class="form-select" style="width: auto;" onchange="location.href='?sort='+this.value">
-                        <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
-                        <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
-                    </select>
+                </div>
+
+                <!-- Filters -->
+                <div class="col-md-7 d-flex gap-3 justify-content-end">
+                    <div>
+                        <label class="form-label small mb-1 fw-bold text-muted"
+                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Categories</label>
+                        <select class="form-select form-select-sm" name="category" onchange="this.form.submit()"
+                            style="width: 140px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
+                            <option value="">All</option>
+                            <option value="create_user" <?= $categoryFilter === 'create_user' ? 'selected' : '' ?>>Create
+                                User</option>
+                            <option value="edit_user" <?= $categoryFilter === 'edit_user' ? 'selected' : '' ?>>Edit User
+                            </option>
+                            <option value="delete_user" <?= $categoryFilter === 'delete_user' ? 'selected' : '' ?>>Delete
+                                User</option>
+                            <option value="upload" <?= $categoryFilter === 'upload' ? 'selected' : '' ?>>Create</option>
+                            <option value="delete" <?= $categoryFilter === 'delete' ? 'selected' : '' ?>>Delete</option>
+                            <option value="edit" <?= $categoryFilter === 'edit' ? 'selected' : '' ?>>Edited</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1 fw-bold text-muted"
+                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Role</label>
+                        <select class="form-select form-select-sm" name="role" onchange="this.form.submit()"
+                            style="width: 120px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
+                            <option value="">User</option>
+                            <option value="admin" <?= $roleFilter === 'admin' ? 'selected' : '' ?>>Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1 fw-bold text-muted"
+                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Sort By</label>
+                        <select class="form-select form-select-sm" name="sort" onchange="this.form.submit()"
+                            style="width: 120px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
+                            <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
+                            <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- History Table -->
-        <div class="table-container">
-            <table class="table">
+        <div class="table-container"
+            style="background: #EBE8E4; border: 1px solid #D7D3CE; border-radius: 12px; overflow: hidden;">
+            <table class="table mb-0">
                 <thead>
-                    <tr>
-                        <th>USER</th>
-                        <th>ACTION</th>
-                        <th>TITLE</th>
-                        <th>TIMESTAMP</th>
+                    <tr style="border-bottom: 2px solid #D7D3CE;">
+                        <th class="py-3 ps-4 text-center text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 60px;">
+                            ID</th>
+                        <th class="py-3 text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none;">User
+                        </th>
+                        <th class="py-3 text-center text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none;">Action
+                        </th>
+                        <th class="py-3 text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none;">Title
+                        </th>
+                        <th class="py-3 pe-4 text-end text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none;">
+                            Timestampt</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="bg-white">
                     <?php if (empty($logs)): ?>
                         <tr>
-                            <td colspan="4" class="text-center py-4">No activity logs found.</td>
+                            <td colspan="5" class="text-center py-5 bg-white">
+                                <span class="text-muted">No activity logs found.</span>
+                            </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($logs as $log): ?>
-                            <tr>
-                                <td>
+                            <tr style="border-bottom: 1px solid #EBE8E4;">
+                                <td class="py-3 ps-4 text-center" style="font-size: 13px; font-weight: 500; color: #333;">
+                                    <?= $log['id'] ?>
+                                </td>
+                                <td class="py-3" style="font-size: 13px; color: #333;">
                                     <?= htmlspecialchars($log['username']) ?>
                                 </td>
-                                <td>
-                                    <span class="action-badge <?= getActionClass($log['action']) ?>">
-                                        <?= ucwords(str_replace('_', ' ', $log['action'])) ?>
+                                <td class="py-3 text-center">
+                                    <?php
+                                    $actionStr = getActionLabel($log['action']);
+                                    $color = '#333';
+
+                                    if (stripos($log['action'], 'delete') !== false) {
+                                        $color = '#DC3545'; // Red
+                                    } elseif (stripos($log['action'], 'create') !== false || stripos($log['action'], 'upload') !== false || stripos($log['action'], 'restore') !== false) {
+                                        $color = '#198754'; // Green
+                                    } elseif (stripos($log['action'], 'edit') !== false || stripos($log['action'], 'login') !== false || stripos($log['action'], 'logout') !== false) {
+                                        $color = '#0D6EFD'; // Blue (or maybe black for login/out)
+                                        if (stripos($log['action'], 'login') !== false || stripos($log['action'], 'logout') !== false)
+                                            $color = '#333';
+                                    }
+
+                                    // Custom colors for specific actions if needed
+                                    ?>
+                                    <span class="fw-bold" style="font-size: 12px; color: <?= $color ?>;">
+                                        <?= $actionStr ?>
                                     </span>
                                 </td>
-                                <td>
+                                <td class="py-3" style="font-size: 13px; color: #333;">
                                     <?= htmlspecialchars($log['target_title'] ?? '-') ?>
                                 </td>
-                                <td>
-                                    <?= formatDate($log['created_at']) ?>
+                                <td class="py-3 pe-4 text-end" style="font-size: 12px; color: #333;">
+                                    <?= date('Y-m-d h:i A', strtotime($log['created_at'])) ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -228,46 +295,50 @@ function getActionClass($action)
             </table>
 
             <!-- Pagination -->
-            <div class="pagination-wrapper">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="pagination-info">Rows per page</span>
-                    <select class="form-select form-select-sm" style="width: auto;" id="rowsPerPage">
+            <div class="px-3 py-3 d-flex justify-content-between align-items-center"
+                style="background: #EBE8E4; border-top: 1px solid #D7D3CE;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Rows per page</span>
+                    <select class="form-select form-select-sm" id="rowsPerPage"
+                        style="width: 50px; background: #D7D3CE; border: none; font-size: 12px; height: 26px; padding: 2px 24px 2px 8px;">
                         <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
                         <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
                         <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
-                        <option value="50" <?= $limit === 50 ? 'selected' : '' ?>>50</option>
                     </select>
-                    <span class="pagination-info">Showing
-                        <?= ($pagination['offset'] + 1) ?>-
-                        <?= min($pagination['offset'] + $limit, $totalLogs) ?> of
+                    <span class="text-muted small ms-2">
+                        Showing
+                        <?= ($pagination['offset'] + 1) ?>-<?= min($pagination['offset'] + $limit, $totalLogs) ?> of
                         <?= $totalLogs ?> actions
                     </span>
                 </div>
 
-                <nav>
-                    <ul class="pagination mb-0">
-                        <li class="page-item <?= !$pagination['has_prev'] ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?page=<?= $page - 1 ?>&limit=<?= $limit ?>">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </a>
-                        </li>
-                        <?php for ($i = 1; $i <= min(5, $pagination['total_pages']); $i++): ?>
-                            <li class="page-item <?= $page === $i ? 'active' : '' ?>">
-                                <a class="page-link" href="?page=<?= $i ?>&limit=<?= $limit ?>">
-                                    <?= $i ?>
-                                </a>
-                            </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?= !$pagination['has_next'] ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?page=<?= $page + 1 ?>&limit=<?= $limit ?>">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
+                        class="text-decoration-none text-dark d-flex align-items-center small fw-bold <?= !$pagination['has_prev'] ? 'text-muted pe-none' : '' ?>">
+                        <i class="bi bi-chevron-left small me-1"></i> Previous
+                    </a>
+
+                    <div class="d-flex gap-1">
+                        <span class="badge rounded-1 d-flex align-items-center justify-content-center"
+                            style="width: 24px; height: 24px; font-weight: normal; background: #4C3939; font-size: 12px;">
+                            <?= $page ?>
+                        </span>
+                        <?php if ($pagination['has_next']): ?>
+                            <span class="d-flex align-items-center justify-content-center small text-muted"
+                                style="width: 24px; height: 24px;">
+                                <?= $page + 1 ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
+                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>"
+                        class="text-decoration-none text-dark d-flex align-items-center small fw-bold <?= !$pagination['has_next'] ? 'text-muted pe-none' : '' ?>">
+                        Next <i class="bi bi-chevron-right small ms-1"></i>
+                    </a>
+                </div>
             </div>
-        </div>
     </main>
+
 
     <?php include __DIR__ . '/../layouts/footer.php'; ?>
 

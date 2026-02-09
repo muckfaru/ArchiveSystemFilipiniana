@@ -170,107 +170,142 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Stats Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
-                <div
-                    style="background: white; border-radius: 16px; padding: 20px 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative;">
-                    <span style="font-size: 13px; color: #888;">Total Admins</span>
-                    <div style="font-size: 36px; font-weight: 600; color: #333; margin-top: 5px;"><?= $totalAdmins ?>
+                <div class="stat-card">
+                    <span class="stat-card-title">Total Admins</span>
+                    <div class="stat-card-value"><?= $totalAdmins ?>
                     </div>
-                    <div
-                        style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background: #f5f5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-people" style="font-size: 18px; color: #666;"></i>
+                    <div class="stat-card-icon-wrapper">
+                        <i class="bi bi-people stat-card-icon"></i>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div
-                    style="background: white; border-radius: 16px; padding: 20px 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative;">
-                    <span style="font-size: 13px; color: #888;">Active Accounts</span>
-                    <div style="font-size: 36px; font-weight: 600; color: #333; margin-top: 5px;"><?= $activeAdmins ?>
+                <div class="stat-card">
+                    <span class="stat-card-title">Active Accounts</span>
+                    <div class="stat-card-value"><?= $activeAdmins ?>
                     </div>
-                    <div
-                        style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background: #e8f5e9; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-broadcast" style="font-size: 18px; color: #4caf50;"></i>
+                    <div class="stat-card-icon-wrapper success">
+                        <i class="bi bi-broadcast stat-card-icon"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search & Filter -->
-        <div
-            style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px;">
-            <form method="GET" style="display: flex; align-items: center; gap: 15px;">
-                <div style="flex: 1; position: relative;">
-                    <i class="bi bi-search"
-                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                    <input type="text" class="form-control" name="search"
-                        placeholder="Search by username, email or role..." value="<?= htmlspecialchars($search) ?>"
-                        style="padding: 12px 15px 12px 42px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+        <!-- Search & Filter Card -->
+        <div class="mb-4" style="background: #F8F5F2; padding: 20px; border-radius: 12px; border: 1px solid #E6D5C9;">
+            <div class="row align-items-end g-3">
+                <!-- Search -->
+                <div class="col-md-5">
+                    <div class="search-input-wrapper position-relative"
+                        style="background: #EBE8E4; border: 1px solid #D7D3CE; border-radius: 8px;">
+                        <i class="bi bi-search position-absolute text-muted"
+                            style="top: 50%; left: 15px; transform: translateY(-50%); font-size: 16px;"></i>
+                        <form method="GET" class="w-100">
+                            <input type="text" class="form-control" name="search" placeholder="Search users ..."
+                                value="<?= htmlspecialchars($search) ?>"
+                                style="background: transparent; border: none; padding: 10px 10px 10px 45px; box-shadow: none; font-size: 14px;">
+                        </form>
+                    </div>
                 </div>
-                <button type="submit" class="btn"
-                    style="background: #4C3939; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 500;">Search</button>
-                <select class="form-select" name="sort" onchange="this.form.submit()"
-                    style="width: auto; padding: 12px 35px 12px 15px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-                    <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest ↓</option>
-                    <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest ↑</option>
-                </select>
-            </form>
+
+                <!-- Filters -->
+                <div class="col-md-7 d-flex gap-3 justify-content-end">
+                    <div>
+                        <label class="form-label small mb-1 fw-bold text-muted"
+                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Status</label>
+                        <select class="form-select form-select-sm" name="status" onchange="this.form.submit()"
+                            style="width: 140px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
+                            <option value="">All</option>
+                            <option value="active" <?= ($_GET['status'] ?? '') === 'active' ? 'selected' : '' ?>>Active
+                            </option>
+                            <option value="inactive" <?= ($_GET['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>
+                                Inactive</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1 fw-bold text-muted"
+                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Sort By</label>
+                        <select class="form-select form-select-sm" name="sort" onchange="this.form.submit()"
+                            style="width: 120px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
+                            <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
+                            <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Users Table -->
-        <div style="background: white; border-radius: 16px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); overflow: hidden;">
-            <table class="table" style="margin: 0;">
+        <div class="table-container"
+            style="background: #EBE8E4; border: 1px solid #D7D3CE; border-radius: 12px; overflow: hidden;">
+            <table class="table mb-0">
                 <thead>
-                    <tr style="background: #fafafa;">
-                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Username</th>
-                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Role</th>
-                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Status</th>
-                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none;">Last Login</th>
-                        <th style="padding: 15px 20px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border: none; text-align: right;">Actions</th>
+                    <tr style="border-bottom: 2px solid #D7D3CE;">
+                        <th class="py-3 ps-4 text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 30%;">
+                            Username</th>
+                        <th class="py-3 text-center text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 15%;">
+                            Role</th>
+                        <th class="py-3 text-center text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 15%;">
+                            Status</th>
+                        <th class="py-3 text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 25%;">
+                            Last Login</th>
+                        <th class="py-3 pe-4 text-end text-uppercase text-muted"
+                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 15%;">
+                            Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="bg-white">
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="5" class="text-center py-4" style="border: none;">No users found.</td>
+                            <td colspan="5" class="text-center py-5 bg-white">
+                                <span class="text-muted">No users found.</span>
+                            </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $user): ?>
-                            <tr style="border-bottom: 1px solid #f0f0f0;">
-                                <td style="padding: 15px 20px; border: none;">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div style="width: 32px; height: 32px; background: #C08B5C; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="bi bi-person-fill" style="color: white; font-size: 14px;"></i>
+                            <tr style="border-bottom: 1px solid #EBE8E4;">
+                                <td class="py-3 ps-4" style="font-size: 13px; color: #333;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="user-avatar"
+                                            style="width: 32px; height: 32px; background: #EBE8E4; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-person-fill" style="color: #8B7355;"></i>
                                         </div>
-                                        <span style="font-weight: 500; color: #333;"><?= htmlspecialchars($user['username']) ?></span>
+                                        <span class="fw-medium"><?= htmlspecialchars($user['username']) ?></span>
                                     </div>
                                 </td>
-                                <td style="padding: 15px 20px; border: none; color: #666;">
+                                <td class="py-3 text-center" style="font-size: 13px; color: #333;">
                                     <?= ($user['role'] === 'super_admin') ? 'Admin' : 'Admin' ?>
                                 </td>
-                                <td style="padding: 15px 20px; border: none;">
-                                    <span style="display: inline-flex; align-items: center; gap: 5px; color: <?= $user['status'] === 'active' ? '#4caf50' : '#999' ?>; font-size: 13px;">
-                                        <span style="width: 6px; height: 6px; background: <?= $user['status'] === 'active' ? '#4caf50' : '#999' ?>; border-radius: 50%;"></span>
+                                <td class="py-3 text-center">
+                                    <?php
+                                    $statusColor = $user['status'] === 'active' ? '#198754' : '#DC3545';
+                                    ?>
+                                    <span class="fw-bold" style="font-size: 12px; color: <?= $statusColor ?>;">
                                         <?= ucfirst($user['status']) ?>
                                     </span>
                                 </td>
-                                <td style="padding: 15px 20px; border: none; color: #666; font-size: 13px;">
-                                    <?= $user['last_login'] ? formatDate($user['last_login']) : 'Never' ?>
+                                <td class="py-3" style="font-size: 12px; color: #333;">
+                                    <?= $user['last_login'] ? date('Y-m-d h:i A', strtotime($user['last_login'])) : 'Never' ?>
                                 </td>
-                                <td style="padding: 15px 20px; border: none; text-align: right;">
-                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                <td class="py-3 pe-4 text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <button type="button" class="btn btn-sm" data-bs-toggle="modal"
                                             data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>'
-                                            style="width: 36px; height: 36px; background: #f5f5f5; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="bi bi-pencil" style="color: #666;"></i>
+                                            style="background: #f5f5f5; border: 1px solid #ddd; padding: 6px 10px; border-radius: 6px;">
+                                            <i class="bi bi-pencil" style="font-size: 12px; color: #666;"></i>
                                         </button>
                                         <?php if ($user['id'] !== $currentUser['id']): ?>
                                             <form method="POST" class="d-inline"
                                                 onsubmit="return confirm('Are you sure you want to delete this user?')">
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                                <button type="submit" class="btn"
-                                                    style="width: 36px; height: 36px; background: #fff5f5; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="bi bi-trash" style="color: #dc3545;"></i>
+                                                <button type="submit" class="btn btn-sm"
+                                                    style="background: #FFF5F5; border: 1px solid #FFCDD2; padding: 6px 10px; border-radius: 6px;">
+                                                    <i class="bi bi-trash" style="font-size: 12px; color: #DC3545;"></i>
                                                 </button>
                                             </form>
                                         <?php endif; ?>
@@ -283,41 +318,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
 
             <!-- Pagination -->
-            <div class="pagination-wrapper">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="pagination-info">Rows per page</span>
-                    <select class="form-select form-select-sm" style="width: auto;" id="rowsPerPage">
+            <div class="px-3 py-3 d-flex justify-content-between align-items-center"
+                style="background: #EBE8E4; border-top: 1px solid #D7D3CE;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Rows per page</span>
+                    <select class="form-select form-select-sm" id="rowsPerPage"
+                        style="width: 50px; background: #D7D3CE; border: none; font-size: 12px; height: 26px; padding: 2px 24px 2px 8px;">
                         <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
                         <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
                         <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
                     </select>
-                    <span class="pagination-info">Showing
-                        <?= count($users) ?> of
+                    <span class="text-muted small ms-2">
+                        Showing
+                        <?= ($pagination['offset'] + 1) ?>-<?= min($pagination['offset'] + $limit, $totalUsers) ?> of
                         <?= $totalUsers ?> users
                     </span>
                 </div>
 
-                <nav>
-                    <ul class="pagination mb-0">
-                        <li class="page-item <?= !$pagination['has_prev'] ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?page=<?= $page - 1 ?>&limit=<?= $limit ?>">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </a>
-                        </li>
-                        <?php for ($i = 1; $i <= min(5, $pagination['total_pages']); $i++): ?>
-                            <li class="page-item <?= $page === $i ? 'active' : '' ?>">
-                                <a class="page-link" href="?page=<?= $i ?>&limit=<?= $limit ?>">
-                                    <?= $i ?>
-                                </a>
-                            </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?= !$pagination['has_next'] ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?page=<?= $page + 1 ?>&limit=<?= $limit ?>">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
+                        class="text-decoration-none text-dark d-flex align-items-center small fw-bold <?= !$pagination['has_prev'] ? 'text-muted pe-none' : '' ?>">
+                        <i class="bi bi-chevron-left small me-1"></i> Previous
+                    </a>
+
+                    <div class="d-flex gap-1">
+                        <span class="badge rounded-1 d-flex align-items-center justify-content-center"
+                            style="width: 24px; height: 24px; font-weight: normal; background: #4C3939; font-size: 12px;">
+                            <?= $page ?>
+                        </span>
+                        <?php if ($pagination['has_next']): ?>
+                            <span class="d-flex align-items-center justify-content-center small text-muted"
+                                style="width: 24px; height: 24px;">
+                                <?= $page + 1 ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
+                    <a href="?page=<?= min($pagination['total_pages'], $page + 1) ?>&limit=<?= $limit ?>"
+                        class="text-decoration-none text-dark d-flex align-items-center small fw-bold <?= !$pagination['has_next'] ? 'text-muted pe-none' : '' ?>">
+                        Next <i class="bi bi-chevron-right small ms-1"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </main>

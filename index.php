@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -94,7 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             height: 100%;
             background: url('<?= APP_URL ?>/assets/images/login-bg.jpg') center/cover no-repeat;
-            z-index: -1;
+            filter: blur(8px);
+            transform: scale(1.1);
+            z-index: -2;
         }
 
         .login-overlay {
@@ -103,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
             z-index: -1;
         }
 
@@ -125,9 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-title {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: 'IM Fell English', Georgia, serif;
             font-size: 22px;
-            font-weight: 700;
+            font-weight: 400;
             text-align: center;
             margin-bottom: 6px;
             letter-spacing: 1px;
@@ -135,7 +137,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-title span {
-            font-weight: 800;
+            font-weight: 400;
+        }
+
+        .error-alert {
+            background: #FFEBEE;
+            border: 1px solid #FFCDD2;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #C62828;
+            font-size: 13px;
+        }
+
+        .error-alert i {
+            font-size: 18px;
         }
 
         .login-subtitle {
@@ -327,6 +346,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="login-subtitle">Please log in to Continue</p>
 
             <form method="POST" action="">
+                <?php if ($showErrorModal && $error): ?>
+                    <div class="error-alert">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <?= $error ?>
+                    </div>
+                <?php endif; ?>
                 <div class="mb-3 text-start">
                     <label for="username" class="form-label">Username</label>
                     <input type="text" class="form-control" id="username" name="username" placeholder="Enter Username"
@@ -352,22 +377,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- Error Modal -->
-    <div class="modal fade" id="errorModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div class="modal-icon error">
-                        <i class="bi bi-x-lg"></i>
-                    </div>
-                    <h3 class="modal-title-custom">Login Failed</h3>
-                    <p class="modal-message"><?= $error ?></p>
-                    <button type="button" class="modal-btn secondary" data-bs-dismiss="modal">Try Again</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -378,12 +387,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         showPasswordCheckbox.addEventListener('change', function () {
             passwordInput.type = this.checked ? 'text' : 'password';
         });
-
-        <?php if ($showErrorModal): ?>
-            document.addEventListener('DOMContentLoaded', function () {
-                new bootstrap.Modal(document.getElementById('errorModal')).show();
-            });
-        <?php endif; ?>
     </script>
 </body>
 

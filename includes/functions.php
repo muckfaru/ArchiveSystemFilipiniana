@@ -118,12 +118,22 @@ function getCategories()
 }
 
 /**
- * Get all languages
+ * Get all languages (prioritize English, Filipino, Tagalog first)
  */
 function getLanguages()
 {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM languages ORDER BY name");
+    $stmt = $pdo->query("
+        SELECT * FROM languages 
+        ORDER BY 
+            CASE 
+                WHEN name = 'English' THEN 1
+                WHEN name = 'Filipino' THEN 2
+                WHEN name = 'Tagalog' THEN 3
+                ELSE 4
+            END,
+            name ASC
+    ");
     return $stmt->fetchAll();
 }
 
@@ -162,12 +172,16 @@ function getYearsCovered()
 }
 
 /**
- * Count categories
+ * Count categories that are actually used by newspapers
  */
 function countCategories()
 {
     global $pdo;
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM categories");
+    $stmt = $pdo->query("
+        SELECT COUNT(DISTINCT category_id) as total 
+        FROM newspapers 
+        WHERE deleted_at IS NULL AND category_id IS NOT NULL
+    ");
     return $stmt->fetch()['total'];
 }
 

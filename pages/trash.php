@@ -88,6 +88,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect($_SERVER['PHP_SELF']);
     }
 
+    if ($action === 'move_to_trash') {
+        $itemId = intval($_POST['item_id']);
+
+        // Get item title before moving to trash
+        $stmt = $pdo->prepare("SELECT title FROM newspapers WHERE id = ?");
+        $stmt->execute([$itemId]);
+        $item = $stmt->fetch();
+
+        if ($item) {
+            // Soft delete - move to trash
+            $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NOW(), deleted_by = ? WHERE id = ?");
+            $stmt->execute([$currentUser['id'], $itemId]);
+
+            logActivity($currentUser['id'], 'delete', $item['title']);
+            showAlert('success', 'Item moved to trash.');
+        }
+        redirect(APP_URL . '/pages/trash.php');
+    }
+
     if ($action === 'permanent_delete') {
         $itemId = intval($_POST['item_id']);
 
@@ -264,24 +283,28 @@ foreach ($oldItems as $item) {
             <table class="table">
                 <thead>
                     <tr>
+                        <th style="width: 60px;">ID</th>
                         <th>TITLE</th>
                         <th>DELETED BY</th>
                         <th>DATE</th>
                         <th>SIZE</th>
-                        <th>ACTIONS</th>
+                        <th style="width: 120px;">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($trashedItems)): ?>
                         <tr>
-                            <td colspan="5" class="text-center py-4">
+                            <td colspan="6" class="text-center py-4">
                                 <i class="bi bi-trash text-muted" style="font-size: 48px;"></i>
                                 <p class="text-muted mt-2">Trash is empty</p>
                             </td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($trashedItems as $item): ?>
+                        <?php foreach ($trashedItems as $index => $item): ?>
                             <tr>
+                                <td style="color: #888; font-weight: 500;">
+                                    <?= $item['id'] ?>
+                                </td>
                                 <td>
                                     <?= htmlspecialchars($item['title']) ?>
                                 </td>
@@ -295,22 +318,27 @@ foreach ($oldItems as $item) {
                                     <?= formatFileSize($item['file_size']) ?>
                                 </td>
                                 <td>
-                                    <form method="POST" class="d-inline">
-                                        <input type="hidden" name="action" value="restore">
-                                        <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-icon btn-secondary" title="Restore">
-                                            <i class="bi bi-arrow-counterclockwise"></i>
-                                        </button>
-                                    </form>
-                                    <form method="POST" class="d-inline"
-                                        onsubmit="return confirm('This action cannot be undone. Are you sure?')">
-                                        <input type="hidden" name="action" value="permanent_delete">
-                                        <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-icon btn-outline-danger"
-                                            title="Delete Permanently">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <div class="d-flex gap-1">
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="action" value="restore">
+                                            <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                                            <button type="submit" class="btn btn-sm"
+                                                style="background: #E8F5E9; color: #2E7D32; border-radius: 6px; padding: 6px 10px;"
+                                                title="Restore">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" class="d-inline"
+                                            onsubmit="return confirm('This action cannot be undone. Are you sure?')">
+                                            <input type="hidden" name="action" value="permanent_delete">
+                                            <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                                            <button type="submit" class="btn btn-sm"
+                                                style="background: #FFEBEE; color: #C62828; border-radius: 6px; padding: 6px 10px;"
+                                                title="Delete Permanently">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -176,13 +176,17 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                 <h1 class="page-title"
                     style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Playfair Display', Georgia, serif;">
                     Settings</h1>
-                <p class="page-subtitle" style="color: #888; margin: 0;">Manage system preferences and administrative
-                    configurations</p>
+                <p class="page-subtitle" style="color: #888; margin: 0;">Manage your account settings and preferences
+                </p>
             </div>
             <div class="page-actions" style="display: flex; gap: 12px;">
-                <button type="button" class="btn" onclick="location.reload()"
+                <button type="button" class="btn btn-cancel-edit d-none" onclick="cancelEdit()"
                     style="background: white; border: 1px solid #ddd; color: #333; padding: 10px 24px; border-radius: 8px; font-weight: 500;">Cancel</button>
-                <button type="submit" form="profileForm" class="btn"
+                <button type="button" class="btn btn-edit-profile" onclick="toggleEditMode()"
+                    style="background: #4C3939; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                    <i class="bi bi-pencil me-2"></i>Edit Profile
+                </button>
+                <button type="submit" form="profileForm" class="btn btn-save-changes d-none"
                     style="background: #4C3939; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-check2 me-2"></i>Save Changes
                 </button>
@@ -199,9 +203,9 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
         <div class="row g-4">
             <!-- Profile Settings -->
-            <div class="col-lg-8">
+            <div class="col-lg-12">
                 <div class="settings-card"
-                    style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                     <div class="settings-card-header"
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
                         <i class="bi bi-person" style="color: #666;"></i>
@@ -213,65 +217,86 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                     <form method="POST" enctype="multipart/form-data" id="profileForm">
                         <input type="hidden" name="action" value="update_profile">
 
-                        <div style="display: flex; gap: 30px; align-items: flex-start;">
-                            <!-- Profile Photo -->
-                            <div style="text-align: center;">
-                                <div style="position: relative; width: 100px; height: 100px; margin: 0 auto;">
+                        <div class="row g-4">
+                            <!-- Profile Photo Section -->
+                            <div class="col-md-3 text-center">
+                                <div style="position: relative; width: 120px; height: 120px; margin: 0 auto;">
                                     <?php if ($currentUser['profile_photo']): ?>
                                         <img src="<?= APP_URL ?>/<?= $currentUser['profile_photo'] ?>"
-                                            style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;"
-                                            alt="Profile" class="profile-photo">
+                                            style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;"
+                                            alt="Profile" class="profile-photo-preview" id="profilePhotoPreview">
                                     <?php else: ?>
-                                        <div
-                                            style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #f5f0ed 0%, #e8e0db 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #f0f0f0;">
-                                            <i class="bi bi-person" style="font-size: 40px; color: #999;"></i>
+                                        <div id="profilePhotoPreview"
+                                            style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #f5f0ed 0%, #e8e0db 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #f0f0f0;">
+                                            <i class="bi bi-person" style="font-size: 50px; color: #999;"></i>
                                         </div>
                                     <?php endif; ?>
-                                    <label for="profilePhotoInput"
-                                        style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #f0f0f0;">
-                                        <i class="bi bi-camera" style="font-size: 14px; color: #666;"></i>
+                                    <label for="profilePhotoInput" class="edit-photo-btn d-none"
+                                        style="position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; background: #4C3939; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #fff;">
+                                        <i class="bi bi-camera" style="font-size: 14px; color: white;"></i>
                                     </label>
                                     <input type="file" id="profilePhotoInput" name="profile_photo" class="d-none"
-                                        accept=".jpg,.jpeg,.png">
+                                        accept=".jpg,.jpeg,.png" disabled>
                                 </div>
-                                <label for="profilePhotoInput"
-                                    style="display: block; margin-top: 12px; font-size: 12px; font-weight: 600; color: #C08B5C; cursor: pointer; text-transform: uppercase;">Upload
-                                    New</label>
+                                <p class="text-muted mt-2 mb-0" style="font-size: 12px;">Profile Photo</p>
+                                <div class="photo-actions d-none mt-2">
+                                    <label for="profilePhotoInput" class="btn btn-sm"
+                                        style="background: #f8f6f5; border: 1px solid #ddd; font-size: 11px; padding: 4px 12px;">
+                                        <i class="bi bi-upload me-1"></i>Upload
+                                    </label>
+                                    <?php if ($currentUser['profile_photo']): ?>
+                                        <button type="button" class="btn btn-sm ms-1" onclick="removePhoto()"
+                                            style="background: #fff5f5; border: 1px solid #FFCDD2; font-size: 11px; padding: 4px 12px; color: #dc3545;">
+                                            <i class="bi bi-trash me-1"></i>Remove
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
                             </div>
 
                             <!-- Form Fields -->
-                            <div style="flex: 1;">
+                            <div class="col-md-9">
                                 <div class="row g-3">
-                                    <div class="col-6">
+                                    <div class="col-md-6">
                                         <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;">Full
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Full
                                             Name</label>
-                                        <input type="text" class="form-control" name="full_name"
-                                            value="<?= htmlspecialchars($currentUser['full_name']) ?>" required
-                                            style="background: #f8f6f5; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px;">
+                                        <input type="text" class="form-control profile-field" name="full_name"
+                                            value="<?= htmlspecialchars($currentUser['full_name']) ?>" required readonly
+                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px;">
                                     </div>
-                                    <div class="col-6">
+                                    <div class="col-md-6">
                                         <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;">Username</label>
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Username</label>
                                         <input type="text" class="form-control" name="username"
                                             value="<?= htmlspecialchars($currentUser['username']) ?>"
-                                            style="background: #f8f6f5; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px;"
-                                            readonly>
+                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px; color: #666;"
+                                            readonly disabled>
+                                        <small class="text-muted" style="font-size: 10px;">Username cannot be
+                                            changed</small>
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-md-6">
                                         <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;">Email
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Email
                                             Address</label>
-                                        <input type="email" class="form-control" name="email"
-                                            value="<?= htmlspecialchars($currentUser['email']) ?>"
-                                            style="background: #f8f6f5; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px;"
-                                            readonly>
+                                        <input type="email" class="form-control profile-field" name="email"
+                                            value="<?= htmlspecialchars($currentUser['email']) ?>" readonly
+                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px;">
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-md-6">
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Role</label>
+                                        <input type="text" class="form-control"
+                                            value="<?= ucfirst($currentUser['role'] === 'super_admin' ? 'Administrator' : $currentUser['role']) ?>"
+                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px; color: #666;"
+                                            readonly disabled>
+                                        <small class="text-muted" style="font-size: 10px;">Role cannot be
+                                            changed</small>
+                                    </div>
+                                    <div class="col-12 mt-4">
                                         <button type="button" class="btn" data-bs-toggle="modal"
                                             data-bs-target="#changePasswordModal"
-                                            style="background: transparent; border: 1px solid #ddd; color: #333; padding: 10px 20px; border-radius: 8px; font-size: 13px;">
-                                            <i class="bi bi-arrow-repeat me-2"></i>Change Password
+                                            style="background: #f8f6f5; border: 1px solid #ddd; color: #333; padding: 12px 24px; border-radius: 8px; font-size: 13px;">
+                                            <i class="bi bi-key me-2"></i>Change Password
                                         </button>
                                     </div>
                                 </div>
@@ -305,62 +330,27 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                     </div>
                 </div>
             </div>
-
-            <!-- Right Sidebar -->
-            <div class="col-lg-4">
-                <!-- Appearance -->
-                <div class="settings-card"
-                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 16px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <i class="bi bi-moon" style="color: #666;"></i>
-                        <span
-                            style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px;">Appearance</span>
-                    </div>
-
-                    <form method="POST">
-                        <input type="hidden" name="action" value="update_appearance">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong style="font-size: 14px; color: #333;">Dark Mode</strong>
-                                <p style="color: #888; font-size: 12px; margin: 0;">Reduces eye strain in low-light</p>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="darkModeToggle" name="dark_mode"
-                                    <?= $darkMode === '1' ? 'checked' : '' ?> onchange="this.form.submit()"
-                                    style="width: 44px; height: 24px; cursor: pointer;">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Storage -->
-                <div class="settings-card"
-                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <i class="bi bi-folder" style="color: #666;"></i>
-                        <span
-                            style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px;">Storage</span>
-                    </div>
-
-                    <form method="POST">
-                        <input type="hidden" name="action" value="update_storage">
-                        <label
-                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Storage
-                            Path</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" class="form-control" name="storage_path"
-                                value="<?= htmlspecialchars($storagePath) ?>"
-                                style="background: #4C3939; color: white; border: none; padding: 12px 16px; border-radius: 8px; font-size: 13px; flex: 1;">
-                            <button type="submit" class="btn"
-                                style="background: #f0f0f0; border: none; padding: 12px 16px; border-radius: 8px;">
-                                <i class="bi bi-folder" style="color: #666;"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
         </div>
     </main>
+
+    <!-- Profile Update Success Modal -->
+    <div class="modal fade" id="profileSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content" style="border-radius: 16px; border: none; text-align: center; padding: 30px;">
+                <div
+                    style="width: 70px; height: 70px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="bi bi-check-lg" style="font-size: 36px; color: #28a745;"></i>
+                </div>
+                <h5 style="font-weight: 600; color: #333; margin-bottom: 10px;">Profile Updated!</h5>
+                <p style="color: #888; font-size: 14px; margin-bottom: 20px;">Your profile changes have been saved
+                    successfully.</p>
+                <button type="button" class="btn" data-bs-dismiss="modal"
+                    style="background: #4C3939; color: white; padding: 10px 30px; border-radius: 8px; font-weight: 500;">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Change Password Modal -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1">
@@ -504,6 +494,94 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         setupPasswordToggle('toggleCurrentPassword', 'currentPassword');
         setupPasswordToggle('toggleNewPassword', 'newPassword');
         setupPasswordToggle('toggleConfirmNewPassword', 'confirmNewPassword');
+
+        // Edit Mode Toggle
+        let isEditMode = false;
+        let originalValues = {};
+
+        function toggleEditMode() {
+            isEditMode = true;
+
+            // Save original values
+            document.querySelectorAll('.profile-field').forEach(field => {
+                originalValues[field.name] = field.value;
+            });
+
+            // Show/hide buttons
+            document.querySelector('.btn-edit-profile').classList.add('d-none');
+            document.querySelector('.btn-save-changes').classList.remove('d-none');
+            document.querySelector('.btn-cancel-edit').classList.remove('d-none');
+
+            // Enable editable fields
+            document.querySelectorAll('.profile-field').forEach(field => {
+                field.removeAttribute('readonly');
+                field.style.border = '1px solid #C08B5C';
+                field.style.background = '#fff';
+            });
+
+            // Enable photo upload
+            document.getElementById('profilePhotoInput').disabled = false;
+            document.querySelector('.edit-photo-btn').classList.remove('d-none');
+            document.querySelector('.photo-actions').classList.remove('d-none');
+        }
+
+        function cancelEdit() {
+            isEditMode = false;
+
+            // Restore original values
+            document.querySelectorAll('.profile-field').forEach(field => {
+                if (originalValues[field.name] !== undefined) {
+                    field.value = originalValues[field.name];
+                }
+            });
+
+            // Show/hide buttons
+            document.querySelector('.btn-edit-profile').classList.remove('d-none');
+            document.querySelector('.btn-save-changes').classList.add('d-none');
+            document.querySelector('.btn-cancel-edit').classList.add('d-none');
+
+            // Disable editable fields
+            document.querySelectorAll('.profile-field').forEach(field => {
+                field.setAttribute('readonly', true);
+                field.style.border = '1px solid transparent';
+                field.style.background = '#f8f6f5';
+            });
+
+            // Disable photo upload
+            document.getElementById('profilePhotoInput').disabled = true;
+            document.querySelector('.edit-photo-btn').classList.add('d-none');
+            document.querySelector('.photo-actions').classList.add('d-none');
+        }
+
+        // Handle form submission with success modal
+        document.getElementById('profileForm').addEventListener('submit', function (e) {
+            // Store form data in session storage to show modal after reload
+            sessionStorage.setItem('profileUpdated', 'true');
+        });
+
+        // Show success modal if profile was just updated
+        document.addEventListener('DOMContentLoaded', function () {
+            if (sessionStorage.getItem('profileUpdated') === 'true') {
+                sessionStorage.removeItem('profileUpdated');
+                const successModal = new bootstrap.Modal(document.getElementById('profileSuccessModal'));
+                successModal.show();
+            }
+        });
+
+        function removePhoto() {
+            // Add hidden input to indicate photo removal
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_photo';
+            input.value = '1';
+            document.getElementById('profileForm').appendChild(input);
+
+            // Update preview
+            const preview = document.getElementById('profilePhotoPreview');
+            if (preview.tagName === 'IMG') {
+                preview.outerHTML = '<div id="profilePhotoPreview" style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #f5f0ed 0%, #e8e0db 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #f0f0f0;"><i class="bi bi-person" style="font-size: 50px; color: #999;"></i></div>';
+            }
+        }
     </script>
 </body>
 

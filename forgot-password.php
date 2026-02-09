@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -123,7 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             height: 100%;
             background: url('<?= APP_URL ?>/assets/images/login-bg.jpg') center/cover no-repeat;
-            z-index: -1;
+            filter: blur(8px);
+            transform: scale(1.1);
+            z-index: -2;
         }
 
         .forgot-overlay {
@@ -132,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
             z-index: -1;
         }
 
@@ -159,9 +161,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .forgot-title {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: 'IM Fell English', Georgia, serif;
             font-size: 22px;
-            font-weight: 700;
+            font-weight: 400;
             color: #2C1810;
             margin-bottom: 10px;
             letter-spacing: 1px;

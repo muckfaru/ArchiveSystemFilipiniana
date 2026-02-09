@@ -396,3 +396,238 @@ body.dark-mode .bulk-list-container {
     background-color: var(--bg-light);
     border-color: var(--border-color);
 }
+
+/* ==================== Additional Dark Mode Overrides for Inline Styles ==================== */
+
+/* Override inline background: white on containers */
+body.dark-mode [style*="background: white"],
+body.dark-mode [style*="background:white"],
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background: #ffffff"],
+body.dark-mode [style*="background:#ffffff"] {
+    background-color: var(--bg-card) !important;
+}
+
+/* Override inline background on table rows */
+body.dark-mode [style*="background: #f8f9fa"],
+body.dark-mode [style*="background:#f8f9fa"],
+body.dark-mode [style*="background: #fafafa"],
+body.dark-mode [style*="background:#fafafa"] {
+    background-color: var(--bg-light) !important;
+}
+
+/* Override inline text colors */
+body.dark-mode [style*="color: #333"],
+body.dark-mode [style*="color:#333"],
+body.dark-mode [style*="color: #2C1810"],
+body.dark-mode [style*="color:#2C1810"] {
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode [style*="color: #666"],
+body.dark-mode [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.dark-mode [style*="color: #888"],
+body.dark-mode [style*="color:#888"],
+body.dark-mode [style*="color: #999"],
+body.dark-mode [style*="color:#999"] {
+    color: var(--text-muted) !important;
+}
+
+/* Override inline border colors */
+body.dark-mode [style*="border: 1px solid #e0e0e0"],
+body.dark-mode [style*="border: 1px solid #ddd"],
+body.dark-mode [style*="border: 1px solid #eee"],
+body.dark-mode [style*="border-bottom: 1px solid #f0f0f0"],
+body.dark-mode [style*="border-bottom: 2px solid #eee"] {
+    border-color: var(--border-color) !important;
+}
+
+/* History page table overrides */
+body.dark-mode .table-container[style*="background: white"] {
+    background-color: var(--bg-card) !important;
+}
+
+body.dark-mode .table thead tr[style*="background: #f8f9fa"] {
+    background-color: var(--bg-light) !important;
+}
+
+body.dark-mode .table thead tr[style*="background: #f8f9fa"] th {
+    background-color: var(--bg-light) !important;
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode .table tbody tr[style*="border-bottom: 1px solid #f0f0f0"] {
+    border-bottom-color: var(--border-light) !important;
+}
+
+body.dark-mode .table tbody td[style*="color: #333"] span,
+body.dark-mode .table tbody td span[style*="color: #333"] {
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode .table tbody td[style*="color: #666"],
+body.dark-mode .table tbody td[style*="color: #999"] {
+    color: var(--text-secondary) !important;
+}
+
+/* Users page stat cards override */
+body.dark-mode .row.g-4>div>[style*="background: white"] {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+body.dark-mode [style*="background: white"] span[style*="color: #888"],
+body.dark-mode [style*="background: white"] span[style*="color: #333"] {
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode [style*="background: white"] div[style*="color: #333"],
+body.dark-mode [style*="background: white"] [style*="font-size: 36px"] {
+    color: var(--text-primary) !important;
+}
+
+/* Search/filter form overrides */
+body.dark-mode [style*="background: white"][style*="border-radius: 16px"] {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+body.dark-mode input[style*="border: 1px solid #e0e0e0"],
+body.dark-mode select[style*="border: 1px solid #e0e0e0"] {
+    background-color: var(--bg-light) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Button overrides for dark mode */
+body.dark-mode button[style*="background: #f5f5f5"],
+body.dark-mode [style*="background: #f5f5f5"] {
+    background-color: var(--bg-light) !important;
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode [style*="background: #fff5f5"] {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+/* Icon backgrounds in dark mode */
+body.dark-mode [style*="background: #e8f5e9"] {
+    background-color: rgba(46, 125, 50, 0.15) !important;
+}
+
+/* Page header title color */
+body.dark-mode .page-header h1[style*="color: #2C1810"],
+body.dark-mode h1[style*="color: #2C1810"] {
+    color: var(--text-primary) !important;
+}
+
+/* Export button override */
+body.dark-mode .page-actions a[style*="background-color: white"],
+body.dark-mode .page-actions .btn[style*="background-color: white"] {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Upload page dark mode overrides */
+body.dark-mode .upload-drop-zone {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .upload-drop-zone h3 {
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode .upload-drop-zone p {
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode #filePreview {
+    background-color: var(--bg-card) !important;
+    border-color: var(--accent-primary) !important;
+}
+
+body.dark-mode #filePreview [style*="color: #4C3939"] {
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode #filePreview [style*="color: #8D6E63"] {
+    color: var(--text-muted) !important;
+}
+
+/* Bulk upload header */
+body.dark-mode .bulk-header {
+    background-color: var(--bg-light) !important;
+}
+
+body.dark-mode .bulk-file-tab {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode .bulk-file-tab.active,
+body.dark-mode .bulk-file-tab[style*="background: #C08B5C"],
+body.dark-mode .bulk-file-tab[style*="background: rgb(192, 139, 92)"] {
+    background-color: var(--accent-primary) !important;
+    color: white !important;
+}
+
+/* Modal dark mode fixes */
+body.dark-mode .modal-content input[style*="background: linear-gradient"],
+body.dark-mode .modal-content select[style*="background: linear-gradient"] {
+    background: var(--bg-light) !important;
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode .modal-content input[style*="background: white"],
+body.dark-mode .modal-content select[style*="background: white"] {
+    background-color: var(--bg-light) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode for new utility classes */
+body.dark-mode .stat-card-icon-wrapper {
+    background: var(--bg-light);
+}
+
+body.dark-mode .stat-card-icon-wrapper.success {
+    background: rgba(46, 125, 50, 0.15);
+}
+
+body.dark-mode .user-avatar {
+    background: var(--accent-primary);
+}
+
+body.dark-mode .status-badge.active {
+    color: #81c784;
+}
+
+body.dark-mode .status-badge.inactive {
+    color: var(--text-muted);
+}
+
+body.dark-mode .btn-action {
+    background: var(--bg-light);
+    color: var(--text-secondary);
+}
+
+body.dark-mode .btn-action:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-mode .btn-action-danger {
+    background: rgba(220, 53, 69, 0.15);
+}
+
+body.dark-mode .btn-action-danger:hover {
+    background: var(--danger-color);
+    color: white;
+}

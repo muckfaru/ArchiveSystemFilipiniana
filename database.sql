@@ -52,6 +52,17 @@ CREATE TABLE IF NOT EXISTS newspapers (
     file_type VARCHAR(50) NOT NULL,
     file_size BIGINT NOT NULL,
     thumbnail_path VARCHAR(500) DEFAULT NULL,
+    -- Conversion tracking for MOBI to EPUB
+    conversion_status ENUM(
+        'uploaded',
+        'converting',
+        'converted',
+        'failed'
+    ) DEFAULT 'uploaded',
+    epub_path VARCHAR(500) DEFAULT NULL,
+    conversion_error TEXT DEFAULT NULL,
+    converted_at DATETIME DEFAULT NULL,
+    -- User tracking
     uploaded_by INT NOT NULL,
     deleted_by INT DEFAULT NULL,
     deleted_at DATETIME DEFAULT NULL,
