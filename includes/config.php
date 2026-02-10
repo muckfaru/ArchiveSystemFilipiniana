@@ -12,7 +12,7 @@ define('DB_PASS', '');
 
 // Application Constants
 define('APP_NAME', 'Quezon City Public Library - Archive System');
-define('APP_URL', 'http://localhost/qcpl');
+define('APP_URL', 'http://localhost/qcpl/ArchiveSystemFilipiniana');
 define('APP_VERSION', '1.0.0');
 
 // File upload settings
