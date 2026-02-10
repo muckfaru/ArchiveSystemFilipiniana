@@ -10,9 +10,9 @@ define('DB_NAME', 'archive_system');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-// Application settings
-define('APP_NAME', 'Quezon City Public Library');
-define('APP_URL', 'http://localhost/qcpl/ArchiveSystemFilipiniana');
+// Application Constants
+define('APP_NAME', 'Quezon City Public Library - Archive System');
+define('APP_URL', 'http://localhost/qcpl');
 define('APP_VERSION', '1.0.0');
 
 // File upload settings
@@ -24,7 +24,7 @@ define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png'
 // Update this path to match your Calibre installation
 // Default Windows path: C:\Program Files\Calibre2\ebook-convert.exe
 // Default Mac path: /Applications/calibre.app/Contents/MacOS/ebook-convert
-define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\tools\\calibre\\CalibrePortable\\Calibre\\ebook-convert.exe');
+define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
 
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:
