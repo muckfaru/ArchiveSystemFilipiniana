@@ -255,6 +255,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Custom CSS -->
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
+    
+    <!-- Custom CSS for Upload Page -->
+    <style>
+        /* Bulk Upload Tab Styling */
+        .bulk-file-tab {
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .bulk-file-tab:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .bulk-file-tab.active {
+            border-bottom-color: #C08B5C;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(192, 139, 92, 0.1);
+        }
+        
+        /* Page Order Grid */
+        .page-order-item {
+            transition: all 0.2s ease;
+            cursor: move;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-order-item img {
+            transition: transform 0.2s ease;
+        }
+        
+        .page-order-item:hover img {
+            transform: scale(1.05);
+        }
+        
+        .page-order-item.active-item {
+            box-shadow: 0 6px 20px rgba(192, 139, 92, 0.5) !important;
+            transform: scale(1.02);
+            border-color: #C08B5C !important;
+        }
+        
+        .page-order-item:not(.active-item):hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            border-color: #C08B5C;
+        }
+        
+        .page-order-item.drag-over {
+            background-color: rgba(192, 139, 92, 0.15) !important;
+            border: 2px dashed #C08B5C !important;
+            opacity: 0.9;
+        }
+        
+        .page-order-item .position-absolute.top-0 {
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .page-order-item:hover .position-absolute.top-0 {
+            opacity: 1;
+        }
+        
+        /* Upload Drop Zone */
+        .upload-drop-zone {
+            border: 2px dashed #E6E8EB;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #F9FAFB;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-drop-zone:hover {
+            border-color: #C08B5C;
+            background-color: #FFF8F6;
+        }
+        
+        .upload-drop-zone.dragover {
+            border-color: #C08B5C;
+            background-color: #FFF8F6;
+            box-shadow: 0 4px 16px rgba(192, 139, 92, 0.2);
+        }
+        
+        /* Disabled Button State */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* Tab Bar */
+        #bulkFileTabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #C08B5C #f5f5f5;
+        }
+        
+        #bulkFileTabs::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        #bulkFileTabs::-webkit-scrollbar-track {
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+        
+        #bulkFileTabs::-webkit-scrollbar-thumb {
+            background: #C08B5C;
+            border-radius: 3px;
+        }
+        
+        #bulkFileTabs > div {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+    </style>
 </head>
 
 <body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
@@ -366,23 +486,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
             <?php else: ?>
-                <!-- Drop Zone Card -->
-                <div class="upload-drop-zone">
-                    <!-- Upload Icon -->
-                    <div class="upload-icon-wrapper">
-                        <i class="bi bi-cloud-arrow-up" style="font-size: 28px; color: #C08B5C;"></i>
+                <!-- Drop Zone Card (Mockup Style) -->
+                <div class="upload-drop-zone text-center p-5 mb-4 border-2 border-dashed rounded-3 bg-white"
+                    style="border-style: dashed !important; border-color: #E0E0E0; border-width: 2px;">
+                    <div class="mb-3">
+                        <span style="display: inline-block; padding: 15px; background: #F5F5F5; border-radius: 12px;">
+                            <i class="bi bi-cloud-arrow-up-fill" style="font-size: 24px; color: #5D4037;"></i>
+                        </span>
                     </div>
+                    <h5 class="fw-bold text-dark mb-1" style="font-size: 16px;">Drag & Drop Primary File</h5>
+                    <p class="text-muted small mb-3" style="font-size: 12px;">PDF, TIFF, or High-Res JPG (Maximum 100MB)</p>
 
-                    <h3 style="color: #333; font-size: 18px; font-weight: 600; margin: 0 0 8px;">Choose a file or drag &
-                        drop it here</h3>
-                    <p style="color: #999; font-size: 13px; margin: 0 0 20px;">Supported formats: MOBI, PDF, JPG, PNG, TIFF,
-                        TXT (Max: 50MB)</p>
-
-                    <label for="fileInput"
-                        style="display: inline-block; padding: 10px 30px; border: 2px solid #4C3939; border-radius: 8px; color: #4C3939; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                        Browse Files
+                    <label class="btn px-4 py-2" for="fileInput"
+                        style="background: #E0E0E0; color: #5D4037; font-weight: 700; font-size: 11px; letter-spacing: 1px; border-radius: 20px; text-transform: uppercase;">
+                        SELECT FILE
                     </label>
-                    <input type="file" id="fileInput" name="file" class="d-none"
+            <input type="file" id="fileInput" name="file" class="d-none"
                         accept=".pdf,.mobi,.epub,.txt,.jpg,.jpeg,.png,.tiff,.tif" multiple required>
                 </div>
 
@@ -435,9 +554,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div id="bulkUploadContent" style="display: none;">
 
-                    <!-- Bulk Upload Mode Notification -->
-                    <!-- Bulk Upload Mode Notification -->
-                    <div class="alert active d-flex align-items-center mb-4" role="alert"
+                    <!-- Bulk Upload Mode Notification - Always visible in bulk mode -->
+                    <div id="bulkModeAlert" class="alert active d-flex align-items-center mb-4" role="alert"
                         style="border-left: 5px solid #C08B5C; background-color: #F9F5F2; border-radius: 8px; box-shadow: 0 2px 8px rgba(192, 139, 92, 0.1); color: #5D4037;">
                         <i class="bi bi-collection-fill me-3" style="font-size: 28px; color: #C08B5C;"></i>
                         <div>
@@ -449,52 +567,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <!-- Bulk Upload -->
-                    <div class="tab-pane fade" id="bulkUpload">
-                        <!-- Bulk Upload Info -->
-                        <div class="d-flex justify-content-end mb-3">
-                            <span class="text-muted"><i class="bi bi-clock me-1"></i> Editing <span
-                                    id="bulkFileCount">0</span> Files in batch</span>
-                        </div>
-
-                        <!-- File Tabs -->
-                        <div class="bulk-file-tabs bg-primary text-white p-2 rounded-top" id="bulkFileTabs"
-                            style="display: none;">
-                            <div class="d-flex align-items-center gap-2 overflow-auto">
-                                <i class="bi bi-file-earmark-text me-2"></i>
-                                <span class="text-white-50">Currently Editing:</span>
-                                <div class="d-flex gap-2" id="fileTabsContainer"></div>
+                    <!-- Bulk Header Statistics (Document Mode) -->
+                    <div id="bulkStatsBar"
+                        class="d-none d-flex align-items-center justify-content-between p-3 mb-4 bg-white rounded shadow-sm border">
+                        <div class="d-flex text-uppercase small fw-bold" style="letter-spacing: 0.5px; gap: 30px;">
+                            <div>
+                                <span class="text-muted d-block" style="font-size: 10px;">Total Files</span>
+                                <span class="fs-5 text-dark" id="totalFilesCount">0</span>
+                            </div>
+                            <div>
+                                <span class="text-muted d-block" style="font-size: 10px; color: #4CAF50 !important;">Ready</span>
+                                <span class="fs-5" style="color: #4CAF50;" id="readyFilesCount">0</span>
+                            </div>
+                            <div>
+                                <span class="text-muted d-block" style="font-size: 10px; color: #FF9800 !important;">Pending</span>
+                                <span class="fs-5" style="color: #FF9800;" id="pendingFilesCount">0</span>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-sm btn-outline-dark fw-bold text-uppercase"
+                            style="font-size: 11px; letter-spacing: 0.5px; white-space: nowrap;"
+                            onclick="document.getElementById('bulkFileInput').click()">
+                            <i class="bi bi-plus-lg me-1"></i> Add Files
+                        </button>
+                    </div>
 
-                        <!-- Bulk Drop Zone -->
-                        <div class="upload-area mb-4" id="bulkDropZone">
-                            <i class="bi bi-cloud-arrow-up upload-icon"></i>
-                            <p class="upload-text">Drag & drop multiple files here</p>
-                            <p class="upload-hint">MOBI, PDF, JPG, PNG, TIFF and TXT formats</p>
+                    <!-- Bulk Document Tabs/List -->
+                    <div id="bulkDocumentList" class="d-none mb-4">
+                        <div class="d-flex gap-2 overflow-auto pb-2 mb-3" id="bulkFileTabs" style="border-bottom: 2px solid #E0E0E0;">
+                            <!-- Tabs will be injected here via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Bulk Image Page Order -->
+                    <div id="bulkPageOrder" class="d-none mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="section-title m-0">
+                                <i class="bi bi-grid-3x3-gap-fill"></i> PAGE ORDER MANAGEMENT
+                            </div>
+                            <span class="badge bg-light text-secondary border">DRAG AND DROP TO REORDER</span>
+                        </div>
+
+                        <div class="row g-3" id="pageOrderGrid">
+                            <!-- Images will be injected here via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Default Bulk Drop Zone (Initial State) -->
+                    <div class="upload-area mb-4" id="bulkDropZone">
+                        <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                        <p class="upload-text">Drag & drop multiple files here</p>
+                        <p class="upload-hint">MOBI, PDF, JPG, PNG, TIFF and TXT formats</p>
                             <label class="btn btn-secondary mt-3" for="bulkFileInput"
                                 style="padding: 10px 30px; border: 2px solid #4C3939; background: transparent; border-radius: 8px; color: #4C3939; font-weight: 500; cursor: pointer; transition: all 0.2s;">Browse
                                 Files</label>
                             <input type="file" id="bulkFileInput" class="d-none"
                                 accept=".pdf,.mobi,.epub,.txt,.jpg,.jpeg,.png,.tiff,.tif" multiple>
-                        </div>
-
-                        <!-- Bulk File List -->
-                        <div id="bulkFileList" class="mb-4" style="display: none;">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>File Name</th>
-                                            <th>Type</th>
-                                            <th>Size</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bulkFilesBody"></tbody>
-                                </table>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -503,7 +630,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Form Fields -->
             <div class="row g-4">
                 <!-- General Information -->
-                <div class="col-lg-6">
+                <div class="col-lg-8">
                     <div class="content-card">
                         <div class="section-title">
                             <i class="bi bi-info-circle-fill"></i>
@@ -559,46 +686,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </div>
 
-                        <div class="mt-3">
-                            <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px;">KEYWORDS
-                                / TAGS</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control form-control-custom" id="keywordInput"
-                                    placeholder="Add tag..." style="border-radius: 8px 0 0 8px;">
-                                <button type="button" class="btn" id="addTagBtn"
-                                    style="background: var(--primary-color); color: white; border-radius: 0 8px 8px 0; padding: 0 15px;">
-                                    <i class="bi bi-plus-lg"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" name="keywords" id="hiddenKeywords"
-                                value="<?= $editMode ? htmlspecialchars($editItem['keywords']) : '' ?>">
-                            <div class="mt-2" id="tagsContainer">
-                                <!-- Tags will be added here dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Repository Details -->
-                <div class="col-lg-6">
-                    <div class="content-card">
-                        <div class="section-title">
-                            <i class="bi bi-archive-fill"></i>
-                            REPOSITORY DETAILS
-                        </div>
 
-                        <div class="row g-3">
+
+
+                        <div class="row g-3 mt-1">
                             <div class="col-md-6">
-                                <label class="form-label-custom">ORIGINAL
-                                    TITLE</label>
-                                <input type="text" class="form-control form-control-custom" name="publisher"
-                                    value="<?= $editMode ? htmlspecialchars($editItem['publisher']) : '' ?>"
-                                    placeholder="John Artaro">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label"
-                                    style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px;">LANGUAGE</label>
+                                <label class="form-label-custom">LANGUAGE</label>
                                 <select class="form-select form-control-custom" name="language_id">
                                     <option value="">Select Language</option>
                                     <?php foreach ($languages as $lang): ?>
@@ -608,113 +702,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">VOLUME / ISSUE REFERENCE</label>
+                                <input type="text" class="form-control form-control-custom" name="volume_issue"
+                                    value="<?= $editMode ? htmlspecialchars($editItem['volume_issue']) : '' ?>"
+                                    placeholder="VOL. XCIII, No. 44">
+                            </div>
                         </div>
 
                         <div class="mt-3">
                             <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px;">VOLUME /
-                                ISSUE REFERENCE</label>
-                            <input type="text" class="form-control form-control-custom" name="volume_issue"
-                                value="<?= $editMode ? htmlspecialchars($editItem['volume_issue']) : '' ?>"
-                                placeholder="VOL. XCIII, No. 44">
+                                style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px;">KEYWORDS
+                                / TAGS</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-custom" id="keywordInput"
+                                    placeholder="Type a tag and press add..." style="border-radius: 8px 0 0 8px;">
+                                <button type="button" class="btn" id="addTagBtn"
+                                    style="background: #4E342E; color: white; border-radius: 0 8px 8px 0; padding: 0 15px;">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="keywords" id="hiddenKeywords"
+                                value="<?= $editMode ? htmlspecialchars($editItem['keywords']) : '' ?>">
+                            <div class="mt-2 d-flex gap-2 flex-wrap" id="tagsContainer">
+                                <!-- Tags will be added here dynamically -->
+                            </div>
+
                         </div>
 
                         <div class="mt-3">
-                            <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px;">ARCHIVE
-                                DESCRIPTION</label>
+                            <label class="form-label-custom">DESCRIPTION</label>
                             <textarea class="form-control form-control-custom" name="description" rows="3"
-                                placeholder="Add a detailed description for this archive entry..."
+                                placeholder="Enter a comprehensive description of the archive content..."
                                 style="min-height: 100px;"><?= $editMode ? htmlspecialchars($editItem['description']) : '' ?></textarea>
                         </div>
 
-                        <!-- Thumbnail & Status -->
-                        <div class="row g-4 mt-3">
-                            <div class="col-md-6">
-                                <label class="form-label"
-                                    style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px;">
-                                    THUMBNAIL COVER (OPTIONAL)
-                                </label>
-                                <div class="upload-area" id="thumbnailArea"
-                                    style="border: 2px dashed var(--border-color); background: var(--bg-light); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer;">
-                                    <?php if ($editMode && $editItem['thumbnail_path']): ?>
-                                        <img src="<?= APP_URL ?>/<?= $editItem['thumbnail_path'] ?>" id="thumbnailPreview"
-                                            style="max-height: 50px; margin-bottom: 10px; display: block; margin: 0 auto 10px;">
-                                    <?php else: ?>
-                                        <img src="" id="thumbnailPreview"
-                                            style="max-height: 50px; margin-bottom: 10px; display: none; margin: 0 auto 10px;">
-                                        <div id="thumbnailIcon"
-                                            style="width: 40px; height: 40px; background: var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
-                                            <i class="bi bi-image" style="color: #888; font-size: 20px;"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div style="font-size: 10px; color: #888; font-weight: 600; margin-bottom: 2px;">
-                                        JPG/PROFILE ONLY</div>
-                                    <div style="font-size: 9px; color: #aaa;">(MAX 2MB)</div>
-                                    <input type="file" id="thumbnailInput" name="thumbnail" class="d-none"
-                                        accept=".jpg,.jpeg,.png">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div id="statusContainer"
-                                    style="background: var(--bg-light); border-radius: 12px; padding: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                                    <!-- Waiting State -->
-                                    <div id="statusWaiting">
-                                        <i class="bi bi-hourglass-split"
-                                            style="font-size: 24px; color: #C08B5C; margin-bottom: 10px;"></i>
-                                        <div
-                                            style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px; margin-bottom: 5px;">
-                                            STATUS</div>
-                                        <div style="font-size: 11px; color: #7CA1BF; line-height: 1.4;">
-                                            Waiting for primary file upload to begin automated cataloging...
-                                        </div>
-                                    </div>
-                                    <!-- Checking State -->
-                                    <div id="statusChecking" style="display: none;">
-                                        <div class="spinner-border text-warning" role="status"
-                                            style="width: 24px; height: 24px; margin-bottom: 10px;">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                        <div
-                                            style="font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px; margin-bottom: 5px;">
-                                            CHECKING</div>
-                                        <div style="font-size: 11px; color: #7CA1BF; line-height: 1.4;">
-                                            Verifying for duplicates...
-                                        </div>
-                                    </div>
-                                    <!-- Ready State -->
-                                    <div id="statusReady" style="display: none;">
-                                        <i class="bi bi-check-circle-fill"
-                                            style="font-size: 24px; color: #28a745; margin-bottom: 10px;"></i>
-                                        <div
-                                            style="font-size: 11px; font-weight: 600; color: #28a745; letter-spacing: 0.5px; margin-bottom: 5px;">
-                                            READY FOR UPLOAD</div>
-                                        <div style="font-size: 11px; color: #28a745; line-height: 1.4;">
-                                            No duplication found. You may proceed with the upload.
-                                        </div>
-                                    </div>
-                                    <!-- Duplicate State -->
-                                    <div id="statusDuplicate" style="display: none;">
-                                        <i class="bi bi-exclamation-triangle-fill"
-                                            style="font-size: 24px; color: #dc3545; margin-bottom: 10px;"></i>
-                                        <div
-                                            style="font-size: 11px; font-weight: 600; color: #dc3545; letter-spacing: 0.5px; margin-bottom: 5px;">
-                                            DUPLICATE FOUND</div>
-                                        <div id="duplicateMessage"
-                                            style="font-size: 11px; color: #dc3545; line-height: 1.4;">
-                                            A document with this title or filename already exists.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
+
+        <!-- Cover Preview / Thumbnail -->
+        <div class="col-lg-4"> <!-- Adjusted column width to match layout -->
+            <div class="content-card h-100" style="display: flex; flex-direction: column;">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-image me-2"></i>THUMBNAIL PREVIEW
+                    </span>
+                    <span class="badge bg-light text-primary border"
+                        style="font-size: 9px; letter-spacing: 0.5px; color: #8DA9C4 !important; border-color: #E6EEF5 !important;">VISUAL
+                        FOCUS</span>
+                </div>
+
+                <div class="flex-grow-1 d-flex flex-col align-items-center justify-content-center"
+                    style="background: #F9FAFB; border: 2px dashed #E6E8EB; border-radius: 12px; margin-top: 20px; min-height: 400px; position: relative;">
+
+                    <?php if ($editMode && $editItem['thumbnail_path']): ?>
+                        <img src="<?= APP_URL ?>/<?= $editItem['thumbnail_path'] ?>" id="thumbnailPreview"
+                            style="max-width: 100%; max-height: 350px; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;">
+                        <div class="mt-3 text-center">
+                            <label class="btn btn-outline-secondary btn-sm" for="thumbnailInput"
+                                style="border-radius: 4px; font-size: 10px; font-weight: 700; padding: 8px 16px; letter-spacing: 0.5px; border-color: #4C3939; color: #4C3939;">
+                                CHANGE THUMBNAIL
+                            </label>
+                        </div>
+                    <?php else: ?>
+                        <div id="previewPlaceholder" class="text-center p-4">
+                            <div
+                                style="width: 64px; height: 64px; background: #E6E8EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <i class="bi bi-image" style="color: #9CA3AF; font-size: 28px;"></i>
+                            </div>
+                            <h6
+                                style="color: #4B5563; font-weight: 700; letter-spacing: 0.5px; font-size: 13px; margin-bottom: 8px;">
+                                UPLOAD THUMBNAIL</h6>
+                            <p
+                                style="color: #9CA3AF; font-size: 11px; max-width: 200px; margin: 0 auto 20px; line-height: 1.5;">
+                                Recommended aspect ratio 4:5 for vertical archive cover images.
+                            </p>
+                            <label class="btn btn-outline-dark btn-sm" for="thumbnailInput"
+                                style="border-radius: 4px; font-size: 10px; font-weight: 700; padding: 8px 16px; letter-spacing: 0.5px; border-color: #4C3939; color: #4C3939;">
+                                BROWSE MEDIA LIBRARY
+                            </label>
+                        </div>
+                    <?php endif; ?>
+
+                    <img id="thumbnailPreview" style="display: none; max-width: 100%; max-height: 350px; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;">
+                    <input type="file" id="thumbnailInput" name="thumbnail" class="d-none" accept=".jpg,.jpeg,.png,.tiff,.tif">
+                </div>
             </div>
+        </div>
+
+        <!-- End Form Fields Row -->
+        </div>
         </form>
     </main>
 
     <?php include __DIR__ . '/../layouts/footer.php'; ?>
+
+    <script>
+        // Add form submission handler for single file uploads
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('uploadForm');
+            form.addEventListener('submit', function(e) {
+                // Only prevent default for single file uploads (not bulk)
+                if (!isBulkMode && fileInput && fileInput.files.length > 0) {
+                    // For single files, allow normal submission since backend handles it
+                    // The success modal will be triggered on page return via query parameter
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Uploading...`;
+                }
+            });
+        });
+    </script>
 
     <script>
         // Button references
@@ -893,10 +991,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         function clearFile() {
+            // Reset file input
             fileInput.value = '';
+            
+            // Reset UI for single upload
             filePreview.classList.add('d-none');
+            filePreview.style.display = 'none';
+            
             // Show drop zone again
-            document.querySelector('.upload-area').style.display = 'block';
+            const dropZone = document.querySelector('.upload-drop-zone');
+            if (dropZone) dropZone.style.display = 'block';
+            
+            // Reset bulk UI if in bulk mode
+            if (isBulkMode) {
+                bulkFiles = [];
+                activeFileIndex = 0;
+                isBulkMode = false;
+                document.getElementById('bulkUploadContent').style.display = 'none';
+                updateBulkUI();
+            }
+            
+            // Reset status indicators
+            showStatus('waiting');
+            isDuplicateCheckPassed = false;
+            
             checkFormInput();
         }
 
@@ -943,8 +1061,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             thumbnailPreview.src = e.target.result;
                             thumbnailPreview.style.display = 'block';
                         }
-                        if (thumbnailIcon) {
-                            thumbnailIcon.style.display = 'none';
+                        const previewPlaceholder = document.getElementById('previewPlaceholder');
+                        if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+                        
+                        // Mark current file as edited in bulk mode
+                        if (isBulkMode && bulkFiles[activeFileIndex]) {
+                            bulkFiles[activeFileIndex].thumbnail = this.files[0];
+                            bulkFiles[activeFileIndex].isEdited = true;
+                            bulkFiles[activeFileIndex].lastEditTime = Date.now();
+                            updateBulkUI();
+                            
+                            // Update cover preview
+                            updateCoverPreview(activeFileIndex);
                         }
                     };
                     reader.readAsDataURL(this.files[0]);
@@ -956,6 +1084,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Auto-detect bulk mode based on number of files selected
 
         let isBulkMode = false;
+        let isEditingBulkFile = false; // Track if user is currently editing bulk file metadata
 
         // Store file data
         let bulkFiles = [];
@@ -977,7 +1106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             name: file.name,
                             size: file.size,
                             type: file.type,
+                            ext: file.name.split('.').pop().toLowerCase(),
                             status: 'waiting',
+                            isEdited: false, // Track if metadata has been filled in
+                            lastEditTime: 0, // Track when last edited
                             // Metadata fields
                             title: file.name.split('.')[0], // Default title is filename
                             publication_date: '',
@@ -1041,6 +1173,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (input) input.value = fileData[field] || '';
             });
 
+            // Update Cover Preview
+            updateCoverPreview(index);
+
             // Determine active tab/ui
             // Update styling for active tab in bulk list
             document.querySelectorAll('.bulk-file-tab').forEach((el, idx) => {
@@ -1058,66 +1193,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         function updateBulkUI() {
             const bulkContainer = document.getElementById('bulkUploadContent');
+            const bulkDropZone = document.getElementById('bulkDropZone');
+            const bulkPageOrder = document.getElementById('bulkPageOrder');
+            const bulkDocumentList = document.getElementById('bulkDocumentList');
+            const bulkStatsBar = document.getElementById('bulkStatsBar');
 
             if (bulkFiles.length > 0) {
-                // Generate Bulk UI if not exists or update it
-                let bulkList = document.getElementById('bulk-list-container');
-                if (!bulkList) {
-                    bulkList = document.createElement('div');
-                    bulkList.id = 'bulk-list-container';
-                    bulkList.className = 'mb-4';
-                    // Insert before form fields
-                    document.querySelector('.row.g-4').before(bulkList);
+                bulkDropZone.style.display = 'none';
+
+                // Determine mode: Image or Document
+                // If any file is PDF/MOBI/EPUB/TXT, defaults to Document mode.
+                // If all are images, Image mode.
+                const hasDocuments = bulkFiles.some(f => ['pdf', 'mobi', 'epub', 'txt'].includes(f.ext));
+                const mode = hasDocuments ? 'document' : 'image';
+
+                // Update Counts for Document Mode
+                document.getElementById('totalFilesCount').textContent = bulkFiles.length.toString().padStart(2, '0');
+                document.getElementById('readyFilesCount').textContent = bulkFiles.filter(f => f.isEdited === true).length.toString().padStart(2, '0');
+                document.getElementById('pendingFilesCount').textContent = bulkFiles.filter(f => f.isEdited !== true).length.toString().padStart(2, '0');
+
+
+                if (mode === 'image') {
+                    // Image Mode UI
+                    bulkPageOrder.classList.remove('d-none');
+                    bulkDocumentList.classList.add('d-none');
+                    bulkStatsBar.classList.add('d-none'); // Don't show stats for images
+
+                    const grid = document.getElementById('pageOrderGrid');
+                    grid.innerHTML = '';
+
+                    bulkFiles.forEach((file, idx) => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-2 col-4'; // Grid layout
+
+                        // Create thumbnail URL
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const img = col.querySelector('img');
+                            if (img) img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file.file);
+
+                        col.innerHTML = `
+                            <div class="position-relative page-order-item ${idx === activeFileIndex ? 'active-item' : ''}" onclick="setActiveFile(${idx})" 
+                                 draggable="true"
+                                 ondragstart="handleDragStart(event, ${idx})"
+                                 ondragover="handleDragOver(event)"
+                                 ondrop="handleDrop(event, ${idx})"
+                                 ondragenter="handleDragEnter(event)"
+                                 ondragleave="handleDragLeave(event)"
+                                 style="background: #E0E0E0; border-radius: 8px; aspect-ratio: 3/4; overflow: hidden; cursor: pointer; border: ${idx === activeFileIndex ? '3px solid #C08B5C' : '1px solid #ddd'}; transition: all 0.2s;">
+                                <img src="" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;" alt="Page ${idx + 1}" draggable="false">
+                                <div class="position-absolute d-flex align-items-center justify-content-center" 
+                                     style="top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; font-weight: bold; font-size: 12px;">
+                                    ${idx + 1}
+                                </div>
+                                <div class="position-absolute top-0 end-0 p-1" onclick="event.stopPropagation(); removeBulkFile(${idx});">
+                                    <i class="bi bi-x-circle-fill text-danger bg-white rounded-circle" style="font-size: 14px; cursor: pointer;"></i>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(col);
+                    });
+
+                } else {
+                    // Document Mode UI - Show stats and tabs
+                    bulkPageOrder.classList.add('d-none');
+                    bulkDocumentList.classList.remove('d-none');
+                    bulkStatsBar.classList.remove('d-none');
+
+                    const tabsContainer = document.getElementById('bulkFileTabs');
+                    tabsContainer.innerHTML = '';
+
+                    bulkFiles.forEach((file, idx) => {
+                        const isActive = idx === activeFileIndex;
+                        const isEdited = file.isEdited === true;
+
+                        const tab = document.createElement('button');
+                        tab.type = 'button';
+                        tab.className = `bulk-file-tab d-flex align-items-center gap-2 px-3 py-2 rounded-top border-bottom-0 ${isActive ? 'bg-white text-dark shadow-sm active' : 'bg-light text-muted'}`;
+                        tab.style.cursor = 'pointer';
+                        tab.style.minWidth = '160px';
+                        tab.style.border = isActive ? 'none' : '1px solid transparent';
+                        if (isActive) {
+                            tab.style.borderTop = '3px solid #C08B5C';
+                            tab.style.boxShadow = '0 2px 8px rgba(192, 139, 92, 0.2)';
+                        }
+
+                        let icon = 'bi-file-earmark-text';
+                        if (file.ext === 'pdf') icon = 'bi-file-earmark-pdf';
+                        if (file.ext === 'mobi' || file.ext === 'epub') icon = 'bi-book';
+
+                        // Status indicator: checkmark for edited, pending for not edited
+                        let statusHTML = '';
+                        if (isEdited) {
+                            statusHTML = `<i class="bi bi-check-circle-fill" style="color: #22C55E; font-size: 14px;"></i>`;
+                        } else {
+                            statusHTML = `<span class="rounded-circle" style="width: 8px; height: 8px; background: #FF9800;"></span>`;
+                        }
+
+                        tab.innerHTML = `
+                            <i class="bi ${icon}" style="font-size: 16px;"></i>
+                            <span class="small fw-bold text-truncate" style="max-width: 80px; display: inline-block; white-space: normal; overflow: visible;">${file.name}</span>
+                            ${statusHTML}
+                         `;
+                        tab.onclick = () => setActiveFile(idx);
+                        tabsContainer.appendChild(tab);
+                    });
                 }
-
-                // Currently Editing Header
-                let html = `
-                    <div class="bulk-header">
-                        <div style="font-weight: 600; font-size: 14px;"><i class="bi bi-collection-fill me-2"></i>BULK EDITING (${bulkFiles.length} FILES)</div>
-                        <button class="btn btn-sm btn-outline-light" onclick="if(confirm('Clear all?')) { bulkFiles=[]; updateBulkUI(); }">Clear All</button>
-                    </div>
-                    <div class="bulk-list-container">
-                `;
-
-                bulkFiles.forEach((file, idx) => {
-                    const isActive = idx === activeFileIndex;
-                    const bg = isActive ? '#C08B5C' : 'white';
-                    const color = isActive ? 'white' : '#4C3939';
-                    const border = isActive ? 'none' : '1px solid #ddd';
-
-                    html += `
-                        <div class="bulk-file-tab" onclick="setActiveFile(${idx})" 
-                            style="display: inline-block; padding: 10px 15px; background: ${bg}; color: ${color}; border-radius: 8px; margin-right: 10px; cursor: pointer; border: ${border}; font-size: 13px; font-weight: 500;">
-                            <i class="bi bi-file-earmark me-1"></i> ${file.name.substring(0, 15)}${file.name.length > 15 ? '...' : ''}
-                            ${file.status === 'success' ? '<i class="bi bi-check-circle-fill ms-2 text-white"></i>' : ''}
-                            ${file.status === 'error' ? '<i class="bi bi-exclamation-circle-fill ms-2 text-danger"></i>' : ''}
-                            <i class="bi bi-x-circle ms-2" style="cursor: pointer; opacity: 0.7;" onclick="event.stopPropagation(); removeBulkFile(${idx});"></i>
-                        </div>
-                   `;
-                });
-
-                html += `
-                    <button type="button" class="btn" onclick="document.getElementById('fileInput').click();" 
-                        style="display: inline-block; padding: 10px 15px; background: transparent; color: #4C3939; border: 2px dashed #C08B5C; border-radius: 8px; font-size: 13px; font-weight: 500;">
-                        <i class="bi bi-plus-lg me-1"></i> Add More Files
-                    </button>
-                </div>`;
-                bulkList.innerHTML = html;
-                bulkList.style.display = 'block';
-
-                // Make sure form is visible
-                document.querySelector('.row.g-4').style.display = 'flex';
 
                 // Load data for active file
                 loadBulkFileData(activeFileIndex);
 
-                // Update upload button text
+                // Update upload button
                 if (uploadBtn) {
-                    uploadBtn.innerHTML = `<i class="bi bi-cloud-upload me-2"></i>Upload ${bulkFiles.length} Files`;
+                    // For Documents "Publish All Files", for Images "Finalize Upload"
+                    const btnText = mode === 'image' ? 'Finalize Upload' : 'Publish All Files';
+                    uploadBtn.innerHTML = `<i class="bi bi-cloud-upload me-2"></i>${btnText}`;
                     uploadBtn.disabled = false;
-                    // Change button processing to AJAX
                     uploadBtn.onclick = processBulkUpload;
-                    uploadBtn.type = 'button'; // Prevent default submit
+                    uploadBtn.type = 'button';
                 }
 
                 // Add form field change listeners for bulk mode sync
@@ -1125,28 +1320,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             } else {
                 // No bulk files, reset UI
-                const bulkList = document.getElementById('bulk-list-container');
-                if (bulkList) bulkList.style.display = 'none';
+                bulkDropZone.style.display = 'block';
+                bulkPageOrder.classList.add('d-none');
+                bulkDocumentList.classList.add('d-none');
+                bulkStatsBar.classList.add('d-none');
+                document.getElementById('bulkUploadContent').style.display = 'none'; // Hide container if empty
 
                 // Show drop zone
-                document.querySelector('.upload-area').parentElement.style.display = 'block';
+                document.querySelector('.upload-drop-zone').style.display = 'block'; // Show MAIN drop zone if resetting completely? 
+                // Wait, if we are in bulk mode tab but no files, show BULK drop zone.
+                // But if we reset logic... 
 
-                // Reset button
                 if (uploadBtn) {
                     uploadBtn.innerHTML = `<i class="bi bi-cloud-upload me-2"></i>Upload`;
                     uploadBtn.type = 'submit';
                     uploadBtn.onclick = null;
                 }
-
-                // Remove bulk form listeners
                 removeBulkFormListeners();
             }
         }
 
         // Function to remove a single file from bulk list
         function removeBulkFile(idx) {
-            if (confirm('Remove this file from the list?')) {
-                bulkFiles.splice(idx, 1);
+            bulkFiles.splice(idx, 1);
+            
+            // If all files removed, reset everything
+            if (bulkFiles.length === 0) {
+                fileInput.value = '';
+                isBulkMode = false;
+                activeFileIndex = 0;
+                isEditingBulkFile = false;
+                
+                // Reset UI
+                document.getElementById('bulkUploadContent').style.display = 'none';
+                document.querySelector('.upload-drop-zone').style.display = 'block';
+                
+                // Reset buttons
+                if (uploadBtn) {
+                    uploadBtn.innerHTML = `<i class="bi bi-cloud-upload me-2"></i>Upload`;
+                    uploadBtn.disabled = true;
+                    uploadBtn.type = 'submit';
+                    uploadBtn.onclick = null;
+                }
+                if (discardBtn) discardBtn.disabled = true;
+                
+                checkFormInput();
+            } else {
+                // Some files remain, adjust active index
                 if (activeFileIndex >= bulkFiles.length) {
                     activeFileIndex = Math.max(0, bulkFiles.length - 1);
                 }
@@ -1163,6 +1383,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const fieldName = e.target.name;
                 const value = e.target.value;
                 updateCurrentBulkFileData(fieldName, value);
+                
+                // Mark as edited and set timestamp
+                if (bulkFiles[activeFileIndex]) {
+                    bulkFiles[activeFileIndex].isEdited = true;
+                    bulkFiles[activeFileIndex].lastEditTime = Date.now();
+                }
+                
+                // Set editing flag and disable upload button
+                isEditingBulkFile = true;
+                if (uploadBtn) uploadBtn.disabled = true;
+                
+                // Update UI to show file status
+                updateBulkUI();
             }
         }
 
@@ -1191,6 +1424,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         function setActiveFile(idx) {
+            isEditingBulkFile = false; // Reset editing flag when switching files
+            if (uploadBtn) uploadBtn.disabled = false; // Re-enable upload button when switching away
             activeFileIndex = idx;
             loadBulkFileData(idx);
         }
@@ -1203,6 +1438,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             let uploadedCount = 0;
             let errorCount = 0;
+            let firstUploadedId = null;
 
             for (let i = 0; i < bulkFiles.length; i++) {
                 const fileData = bulkFiles[i];
@@ -1238,6 +1474,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (text.includes('uploaded successfully') || response.ok) {
                         fileData.status = 'success';
                         uploadedCount++;
+                        
+                        // Extract ID from response if available
+                        const idMatch = text.match(/"id":\s*(\d+)/);
+                        if (idMatch && !firstUploadedId) firstUploadedId = idMatch[1];
                     } else {
                         fileData.status = 'error';
                         errorCount++;
@@ -1255,8 +1495,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             uploadBtn.innerHTML = `<i class="bi bi-cloud-upload me-2"></i>Upload Completed`;
 
             if (errorCount === 0) {
-                alert('All files uploaded successfully!');
-                window.location.href = 'dashboard.php';
+                // Show success modal
+                showUploadSuccessModal(firstUploadedId, true);
+                // Redirect after a delay
+                setTimeout(() => {
+                    window.location.href = 'dashboard.php';
+                }, 3000);
             } else {
                 alert(`Upload complete with ${errorCount} errors.`);
             }
@@ -1313,6 +1557,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         }
+        // ========== COVER PREVIEW & DRAG-DROP LOGIC ==========
+
+        function updateCoverPreview(index) {
+            if (!bulkFiles[index]) return;
+
+            const hasDocuments = bulkFiles.some(f => ['pdf', 'mobi', 'epub', 'txt'].includes(f.ext));
+            const mode = hasDocuments ? 'document' : 'image';
+
+            const previewImg = document.getElementById('thumbnailPreview');
+            const previewPlaceholder = document.getElementById('previewPlaceholder');
+            const pContainer = document.querySelector('.col-lg-4 .content-card .flex-grow-1');
+
+            if (mode === 'image') {
+                // For images, use first image as thumbnail
+                const coverFile = bulkFiles[0];
+                if (coverFile) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (previewImg) {
+                            previewImg.src = e.target.result;
+                            previewImg.style.display = 'block';
+                        }
+                        if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+                        updatePreviewLabel('FIRST IMAGE USED AS THUMBNAIL', 'CHANGE THUMBNAIL');
+                    };
+                    reader.readAsDataURL(coverFile.file);
+                }
+            } else {
+                // For documents - check if JPG/PNG file or has custom thumbnail
+                const file = bulkFiles[index];
+                
+                // If the document file itself is an image (JPG/PNG)
+                if (['jpg', 'jpeg', 'png', 'tiff', 'tif'].includes(file.ext)) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (previewImg) {
+                            previewImg.src = e.target.result;
+                            previewImg.style.display = 'block';
+                        }
+                        if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+                        updatePreviewLabel('IMAGE PREVIEW', 'CHANGE THUMBNAIL');
+                    };
+                    reader.readAsDataURL(file.file);
+                } else if (file.thumbnail) {
+                    // If user manually uploaded a thumbnail
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (previewImg) {
+                            previewImg.src = e.target.result;
+                            previewImg.style.display = 'block';
+                        }
+                        if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+                        updatePreviewLabel('CUSTOM THUMBNAIL UPLOADED', 'CHANGE THUMBNAIL');
+                    };
+                    reader.readAsDataURL(file.thumbnail);
+                } else {
+                    // Show generic document icon
+                    if (previewImg) previewImg.style.display = 'none';
+                    if (previewPlaceholder) previewPlaceholder.style.display = 'block';
+                    updatePreviewLabel('ADD THUMBNAIL', 'UPLOAD THUMBNAIL');
+                }
+            }
+        }
+
+        function updatePreviewLabel(title, buttonText) {
+            const container = document.querySelector('.col-lg-4 .content-card .flex-grow-1');
+            if (!container) return;
+
+            // Check for our custom label div
+            let labelDiv = document.getElementById('dynamicPreviewLabel');
+
+            // Hide default static elements if we haven't already
+            const staticDefaults = container.querySelectorAll('.text-center.p-4');
+            staticDefaults.forEach(el => el.style.display = 'none');
+
+            if (!labelDiv) {
+                labelDiv = document.createElement('div');
+                labelDiv.id = 'dynamicPreviewLabel';
+                labelDiv.className = 'mt-3 text-center';
+                container.appendChild(labelDiv);
+            }
+
+            labelDiv.innerHTML = `
+                 <h6 style="color: #4B5563; font-weight: 700; letter-spacing: 0.5px; font-size: 11px; margin-bottom: 8px; text-transform: uppercase;">${title}</h6>
+                 <button type="button" class="btn btn-outline-dark btn-sm" onclick="document.getElementById('thumbnailInput').click()" 
+                       style="border-radius: 4px; font-size: 10px; font-weight: 700; padding: 8px 16px; letter-spacing: 0.5px; border-color: #4C3939; color: #4C3939;">
+                    ${buttonText}
+                </button>
+             `;
+            labelDiv.style.display = 'block';
+        }
+
+        // Drag and Drop Logic
+        let draggedItem = null;
+
+        function handleDragStart(e, index) {
+            draggedItem = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', index);
+            e.target.closest('.page-order-item').style.opacity = '0.4';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            e.target.closest('.page-order-item')?.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.closest('.page-order-item')?.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, index) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            // Remove style
+            document.querySelectorAll('.page-order-item').forEach(el => {
+                el.style.opacity = '1';
+                el.classList.remove('drag-over');
+            });
+
+            if (draggedItem !== null && draggedItem !== index) {
+                // Reorder array
+                const item = bulkFiles.splice(draggedItem, 1)[0];
+                bulkFiles.splice(index, 0, item);
+
+                // Update active index if needed
+                if (activeFileIndex === draggedItem) activeFileIndex = index;
+
+                updateBulkUI();
+            }
+
+            return false;
+        }
     </script>
 
     <!-- Upload Success Modal -->
@@ -1347,11 +1733,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         // Upload success modal handling
         let lastUploadedId = null;
+        let isBulkUploadSuccess = false;
 
-        function showUploadSuccessModal(uploadedId) {
+        function showUploadSuccessModal(uploadedId, isBulk = false) {
             lastUploadedId = uploadedId;
-            const modal = new bootstrap.Modal(document.getElementById('uploadSuccessModal'));
-            modal.show();
+            isBulkUploadSuccess = isBulk;
+            
+            const modal = document.getElementById('uploadSuccessModal');
+            const modalTitle = modal.querySelector('h4');
+            const modalText = modal.querySelector('p');
+            
+            if (isBulk) {
+                modalTitle.textContent = 'Bulk Upload Complete';
+                modalText.textContent = `${bulkFiles.length} item(s) successfully added and are now available for viewing.`;
+            } else {
+                modalTitle.textContent = 'Upload Success';
+                modalText.textContent = 'Item added successfully and is now available for viewing';
+            }
+            
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
         }
 
         document.getElementById('viewUploadedBtn')?.addEventListener('click', function () {
@@ -1362,10 +1763,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Show success modal if returning from edit
+        // Show success modal if page reload after POST
         document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success') === 'edit') {
+            
+            if (urlParams.get('success') === 'upload') {
+                // Single file upload success
+                const modalTitle = document.querySelector('#uploadSuccessModal h4');
+                const modalText = document.querySelector('#uploadSuccessModal p');
+                if (modalTitle) modalTitle.textContent = 'Upload Success';
+                if (modalText) modalText.textContent = 'Document uploaded successfully and is now available for viewing.';
+
+                const modal = new bootstrap.Modal(document.getElementById('uploadSuccessModal'));
+                modal.show();
+
+                // Clean up URL
+                history.replaceState({}, document.title, window.location.pathname);
+            } else if (urlParams.get('success') === 'edit') {
                 // Update modal text for edit success
                 const modalTitle = document.querySelector('#uploadSuccessModal h4');
                 const modalText = document.querySelector('#uploadSuccessModal p');

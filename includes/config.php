@@ -24,7 +24,7 @@ define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png'
 // Update this path to match your Calibre installation
 // Default Windows path: C:\Program Files\Calibre2\ebook-convert.exe
 // Default Mac path: /Applications/calibre.app/Contents/MacOS/ebook-convert
-define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
+define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\tools\\calibre\\CalibrePortable\\Calibre\\ebook-convert.exe');
 
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:

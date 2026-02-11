@@ -20,7 +20,7 @@ $languages = getLanguages();
 // Get recent newspapers
 $recentNewspapers = getRecentNewspapers(8);
 
-// Handle search
+// Get search
 $searchQuery = $_GET['q'] ?? '';
 $categoryFilter = $_GET['category'] ?? '';
 $languageFilter = $_GET['language'] ?? '';
@@ -289,7 +289,9 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                                 data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
                                 data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
                                 data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                                data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>">
+                                data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
+                                data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+                                data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
                                 <?php if ($paper['thumbnail_path']): ?>
                                     <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
                                 <?php else: ?>
@@ -326,15 +328,30 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                         <!-- Left: Preview Image & Actions -->
                         <div class="col-md-6 d-flex flex-column" style="background: #2C2C2C;">
                             <!-- Image Container -->
-                            <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4"
+                            <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4 position-relative"
                                 style="min-height: 300px;">
-                                <div class="preview-image-container"
+                                <div class="preview-image-container position-relative"
                                     style="background: #1a1a1a; border-radius: 4px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
                                     <img id="previewImage" src="" alt="Preview"
                                         style="display: block; max-height: 280px; max-width: 100%; width: auto;">
                                     <div id="noPreviewIcon"
                                         style="display: none; padding: 60px; background: #333; text-align: center;">
                                         <i class="bi bi-file-earmark-text" style="font-size: 60px; color: #666;"></i>
+                                    </div>
+                                    
+                                    <!-- Image Slider Navigation (Bulk Images) -->
+                                    <div id="sliderControls" style="display: none; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); pointer-events: none;">
+                                        <button id="sliderPrevBtn" class="btn btn-sm" style="position: absolute; left: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </button>
+                                        <button id="sliderNextBtn" class="btn btn-sm" style="position: absolute; right: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Image Counter (Bulk Images) -->
+                                    <div id="imageCounter" style="display: none; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+                                        <span id="currentImage">1</span> / <span id="totalImages">1</span>
                                     </div>
                                 </div>
                             </div>
@@ -440,6 +457,31 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="mb-0 text-muted">Are you sure you want to move this item to trash? This action can be
+                        undone from the Trash page.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                        style="border-radius: 8px; font-weight: 500;">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn"
+                        style="border-radius: 8px; font-weight: 500; background: #D32F2F; border: none;">
+                        <i class="bi bi-trash3 me-2"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php include __DIR__ . '/../layouts/footer.php'; ?>
 
     <script>
@@ -459,6 +501,10 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
         // File Preview Modal Handler
         const filePreviewModal = document.getElementById('filePreviewModal');
         if (filePreviewModal) {
+            // Image Slider State
+            let bulkImagePaths = [];
+            let currentImageIndex = 0;
+
             filePreviewModal.addEventListener('show.bs.modal', function (event) {
                 // event.relatedTarget is the element that triggered the modal (the card)
                 const card = event.relatedTarget;
@@ -475,26 +521,61 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                 const tags = card.dataset.tags;
                 const file = card.dataset.file;
                 const id = card.dataset.id;
+                const isBulk = card.dataset.isBulk === '1';
+                const imagePaths = card.dataset.imagePaths ? JSON.parse(card.dataset.imagePaths) : [];
 
                 // Store current file ID for delete
                 currentFileId = id;
 
-                // Update modal content - Safe checks
-                const titleEl = document.getElementById('previewTitle');
-                if (titleEl) titleEl.textContent = title;
+                // Handle Bulk Image Mode
+                const sliderControls = document.getElementById('sliderControls');
+                const imageCounter = document.getElementById('imageCounter');
+                const readNowBtn = document.getElementById('readNowBtn');
+                
+                if (isBulk && imagePaths.length > 0) {
+                    // Bulk Image Mode
+                    bulkImagePaths = imagePaths;
+                    currentImageIndex = 0;
+                    
+                    // Show slider controls and counter
+                    if (sliderControls) sliderControls.style.display = 'block';
+                    if (imageCounter) imageCounter.style.display = 'block';
+                    if (readNowBtn) readNowBtn.style.display = 'none';
 
-                // Handle Image
-                const previewImg = document.getElementById('previewImage');
-                const noPreviewIcon = document.getElementById('noPreviewIcon');
-                if (thumbnail) {
+                    // Update image counter
+                    const currentImageEl = document.getElementById('currentImage');
+                    const totalImagesEl = document.getElementById('totalImages');
+                    if (currentImageEl) currentImageEl.textContent = '1';
+                    if (totalImagesEl) totalImagesEl.textContent = imagePaths.length;
+
+                    // Display first image
+                    const previewImg = document.getElementById('previewImage');
+                    const noPreviewIcon = document.getElementById('noPreviewIcon');
                     if (previewImg) {
-                        previewImg.src = thumbnail;
+                        previewImg.src = imagePaths[0];
                         previewImg.style.display = 'block';
                     }
                     if (noPreviewIcon) noPreviewIcon.style.display = 'none';
                 } else {
-                    if (previewImg) previewImg.style.display = 'none';
-                    if (noPreviewIcon) noPreviewIcon.style.display = 'block';
+                    // Normal Document Mode
+                    bulkImagePaths = [];
+                    if (sliderControls) sliderControls.style.display = 'none';
+                    if (imageCounter) imageCounter.style.display = 'none';
+                    if (readNowBtn) readNowBtn.style.display = 'flex';
+
+                    // Handle Image
+                    const previewImg = document.getElementById('previewImage');
+                    const noPreviewIcon = document.getElementById('noPreviewIcon');
+                    if (thumbnail) {
+                        if (previewImg) {
+                            previewImg.src = thumbnail;
+                            previewImg.style.display = 'block';
+                        }
+                        if (noPreviewIcon) noPreviewIcon.style.display = 'none';
+                    } else {
+                        if (previewImg) previewImg.style.display = 'none';
+                        if (noPreviewIcon) noPreviewIcon.style.display = 'block';
+                    }
                 }
 
                 // Update Metadata
@@ -508,7 +589,11 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                 if (pagesEl) pagesEl.textContent = pages ? pages + ' Pages' : 'N/A';
 
                 const formatEl = document.getElementById('metaFormat');
-                if (formatEl) formatEl.textContent = format || 'PDF';
+                if (formatEl) {
+                    formatEl.textContent = isBulk ? 'IMAGES' : (format || 'PDF');
+                    formatEl.style.background = isBulk ? '#E3F2FD' : '#FFEBEE';
+                    formatEl.style.color = isBulk ? '#1976D2' : '#D32F2F';
+                }
 
                 const uploaderEl = document.getElementById('metaUploader');
                 if (uploaderEl) uploaderEl.textContent = uploader || 'Admin';
@@ -538,8 +623,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                 }
 
                 // Update Links
-                const readNowBtn = document.getElementById('readNowBtn');
-                if (readNowBtn) readNowBtn.href = '<?= APP_URL ?>/pages/reader.php?id=' + id;
+                if (!isBulk && readNowBtn) readNowBtn.href = '<?= APP_URL ?>/pages/reader.php?id=' + id;
 
                 const editBtn = document.getElementById('editBtn');
                 if (editBtn) editBtn.href = '<?= APP_URL ?>/pages/upload.php?edit=' + id;
@@ -552,6 +636,42 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                     };
                 }
             });
+
+            // Image Slider Navigation
+            const sliderPrevBtn = document.getElementById('sliderPrevBtn');
+            const sliderNextBtn = document.getElementById('sliderNextBtn');
+            
+            if (sliderPrevBtn) {
+                sliderPrevBtn.addEventListener('click', function() {
+                    if (currentImageIndex > 0) {
+                        currentImageIndex--;
+                        updateSliderImage();
+                    }
+                });
+            }
+
+            if (sliderNextBtn) {
+                sliderNextBtn.addEventListener('click', function() {
+                    if (currentImageIndex < bulkImagePaths.length - 1) {
+                        currentImageIndex++;
+                        updateSliderImage();
+                    }
+                });
+            }
+
+            // Update slider image display
+            function updateSliderImage() {
+                const previewImg = document.getElementById('previewImage');
+                const currentImageEl = document.getElementById('currentImage');
+                if (previewImg && bulkImagePaths.length > 0) {
+                    previewImg.src = bulkImagePaths[currentImageIndex];
+                    if (currentImageEl) currentImageEl.textContent = (currentImageIndex + 1);
+                    
+                    // Update button states
+                    if (sliderPrevBtn) sliderPrevBtn.disabled = currentImageIndex === 0;
+                    if (sliderNextBtn) sliderNextBtn.disabled = currentImageIndex === bulkImagePaths.length - 1;
+                }
+            }
         }
 
         // Show delete confirmation (handles modal nesting)

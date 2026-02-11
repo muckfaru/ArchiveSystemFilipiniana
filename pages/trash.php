@@ -283,7 +283,7 @@ foreach ($oldItems as $item) {
             <table class="table">
                 <thead>
                     <tr>
-                        <th style="width: 60px;">ID</th>
+                        <th style="width: 100px;">ID</th>
                         <th>TITLE</th>
                         <th>DELETED BY</th>
                         <th>DATE</th>
