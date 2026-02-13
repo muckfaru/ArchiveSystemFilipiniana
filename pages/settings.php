@@ -52,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$fullName, $username, $email, $profilePhoto, $currentUser['id']]);
 
             logActivity($currentUser['id'], 'settings_update', 'Profile updated');
-            showAlert('success', 'Profile updated successfully.');
 
             // Refresh current user data
             $currentUser = getCurrentUser();
@@ -77,9 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$hashedPassword, $currentUser['id']]);
 
             logActivity($currentUser['id'], 'settings_update', 'Password changed');
-            showAlert('success', 'Password changed successfully.');
+            // showAlert('success', 'Password changed successfully.');
+            redirect($_SERVER['PHP_SELF'] . '?password_changed=true');
         }
-        redirect($_SERVER['PHP_SELF']);
     }
 
     if ($action === 'update_appearance') {
@@ -87,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         updateSetting('dark_mode', $darkMode);
 
         logActivity($currentUser['id'], 'settings_update', 'Appearance settings');
-        showAlert('success', 'Appearance settings updated.');
-        redirect($_SERVER['PHP_SELF']);
+        // showAlert('success', 'Appearance settings updated.');
+        redirect($_SERVER['PHP_SELF'] . '?appearance_updated=true');
     }
 
     if ($action === 'update_storage') {
@@ -96,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         updateSetting('storage_path', $storagePath);
 
         logActivity($currentUser['id'], 'settings_update', 'Storage path');
-        showAlert('success', 'Storage path updated.');
-        redirect($_SERVER['PHP_SELF']);
+        // showAlert('success', 'Storage path updated.');
+        redirect($_SERVER['PHP_SELF'] . '?storage_updated=true');
     }
 
     if ($action === 'delete_account') {
@@ -134,10 +133,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unlink($photoPath);
             }
 
-            $stmt = $pdo->prepare("UPDATE users SET profile_photo = NULL WHERE id = ?");
             $stmt->execute([$currentUser['id']]);
-
-            showAlert('success', 'Profile photo removed.');
+            // showAlert('success', 'Profile photo removed.');
+             redirect($_SERVER['PHP_SELF'] . '?photo_removed=true');
         }
         redirect($_SERVER['PHP_SELF']);
     }
@@ -193,13 +191,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             </div>
         </div>
 
-        <!-- Alert -->
-        <?php if ($alert): ?>
-            <div class="alert alert-<?= $alert['type'] ?> alert-dismissible fade show" role="alert">
-                <?= $alert['message'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+        <!-- Alerts replaced by Modals -->
 
         <div class="row g-4">
             <!-- Profile Settings -->
@@ -455,7 +447,70 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <?php include __DIR__ . '/../layouts/footer.php'; ?>
 
+    <!-- Generic Success Modal -->
+    <div class="modal fade" id="genericSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                         <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2" id="successModalTitle">Success</h5>
+                    <p class="text-muted small mb-4" id="successModalMessage">Operation completed successfully.</p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="settingsErrorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                 <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Error</h5>
+                    <p class="text-muted small mb-4" id="errorMessage"><?= $alert ? $alert['message'] : '' ?></p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Check for URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        function showSuccessModal(title, message) {
+            document.getElementById('successModalTitle').textContent = title;
+            document.getElementById('successModalMessage').textContent = message;
+            new bootstrap.Modal(document.getElementById('genericSuccessModal')).show();
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (urlParams.get('password_changed') === 'true') {
+            showSuccessModal('Password Changed', 'Your password has been successfully updated.');
+        } else if (urlParams.get('appearance_updated') === 'true') {
+            showSuccessModal('Appearance Updated', 'Your appearance settings have been saved.');
+        } else if (urlParams.get('storage_updated') === 'true') {
+             showSuccessModal('Storage Updated', 'Storage path has been updated.');
+        } else if (urlParams.get('photo_removed') === 'true') {
+             showSuccessModal('Photo Removed', 'Your profile photo has been removed.');
+        }
+
+        // Show Error Modal if PHP alert exists
+        <?php if ($alert && $alert['type'] === 'danger'): ?>
+            new bootstrap.Modal(document.getElementById('settingsErrorModal')).show();
+        <?php endif; ?>
+
         // Delete confirmation
         document.getElementById('deleteConfirmation').addEventListener('input', function () {
             document.getElementById('deleteAccountBtn').disabled = this.value !== 'DELETE';

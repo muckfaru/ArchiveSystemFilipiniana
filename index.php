@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        * {
+        <style>* {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -112,15 +112,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-card {
             background: #fff;
             border-radius: 20px;
-            padding: 45px 40px 40px;
+            padding: 30px;
             width: 100%;
-            max-width: 420px;
+            max-width: 380px;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
         }
 
         .login-logo {
-            width: 120px;
+            width: 140px;
             height: auto;
             margin: 0 auto 20px;
             display: block;
@@ -128,208 +128,145 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-title {
             font-family: 'IM Fell English', Georgia, serif;
-            font-size: 22px;
-            font-weight: 400;
+            font-size: 24px;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-            color: #2C1810;
-        }
-
-        .login-title span {
-            font-weight: 400;
-        }
-
-        .error-alert {
-            background: #FFEBEE;
-            border: 1px solid #FFCDD2;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #C62828;
-            font-size: 13px;
-        }
-
-        .error-alert i {
-            font-size: 18px;
+            margin-bottom: 5px;
+            color: #1a1a1a;
+            text-transform: uppercase;
         }
 
         .login-subtitle {
-            font-size: 13px;
-            color: #666;
+            font-size: 14px;
+            color: #888;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             font-weight: 400;
         }
 
-        .form-label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 13px;
+        .form-group {
+            margin-bottom: 20px;
             text-align: left;
+        }
+
+        .form-label {
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: block;
         }
 
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 18px;
+            z-index: 10;
+        }
+
         .form-control {
-            padding: 14px 16px;
-            border: 1px solid #ddd;
+            width: 100%;
+            padding: 10px 10px 10px 40px;
+            /* Space for left icon */
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 14px;
-            background-color: #fff;
+            font-size: 13px;
+            background-color: #f9f9f9;
+            color: #333;
             transition: all 0.3s ease;
         }
 
         .form-control:focus {
             border-color: #4C3939;
-            box-shadow: 0 0 0 3px rgba(76, 57, 57, 0.1);
             background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(76, 57, 57, 0.1);
+            outline: none;
         }
 
         .form-control::placeholder {
             color: #aaa;
         }
 
-        .password-wrapper {
-            position: relative;
-        }
-
-        .show-password {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            /* Right aligned */
-            gap: 6px;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #444;
-        }
-
-        .show-password input[type="checkbox"] {
-            width: 15px;
-            height: 15px;
-            accent-color: #4C3939;
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
             cursor: pointer;
+            font-size: 18px;
+            z-index: 10;
         }
 
-        .show-password label {
-            cursor: pointer;
+        .password-toggle:hover {
+            color: #4C3939;
         }
 
         .forgot-password {
             display: block;
-            color: #444;
-            font-size: 12px;
-            margin-top: 15px;
-            text-decoration: underline;
             text-align: left;
-            /* Left aligned */
+            color: #4C3939;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 15px;
+            margin-bottom: 25px;
         }
 
         .forgot-password:hover {
-            color: #4C3939;
+            text-decoration: underline;
         }
 
         .login-btn {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             background-color: #4C3939;
             border: none;
             color: #fff;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
             letter-spacing: 1px;
             border-radius: 8px;
-            margin-top: 20px;
-            transition: all 0.3s ease;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .login-btn:hover {
-            background-color: #3D2D2D;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(76, 57, 57, 0.3);
+            background-color: #3A2C2C;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
-        /* Modal Styles */
-        .modal-content {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-body {
-            padding: 40px;
-            text-align: center;
-        }
-
-        .modal-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+        /* Error Alert */
+        .error-alert {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
+            gap: 10px;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 40px;
-        }
-
-        .modal-icon.error {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-
-        .modal-title-custom {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .modal-message {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-
-        .modal-btn {
-            padding: 12px 40px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .modal-btn.secondary {
-            background-color: #f5f5f5;
-            color: #333;
-        }
-
-        .modal-btn.secondary:hover {
-            background-color: #e0e0e0;
         }
 
         /* Responsive */
         @media (max-width: 480px) {
             .login-card {
                 margin: 20px;
-                padding: 35px 25px;
-            }
-
-            .login-logo {
-                width: 100px;
-            }
-
-            .login-title {
-                font-size: 18px;
+                padding: 30px 20px;
             }
         }
     </style>
@@ -341,32 +278,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-overlay"></div>
 
         <div class="login-card">
+            <!-- Logo area based on visual, might be circular bg if needed, but using plain image as requested -->
             <img src="<?= APP_URL ?>/assets/images/logo.png" alt="QCPL Logo" class="login-logo">
-            <h1 class="login-title"><span>QUEZON CITY PUBLIC LIBRARY</span></h1>
-            <p class="login-subtitle">Please log in to Continue</p>
+
+            <h1 class="login-title">QUEZON CITY PUBLIC LIBRARY</h1>
+            <p class="login-subtitle">Please login to continue</p>
 
             <form method="POST" action="">
                 <?php if ($showErrorModal && $error): ?>
-                    <div class="error-alert">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <?= $error ?>
+                    <div class="text-danger small fw-bold mb-3" style="font-size: 13px;">
+                        <i class="bi bi-exclamation-circle-fill me-1"></i> <?= $error ?>
                     </div>
                 <?php endif; ?>
-                <div class="mb-3 text-start">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter Username"
-                        value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required>
+
+                <div class="form-group">
+                    <label for="username" class="form-label">USERNAME</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-person-fill input-icon"></i>
+                        <input type="text" class="form-control" id="username" name="username"
+                            placeholder="Enter your username" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
+                            required>
+                    </div>
                 </div>
 
-                <div class="mb-2 text-start">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="password-wrapper">
+                <div class="form-group">
+                    <label for="password" class="form-label">PASSWORD</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-lock-fill input-icon"></i>
                         <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Enter Password" required>
-                    </div>
-                    <div class="show-password">
-                        <input type="checkbox" id="showPassword">
-                        <label for="showPassword">Show Password</label>
+                            placeholder="Enter your password" required style="padding-right: 45px;">
+                        <i class="bi bi-eye-slash-fill password-toggle" id="togglePassword"></i>
                     </div>
                 </div>
 
@@ -379,13 +320,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Toggle password visibility with checkbox
-        const passwordInput = document.getElementById('password');
-        const showPasswordCheckbox = document.getElementById('showPassword');
 
-        showPasswordCheckbox.addEventListener('change', function () {
-            passwordInput.type = this.checked ? 'text' : 'password';
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function (e) {
+            // toggle the type attribute
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // toggle the eye slash icon
+            this.classList.toggle('bi-eye');
+            this.classList.toggle('bi-eye-slash-fill');
         });
     </script>
 </body>

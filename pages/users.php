@@ -17,7 +17,7 @@ $roleFilter = $_GET['role'] ?? '';
 $sortBy = $_GET['sort'] ?? 'newest';
 
 // Build query
-$whereClause = "WHERE 1=1";
+$whereClause = "WHERE deleted_at IS NULL";
 $params = [];
 
 if ($search) {
@@ -60,24 +60,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'create') {
         $username = sanitize($_POST['username']);
-        $fullName = sanitize($_POST['full_name']);
+        $fullName = $username; // Use username as full name
         $email = sanitize($_POST['email']);
         $password = $_POST['password'];
         $role = $_POST['role'];
 
         // Check if username or email exists
-        $checkStmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-        $checkStmt->execute([$username, $email]);
+        // Check if username exists
+        $checkUsername = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+        $checkUsername->execute([$username]);
+        if ($checkUsername->fetch()) {
+            redirect($_SERVER['PHP_SELF'] . '?error=username_exists&old_email=' . urlencode($email) . '&old_username=' . urlencode($username));
+        }
 
-        if ($checkStmt->fetch()) {
-            showAlert('danger', 'Username or email already exists.');
+        // Check if email exists
+        $checkEmail = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $checkEmail->execute([$email]);
+        if ($checkEmail->fetch()) {
+            redirect($_SERVER['PHP_SELF'] . '?error=email_exists&old_email=' . urlencode($email) . '&old_username=' . urlencode($username));
         } else {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $insertStmt = $pdo->prepare("INSERT INTO users (username, password, full_name, email, role) VALUES (?, ?, ?, ?, ?)");
             $insertStmt->execute([$username, $hashedPassword, $fullName, $email, $role]);
 
             logActivity($currentUser['id'], 'create_user', $username);
-            showAlert('success', 'User created successfully.');
+            // showAlert('success', 'User created successfully.');
+            redirect($_SERVER['PHP_SELF'] . '?created=true');
         }
         redirect($_SERVER['PHP_SELF']);
     }
@@ -93,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updateStmt->execute([$fullName, $email, $role, $status, $userId]);
 
         logActivity($currentUser['id'], 'edit_user', $fullName);
-        showAlert('success', 'User updated successfully.');
-        redirect($_SERVER['PHP_SELF']);
+        // showAlert('success', 'User updated successfully.');
+        redirect($_SERVER['PHP_SELF'] . '?updated=true');
     }
 
     if ($action === 'delete') {
@@ -108,11 +116,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userStmt->execute([$userId]);
             $deletedUser = $userStmt->fetch();
 
-            $deleteStmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
-            $deleteStmt->execute([$userId]);
+            // Soft delete - move to trash
+            $deleteStmt = $pdo->prepare("UPDATE users SET deleted_at = NOW(), deleted_by = ? WHERE id = ?");
+            $deleteStmt->execute([$currentUser['id'], $userId]);
 
             logActivity($currentUser['id'], 'delete_user', $deletedUser['username']);
-            showAlert('success', 'User deleted successfully.');
+            // Redirect with success flag for modal
+            redirect($_SERVER['PHP_SELF'] . '?deleted=true');
         }
         redirect($_SERVER['PHP_SELF']);
     }
@@ -120,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 
 <head>
     <meta charset="UTF-8">
@@ -142,123 +153,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="page-header"
-            style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 25px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="page-title"
-                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Playfair Display', Georgia, serif;">
-                    Users</h1>
-                <p class="page-subtitle" style="color: #888; margin: 0;">Create, edit, and manage system user accounts
-                </p>
+                <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529;">Users</h1>
+                <div class="text-muted small">Create, edit, and manage system user accounts</div>
             </div>
-            <div class="page-actions">
-                <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#createUserModal"
-                    style="background: #4C3939; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 500;">
-                    <i class="bi bi-person-plus me-2"></i>Create Account
-                </button>
-            </div>
+            <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal"
+                data-bs-target="#createUserModal"
+                style="background-color: #4C3939; border-color: #4C3939; font-weight: 500;">
+                <i class="bi bi-person-plus-fill me-2"></i>Create Account
+            </button>
         </div>
 
         <!-- Alert -->
-        <?php if ($alert): ?>
-            <div class="alert alert-<?= $alert['type'] ?> alert-dismissible fade show" role="alert">
-                <?= $alert['message'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+        <!-- Alerts are now handled via Modals -->
 
         <!-- Stats Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
-                <div class="stat-card">
-                    <span class="stat-card-title">Total Admins</span>
-                    <div class="stat-card-value"><?= $totalAdmins ?>
-                    </div>
-                    <div class="stat-card-icon-wrapper">
-                        <i class="bi bi-people stat-card-icon"></i>
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-uppercase fw-bold text-muted small mb-1"
+                                style="font-size: 11px; letter-spacing: 1px;">Total Admins</div>
+                            <div class="fw-bold display-6 text-dark mb-0"><?= $totalAdmins ?></div>
+                        </div>
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                            style="width: 56px; height: 56px;">
+                            <i class="bi bi-shield-lock-fill fs-3" style="color: #5F6368;"></i>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="stat-card">
-                    <span class="stat-card-title">Active Accounts</span>
-                    <div class="stat-card-value"><?= $activeAdmins ?>
-                    </div>
-                    <div class="stat-card-icon-wrapper success">
-                        <i class="bi bi-broadcast stat-card-icon"></i>
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-uppercase fw-bold text-muted small mb-1"
+                                style="font-size: 11px; letter-spacing: 1px;">Active Accounts</div>
+                            <div class="fw-bold display-6 text-dark mb-0"><?= $activeAdmins ?></div>
+                        </div>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 56px; height: 56px; background-color: rgba(46, 125, 50, 0.1);">
+                            <i class="bi bi-broadcast fs-3 text-success"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search & Filter Card -->
-        <div class="mb-4" style="background: #F8F5F2; padding: 20px; border-radius: 12px; border: 1px solid #E6D5C9;">
-            <div class="row align-items-end g-3">
-                <!-- Search -->
-                <div class="col-md-5">
-                    <div class="search-input-wrapper position-relative"
-                        style="background: #EBE8E4; border: 1px solid #D7D3CE; border-radius: 8px;">
+        <!-- Search & Filter Section -->
+        <div class="card mb-4 border-0 shadow-sm rounded-4">
+            <div class="card-body p-2">
+                <form method="GET" class="d-flex align-items-center gap-2">
+                    <!-- Search Input -->
+                    <div class="position-relative flex-grow-1">
                         <i class="bi bi-search position-absolute text-muted"
-                            style="top: 50%; left: 15px; transform: translateY(-50%); font-size: 16px;"></i>
-                        <form method="GET" class="w-100">
-                            <input type="text" class="form-control" name="search" placeholder="Search users ..."
-                                value="<?= htmlspecialchars($search) ?>"
-                                style="background: transparent; border: none; padding: 10px 10px 10px 45px; box-shadow: none; font-size: 14px;">
-                        </form>
-                    </div>
-                </div>
+                            style="left: 15px; top: 50%; transform: translateY(-50%); z-index: 5;"></i>
+                        <input type="text" class="form-control border-0 bg-light rounded-pill ps-5 py-2" name="search"
+                            id="searchInput" placeholder="Search users..." value="<?= htmlspecialchars($search) ?>"
+                            style="font-size: 14px; padding-right: 50px;">
 
-                <!-- Filters -->
-                <div class="col-md-7 d-flex gap-3 justify-content-end">
-                    <div>
-                        <label class="form-label small mb-1 fw-bold text-muted"
-                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Status</label>
-                        <select class="form-select form-select-sm" name="status" onchange="this.form.submit()"
-                            style="width: 140px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
-                            <option value="">All</option>
-                            <option value="active" <?= ($_GET['status'] ?? '') === 'active' ? 'selected' : '' ?>>Active
-                            </option>
-                            <option value="inactive" <?= ($_GET['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>
-                                Inactive</option>
-                        </select>
+                        <?php if (!empty($search)): ?>
+                            <a href="users.php"
+                                class="position-absolute d-flex align-items-center justify-content-center text-muted text-decoration-none"
+                                style="right: 50px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; z-index: 10;"
+                                title="Reset Filters">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </a>
+                        <?php endif; ?>
+
+                        <button type="submit"
+                            class="btn position-absolute end-0 top-0 bottom-0 m-1 rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 38px; height: 38px; background-color: #4C3939; color: white; border: none;">
+                            <i class="bi bi-search" style="font-size: 14px;"></i>
+                        </button>
                     </div>
-                    <div>
-                        <label class="form-label small mb-1 fw-bold text-muted"
-                            style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Sort By</label>
-                        <select class="form-select form-select-sm" name="sort" onchange="this.form.submit()"
-                            style="width: 120px; background: #fff; border: 1px solid #D7D3CE; font-size: 13px; padding: 8px 12px; border-radius: 6px;">
-                            <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
-                            <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
-                        </select>
-                    </div>
-                </div>
+
+                    <!-- Sort Dropdown -->
+                    <select class="form-select border-0 bg-light rounded-pill py-2 ps-3 pe-5 shadow-none" name="sort"
+                        onchange="this.form.submit()"
+                        style="width: auto; min-width: 120px; font-size: 13px; font-weight: 600; cursor: pointer; background-position: right 1rem center;">
+                        <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
+                        <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
+                    </select>
+                </form>
             </div>
         </div>
 
         <!-- Users Table -->
-        <div class="table-container"
-            style="background: #EBE8E4; border: 1px solid #D7D3CE; border-radius: 12px; overflow: hidden;">
+        <div class="table-container">
             <table class="table mb-0">
                 <thead>
-                    <tr style="border-bottom: 2px solid #D7D3CE;">
-                        <th class="py-3 ps-4 text-uppercase text-muted"
-                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 30%;">
-                            Username</th>
-                        <th class="py-3 text-center text-uppercase text-muted"
-                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 15%;">
-                            Role</th>
-                        <th class="py-3 text-center text-uppercase text-muted"
-                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 15%;">
-                            Status</th>
-                        <th class="py-3 text-uppercase text-muted"
-                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 25%;">
-                            Last Login</th>
-                        <th class="py-3 pe-4 text-end text-uppercase text-muted"
-                            style="font-size: 11px; font-weight: 800; background: #EBE8E4; border-bottom: none; width: 15%;">
-                            Actions</th>
+                    <tr>
+                        <th class="ps-4 py-3 text-uppercase text-secondary"
+                            style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Username</th>
+                        <th class="py-3 text-uppercase text-secondary"
+                            style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Role</th>
+                        <th class="py-3 text-uppercase text-secondary"
+                            style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Status</th>
+                        <th class="py-3 text-uppercase text-secondary"
+                            style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Last Login</th>
+                        <th class="text-end pe-4 py-3 text-uppercase text-secondary"
+                            style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white">
+                <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
                             <td colspan="5" class="text-center py-5 bg-white">
@@ -267,49 +267,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $user): ?>
-                            <tr style="border-bottom: 1px solid #EBE8E4;">
-                                <td class="py-3 ps-4" style="font-size: 13px; color: #333;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="user-avatar"
-                                            style="width: 32px; height: 32px; background: #EBE8E4; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                            <i class="bi bi-person-fill" style="color: #8B7355;"></i>
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3"
+                                            style="width: 40px; height: 40px; color: #5F6368;">
+                                            <i class="bi bi-person-fill fs-5"></i>
                                         </div>
-                                        <span class="fw-medium"><?= htmlspecialchars($user['username']) ?></span>
+                                        <div>
+                                            <div class="fw-bold text-dark" style="font-size: 14px;">
+                                                <?= htmlspecialchars($user['username']) ?>
+                                            </div>
+                                            <div class="text-muted" style="font-size: 12px;">
+                                                <?= htmlspecialchars($user['email']) ?>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
-                                <td class="py-3 text-center" style="font-size: 13px; color: #333;">
-                                    <?= ($user['role'] === 'super_admin') ? 'Admin' : 'Admin' ?>
+                                <td class="py-3">
+                                    <span class="text-dark fw-medium" style="font-size: 14px;">
+                                        <?= ($user['role'] === 'super_admin') ? 'Administrator' : ucfirst($user['role']) ?>
+                                    </span>
                                 </td>
-                                <td class="py-3 text-center">
+                                <td class="py-3">
                                     <?php
-                                    $statusColor = $user['status'] === 'active' ? '#198754' : '#DC3545';
+                                    $isActive = $user['status'] === 'active';
+                                    $statusClass = $isActive ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary';
+                                    $dotClass = $isActive ? 'bg-success' : 'bg-secondary';
                                     ?>
-                                    <span class="fw-bold" style="font-size: 12px; color: <?= $statusColor ?>;">
+                                    <span
+                                        class="badge rounded-pill <?= $statusClass ?> px-3 py-2 fw-medium border-0 d-inline-flex align-items-center gap-2"
+                                        style="font-size: 12px;">
+                                        <span class="rounded-circle <?= $dotClass ?>" style="width: 6px; height: 6px;"></span>
                                         <?= ucfirst($user['status']) ?>
                                     </span>
                                 </td>
-                                <td class="py-3" style="font-size: 12px; color: #333;">
+                                <td class="py-3 text-muted" style="font-size: 13px;">
                                     <?= $user['last_login'] ? date('Y-m-d h:i A', strtotime($user['last_login'])) : 'Never' ?>
                                 </td>
-                                <td class="py-3 pe-4 text-end">
-                                    <div class="d-flex gap-2 justify-content-end">
-                                        <button type="button" class="btn btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>'
-                                            style="background: #f5f5f5; border: 1px solid #ddd; padding: 6px 10px; border-radius: 6px;">
-                                            <i class="bi bi-pencil" style="font-size: 12px; color: #666;"></i>
+                                <td class="text-end pe-4 py-3">
+                                    <button type="button" class="btn btn-link p-0 text-muted me-3" data-bs-toggle="modal"
+                                        data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>' title="Edit">
+                                        <button type="button" class="btn btn-link p-0 text-muted me-2" data-bs-toggle="modal"
+                                            data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>' title="Edit">
+                                            <i class="bi bi-pencil-fill" style="font-size: 14px;"></i>
                                         </button>
                                         <?php if ($user['id'] !== $currentUser['id']): ?>
-                                            <form method="POST" class="d-inline"
-                                                onsubmit="return confirm('Are you sure you want to delete this user?')">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                                <button type="submit" class="btn btn-sm"
-                                                    style="background: #FFF5F5; border: 1px solid #FFCDD2; padding: 6px 10px; border-radius: 6px;">
-                                                    <i class="bi bi-trash" style="font-size: 12px; color: #DC3545;"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-link p-0 text-danger ms-2"
+                                                onclick="confirmDelete(<?= $user['id'] ?>, '<?= htmlspecialchars($user['username']) ?>')"
+                                                title="Delete"
+                                                style="width: 24px; height: 24px; border-radius: 50%; background-color: rgba(220, 53, 69, 0.1); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                                                <i class="bi bi-trash-fill" style="font-size: 14px;"></i>
+                                            </button>
                                         <?php endif; ?>
-                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -318,12 +328,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
 
             <!-- Pagination -->
-            <div class="px-3 py-3 d-flex justify-content-between align-items-center"
-                style="background: #EBE8E4; border-top: 1px solid #D7D3CE;">
+            <div class="px-4 py-3 d-flex justify-content-between align-items-center bg-white"
+                style="border-top: 1px solid #f0f0f0;">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="text-muted small">Rows per page</span>
-                    <select class="form-select form-select-sm" id="rowsPerPage"
-                        style="width: 50px; background: #D7D3CE; border: none; font-size: 12px; height: 26px; padding: 2px 24px 2px 8px;">
+                    <span class="text-uppercase fw-bold text-secondary"
+                        style="font-size: 11px; letter-spacing: 0.5px;">Rows per page:</span>
+                    <select class="form-select form-select-sm border-0 bg-light rounded-2 py-1 pe-4" id="rowsPerPage"
+                        style="width: 60px; font-weight: 500; cursor: pointer; background-position: right 0.5rem center;">
                         <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
                         <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
                         <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
@@ -335,28 +346,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </span>
                 </div>
 
-                <div class="d-flex align-items-center gap-3">
-                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
-                        class="text-decoration-none text-dark d-flex align-items-center small fw-bold <?= !$pagination['has_prev'] ? 'text-muted pe-none' : '' ?>">
-                        <i class="bi bi-chevron-left small me-1"></i> Previous
+                <div class="pagination-circular">
+                    <?php
+                    function getPaginationUrl($page, $limit)
+                    {
+                        $params = $_GET;
+                        $params['page'] = $page;
+                        $params['limit'] = $limit;
+                        return '?' . http_build_query($params);
+                    }
+                    ?>
+                    <a href="<?= getPaginationUrl(max(1, $page - 1), $limit) ?>"
+                        class="page-link-square <?= !$pagination['has_prev'] ? 'disabled' : '' ?>">
+                        <i class="bi bi-chevron-left"></i>
                     </a>
 
-                    <div class="d-flex gap-1">
-                        <span class="badge rounded-1 d-flex align-items-center justify-content-center"
-                            style="width: 24px; height: 24px; font-weight: normal; background: #4C3939; font-size: 12px;">
-                            <?= $page ?>
-                        </span>
-                        <?php if ($pagination['has_next']): ?>
-                            <span class="d-flex align-items-center justify-content-center small text-muted"
-                                style="width: 24px; height: 24px;">
-                                <?= $page + 1 ?>
-                            </span>
-                        <?php endif; ?>
-                    </div>
+                    <?php
+                    $totalPages = ceil($totalUsers / $limit);
+                    for ($i = 1; $i <= min(5, $totalPages); $i++):
+                        ?>
+                        <a href="<?= getPaginationUrl($i, $limit) ?>"
+                            class="page-link-square <?= $page == $i ? 'active' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
 
-                    <a href="?page=<?= min($pagination['total_pages'], $page + 1) ?>&limit=<?= $limit ?>"
-                        class="text-decoration-none text-dark d-flex align-items-center small fw-bold <?= !$pagination['has_next'] ? 'text-muted pe-none' : '' ?>">
-                        Next <i class="bi bi-chevron-right small ms-1"></i>
+                    <?php if ($totalPages > 5): ?>
+                        <span class="text-muted px-1 small">...</span>
+                        <a href="<?= getPaginationUrl($totalPages, $limit) ?>"
+                            class="page-link-square"><?= $totalPages ?></a>
+                    <?php endif; ?>
+
+                    <a href="<?= getPaginationUrl(min($totalPages, $page + 1), $limit) ?>"
+                        class="page-link-square <?= !$pagination['has_next'] ? 'disabled' : '' ?>">
+                        <i class="bi bi-chevron-right"></i>
                     </a>
                 </div>
             </div>
@@ -371,83 +394,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
                     <div>
                         <h4 class="modal-title"
-                            style="color: #2C1810; font-size: 26px; font-weight: 600; font-family: 'Playfair Display', Georgia, serif;">
+                            style="color: #2C1810; font-size: 26px; font-weight: 600; font-family: 'Poppins', sans-serif;">
                             Create New Account</h4>
                         <p style="color: #888; font-size: 14px; margin: 0;">Add a new user to the Archive System</p>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="opacity: 0.5; width: 1.2rem; height: 1.2rem; position: absolute; top: 24px; right: 24px;"></button>
                 </div>
                 <form method="POST" id="createAccountForm">
-                    <div class="modal-body px-4 py-3">
+                    <div class="modal-body px-4 py-4">
                         <input type="hidden" name="action" value="create">
+                        
+                        <!-- Error Alert -->
+                        <div id="createAccountError" class="alert alert-danger d-none py-2 px-3 mb-3 small fw-bold border-0 bg-danger-subtle text-danger" style="border-radius: 8px;">
+                        </div>
 
+                        <!-- Email -->
                         <div class="mb-3">
-                            <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Full
-                                Name</label>
-                            <input type="text" class="form-control" name="full_name" placeholder="Enter Full name"
-                                required
-                                style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                            <label class="form-label small fw-bold text-secondary text-uppercase"
+                                style="font-size: 11px; letter-spacing: 0.5px;">Email</label>
+                            <input type="email" class="form-control py-2 px-3 rounded-3" name="email"
+                                placeholder="email@example.com" required
+                                style="font-size: 14px; border: 1px solid #dee2e6;">
+                            <div id="emailError" class="text-danger small mt-1 d-none" style="font-size: 11px; font-weight: 600;"></div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Email
-                                Address</label>
-                            <input type="email" class="form-control" name="email" placeholder="Enter Email Address"
-                                required
-                                style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
-                        </div>
-
-                        <div class="row mb-3">
+                        <!-- Username & Role -->
+                        <div class="row g-3 mb-3">
                             <div class="col-6">
-                                <label class="form-label"
-                                    style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Username</label>
-                                <input type="text" class="form-control" name="username" placeholder="Username" required
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                                <label class="form-label small fw-bold text-secondary text-uppercase"
+                                    style="font-size: 11px; letter-spacing: 0.5px;">Username</label>
+                                <input type="text" class="form-control py-2 px-3 rounded-3" name="username"
+                                    placeholder="jdoe_admin" required
+                                    style="font-size: 14px; border: 1px solid #dee2e6;">
+                                <div id="usernameError" class="text-danger small mt-1 d-none" style="font-size: 11px; font-weight: 600;"></div>
                             </div>
                             <div class="col-6">
-                                <label class="form-label"
-                                    style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Role</label>
-                                <select class="form-select" name="role" required
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
-                                    <option value="" selected disabled>Select Role</option>
-                                    <option value="admin">Admin</option>
-                                </select>
+                                <label class="form-label small fw-bold text-secondary text-uppercase"
+                                    style="font-size: 11px; letter-spacing: 0.5px;">Role</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control py-2 px-3 rounded-3 text-dark" value="Admin"
+                                        readonly
+                                        style="font-size: 14px; color: #495057; border: 1px solid #dee2e6; background-color: #f8f9fa;">
+                                    <i class="bi bi-lock-fill position-absolute text-secondary"
+                                        style="right: 12px; top: 50%; transform: translateY(-50%); font-size: 14px;"></i>
+                                    <input type="hidden" name="role" value="admin">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3 position-relative">
-                            <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
-                            <div class="position-relative">
-                                <input type="password" class="form-control" name="password" id="createPassword" required
-                                    minlength="6"
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
-                                <i class="bi bi-eye-slash position-absolute" id="toggleCreatePassword"
-                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                        <!-- Password & Confirm Password -->
+                        <div class="row g-3 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-secondary text-uppercase"
+                                    style="font-size: 11px; letter-spacing: 0.5px;">Password</label>
+                                <div class="position-relative">
+                                    <input type="password" class="form-control py-2 px-3 rounded-3" name="password"
+                                        id="createPassword" required minlength="6"
+                                        style="font-size: 14px; padding-right: 35px !important; border: 1px solid #dee2e6;">
+                                    <i class="bi bi-eye-slash position-absolute text-muted" id="toggleCreatePassword"
+                                        style="right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"></i>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-secondary text-uppercase"
+                                    style="font-size: 11px; letter-spacing: 0.5px;">Confirm Password</label>
+                                <div class="position-relative">
+                                    <input type="password" class="form-control py-2 px-3 rounded-3"
+                                        name="confirm_password" id="confirmPassword" required minlength="6"
+                                        style="font-size: 14px; padding-right: 35px !important; border: 1px solid #dee2e6;">
+                                    <i class="bi bi-eye-slash position-absolute text-muted" id="toggleConfirmPassword"
+                                        style="right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"></i>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-4 position-relative">
-                            <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Confirm
-                                Password</label>
-                            <div class="position-relative">
-                                <input type="password" class="form-control" name="confirm_password" id="confirmPassword"
-                                    required minlength="6"
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
-                                <i class="bi bi-eye-slash position-absolute" id="toggleConfirmPassword"
-                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                        <!-- Validation Message -->
+                        <div class="d-flex justify-content-end">
+                            <div id="passwordMatchMessage" style="font-size: 11px; font-weight: 600; min-height: 17px;">
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-link text-decoration-none" data-bs-dismiss="modal"
-                            style="color: #888; font-weight: 600; font-size: 14px;">CANCEL</button>
-                        <button type="submit" class="btn px-4 py-2"
-                            style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Create
-                            Account</button>
+
+                    <div
+                        class="modal-footer border-0 px-4 pb-4 pt-0 d-flex justify-content-end align-items-center gap-3">
+                        <button type="button"
+                            class="btn btn-link text-decoration-none text-secondary fw-bold text-uppercase"
+                            data-bs-dismiss="modal" style="font-size: 12px; letter-spacing: 1px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 text-uppercase fw-bold"
+                            style="background-color: #4C3939; border-color: #4C3939; font-size: 12px; letter-spacing: 1px;">
+                            Create Account
+                        </button>
                     </div>
                 </form>
             </div>
@@ -514,11 +551,134 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="modal-footer border-0 px-4 pb-4 pt-0 justify-content-center gap-3">
                         <button type="button" class="btn px-4 py-2" data-bs-dismiss="modal"
                             style="background: white; border: 1px solid #ddd; color: #333; border-radius: 8px; font-weight: 500; font-size: 14px;">Cancel</button>
-                        <button type="submit" class="btn px-4 py-2"
+                        <button type="button" class="btn px-4 py-2" onclick="showSaveConfirmation()"
                             style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Save
                             Changes</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Confirmation Modal -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-trash-fill text-danger" style="font-size: 48px;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Delete User?</h5>
+                    <p class="text-muted small mb-4">Are you sure you want to delete <span id="deleteUserName"
+                            class="fw-bold text-dark"></span>? This action cannot be undone.</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <form method="POST" id="deleteUserForm">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="user_id" id="deleteUserId">
+                            <button type="submit" class="btn btn-danger rounded-pill px-4">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Deleted Successfully Modal -->
+    <div class="modal fade" id="userDeletedModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">User Deleted</h5>
+                    <p class="text-muted small mb-4">The user has been successfully moved to trash.</p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Changes Confirmation Modal -->
+    <div class="modal fade" id="saveChangesModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-question-circle-fill text-primary"
+                            style="font-size: 48px; color: #4C3939 !important;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Save Changes?</h5>
+                    <p class="text-muted small mb-4">Are you sure you want to update this user's information?</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4" id="confirmSaveBtn"
+                            style="background-color: #4C3939; border-color: #4C3939;">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Created Successfully Modal -->
+    <div class="modal fade" id="userCreatedModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Account Created!</h5>
+                    <p class="text-muted small mb-4">The new user account has been successfully created.</p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Updated Successfully Modal -->
+    <div class="modal fade" id="userUpdatedModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Account Updated!</h5>
+                    <p class="text-muted small mb-4">The user account details have been successfully updated.</p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="globalErrorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Error</h5>
+                    <p class="text-muted small mb-4" id="globalErrorMessage"><?= $alert ? $alert['message'] : '' ?></p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -580,6 +740,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.getElementById('editStatus').value = user.status;
         });
 
+        // Delete User Confirmation
+        function confirmDelete(userId, username) {
+            document.getElementById('deleteUserId').value = userId;
+            document.getElementById('deleteUserName').textContent = username;
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+            deleteModal.show();
+        }
+
+        // Save Changes Confirmation
+        function showSaveConfirmation() {
+            // Hide edit modal
+            var editModalEl = document.getElementById('editUserModal');
+            var editModal = bootstrap.Modal.getInstance(editModalEl);
+            editModal.hide();
+
+            // Show confirmation modal
+            var saveModal = new bootstrap.Modal(document.getElementById('saveChangesModal'));
+            saveModal.show();
+        }
+
+        document.getElementById('confirmSaveBtn').addEventListener('click', function () {
+            document.getElementById('editUserForm').submit();
+        });
+
+        // Show User Deleted Modal if URL has deleted=true
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('deleted') === 'true') {
+            var deletedModal = new bootstrap.Modal(document.getElementById('userDeletedModal'));
+            deletedModal.show();
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (urlParams.get('created') === 'true') {
+            var createdModal = new bootstrap.Modal(document.getElementById('userCreatedModal'));
+            createdModal.show();
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (urlParams.get('updated') === 'true') {
+            var updatedModal = new bootstrap.Modal(document.getElementById('userUpdatedModal'));
+            updatedModal.show();
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // Handle Create Account Errors
+        const errorParam = urlParams.get('error');
+        if (errorParam === 'username_exists' || errorParam === 'email_exists') {
+            const createModalElement = document.getElementById('createUserModal');
+            const createModal = new bootstrap.Modal(createModalElement);
+            createModal.show();
+            
+            // Repopulate fields using specific selectors for the create modal
+            const usernameInput = createModalElement.querySelector('input[name="username"]');
+            const emailInput = createModalElement.querySelector('input[name="email"]');
+            
+            if (usernameInput) usernameInput.value = urlParams.get('old_username') || '';
+            if (emailInput) emailInput.value = urlParams.get('old_email') || '';
+            
+            // Show error
+            const errorContainer = document.getElementById('createAccountError');
+            if (errorContainer) {
+                errorContainer.classList.remove('d-none');
+                errorContainer.innerHTML = errorParam === 'username_exists' 
+                    ? '<i class="bi bi-exclamation-circle-fill me-2"></i>Username is already taken' 
+                    : '<i class="bi bi-exclamation-circle-fill me-2"></i>Email is already registered';
+            }
+            
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // Show Error Modal if PHP alert exists
+        <?php if ($alert && $alert['type'] === 'danger'): ?>
+            var errorModal = new bootstrap.Modal(document.getElementById('globalErrorModal'));
+            errorModal.show();
+        <?php endif; ?>
+
         // Rows per page
         document.getElementById('rowsPerPage').addEventListener('change', function () {
             const url = new URL(window.location.href);
@@ -587,6 +825,155 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             url.searchParams.set('page', '1');
             window.location.href = url.toString();
         });
+
+        // Live Search
+        let debounceTimer;
+        const searchInput = document.getElementById('searchInput');
+        const searchForm = searchInput.closest('form');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    searchForm.submit();
+                }, 600); // 600ms debounce
+            });
+
+            // Focus search input if it has value (after reload)
+            if (searchInput.value) {
+                searchInput.focus();
+                // Move cursor to end
+                const len = searchInput.value.length;
+                searchInput.setSelectionRange(len, len);
+            }
+        }
+        // Password and Form Validation with Real-time Duplicate Check
+        const createPassword = document.getElementById('createPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const matchMessage = document.getElementById('passwordMatchMessage');
+        const createAccountForm = document.getElementById('createAccountForm');
+        
+        // New elements for validation
+        const createUsernameInput = document.querySelector('#createUserModal input[name="username"]');
+        const createEmailInput = document.querySelector('#createUserModal input[name="email"]');
+        const usernameErrorEl = document.getElementById('usernameError');
+        const emailErrorEl = document.getElementById('emailError');
+        const submitBtn = createAccountForm ? createAccountForm.querySelector('button[type="submit"]') : null;
+
+        // Flags
+        let isUsernameValid = true; // Assume true until checked
+        let isEmailValid = true;
+
+        function checkFormValidity() {
+            if (!submitBtn) return;
+
+            const password = createPassword.value;
+            const confirm = confirmPassword.value;
+            const isPasswordMatch = password.length >= 6 && password === confirm;
+            
+            // Check if errors are displayed
+            const hasUsernameError = !usernameErrorEl.classList.contains('d-none');
+            const hasEmailError = !emailErrorEl.classList.contains('d-none');
+
+            if (hasUsernameError || hasEmailError || !isPasswordMatch) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+                submitBtn.style.cursor = 'not-allowed';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+        }
+
+        // Duplicate Check Function
+        function checkDuplicate(type, value, errorEl) {
+            if (!value) {
+                errorEl.classList.add('d-none');
+                checkFormValidity();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('value', value);
+
+            fetch('<?= APP_URL ?>/ajax/check_duplicate_user.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    errorEl.textContent = type === 'username' ? 'Username is already taken.' : 'Email is already registered.';
+                    errorEl.classList.remove('d-none');
+                } else {
+                    errorEl.classList.add('d-none');
+                }
+                checkFormValidity();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Debounce Function
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Attach Duplicate Check Listeners
+        if (createUsernameInput) {
+            createUsernameInput.addEventListener('input', debounce(function() {
+                checkDuplicate('username', this.value.trim(), usernameErrorEl);
+            }, 500));
+        }
+
+        if (createEmailInput) {
+            createEmailInput.addEventListener('input', debounce(function() {
+                checkDuplicate('email', this.value.trim(), emailErrorEl);
+            }, 500));
+        }
+
+        function checkPasswordMatch() {
+            const password = createPassword.value;
+            const confirm = confirmPassword.value;
+
+            if (confirm === '') {
+                matchMessage.textContent = '';
+                matchMessage.className = 'mt-1';
+                checkFormValidity();
+                return;
+            }
+
+            if (password === confirm) {
+                matchMessage.textContent = 'Passwords match';
+                matchMessage.className = 'mt-1 text-success';
+            } else {
+                matchMessage.textContent = 'Passwords do not match';
+                matchMessage.className = 'mt-1 text-danger';
+            }
+            checkFormValidity();
+        }
+
+        if (createPassword && confirmPassword) {
+            createPassword.addEventListener('input', checkPasswordMatch);
+            confirmPassword.addEventListener('input', checkPasswordMatch);
+        }
+
+        // Prevent submission if mismatch (optional extra safety)
+        if (createAccountForm) {
+            createAccountForm.addEventListener('submit', function (e) {
+                if (createPassword.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    matchMessage.textContent = 'Passwords do not match';
+                    matchMessage.className = 'mt-1 text-danger';
+                    confirmPassword.focus();
+                }
+            });
+        }
     </script>
 </body>
 

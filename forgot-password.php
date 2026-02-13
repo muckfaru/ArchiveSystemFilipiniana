@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
         rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -141,16 +141,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .forgot-card {
             background: #fff;
             border-radius: 20px;
-            padding: 45px 35px 40px;
+            padding: 30px;
             width: 100%;
-            max-width: 420px;
+            max-width: 380px;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
         }
 
         .lock-icon {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             margin: 0 auto 20px;
         }
 
@@ -161,9 +161,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .forgot-title {
-            font-family: 'IM Fell English', Georgia, serif;
-            font-size: 22px;
-            font-weight: 400;
+            font-family: 'Poppins', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
             color: #2C1810;
             margin-bottom: 10px;
             letter-spacing: 1px;
@@ -178,20 +178,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .form-label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 13px;
-            text-align: left;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: block;
+            text-align: left;
         }
 
         .form-control {
-            padding: 14px 16px;
-            border: 1px solid #ddd;
+            width: 100%;
+            padding: 10px 10px 10px 15px;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 14px;
-            background-color: #fff;
+            font-size: 13px;
+            background-color: #f9f9f9;
+            color: #333;
             transition: all 0.3s ease;
         }
 
@@ -256,10 +260,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: none;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 380px;
+            margin: 0 auto;
+            font-family: 'Poppins', sans-serif;
         }
 
         .modal-body {
-            padding: 40px;
+            padding: 30px;
             text-align: center;
         }
 
@@ -372,18 +379,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div class="modal-icon success">
-                        <i class="bi bi-check-lg"></i>
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-info-circle-fill text-success" style="font-size: 32px;"></i>
+                        </div>
                     </div>
-                    <h3 class="modal-title-custom">Email Sent!</h3>
-                    <p class="modal-message">
+                    <h5 class="fw-bold mb-2 text-dark">Email Sent!</h5>
+                    <p class="text-muted small mb-4">
                         We've sent a password reset link to your email address.<br>
-                        Please check your inbox and click the link to reset your password.
+                        Please check your inbox effectively.
                     </p>
-                    <a href="<?= APP_URL ?>/index.php" class="modal-btn primary">Back to Login</a>
+                    <a href="<?= APP_URL ?>/index.php"
+                        class="btn btn-primary rounded-pill px-4 w-100 fw-bold text-uppercase"
+                        style="background-color: #4C3939; border-color: #4C3939; font-size: 13px; letter-spacing: 1px;">
+                        Back to Login
+                    </a>
                 </div>
             </div>
         </div>

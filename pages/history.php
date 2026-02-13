@@ -7,7 +7,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 
 // Get alert message
-$alert = getAlert();
+// $alert = getAlert();
 
 // Pagination
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -22,7 +22,10 @@ $whereClause = "WHERE 1=1";
 $params = [];
 
 if ($search) {
-    $whereClause .= " AND (u.username LIKE ? OR a.target_title LIKE ?)";
+    $whereClause .= " AND (a.id LIKE ? OR u.username LIKE ? OR a.target_title LIKE ? OR a.action LIKE ? OR a.created_at LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
@@ -144,192 +147,148 @@ function getActionLabel($action)
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-end mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <div class="text-muted small mb-1 fw-bold" style="font-size: 11px; letter-spacing: 1px;">ADMIN <i
-                        class="bi bi-chevron-right mx-1" style="font-size: 10px;"></i> AUDIT TRAIL</div>
-                <h1 class="page-title m-0" style="font-size: 28px; font-weight: 700; color: #4C3939;">System History
-                    Logs</h1>
+                <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529;">History Logs</h1>
+                <div class="text-muted small">Monitor and review all system activities and administrative actions</div>
             </div>
-            <div class="page-actions">
-                <a href="?export=csv" class="btn"
-                    style="background: #4C3939; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500; font-size: 14px;">
-                    <i class="bi bi-download me-2"></i>Export CSV
-                </a>
-            </div>
+            <a href="?export=csv" class="btn btn-primary px-4 py-2"
+                style="background-color: #4C3939; border-color: #4C3939; font-weight: 500;">
+                <i class="bi bi-download me-2"></i>Export CSV
+            </a>
         </div>
 
-        <!-- Alert -->
-        <?php if ($alert): ?>
-            <div class="alert alert-<?= $alert['type'] ?> alert-dismissible fade show" role="alert">
-                <?= $alert['message'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+
 
         <!-- Search & Filter Card -->
-        <div class="card mb-4 border-0 shadow-sm" style="border-radius: 12px;">
-            <div class="card-body p-3">
-                <div class="row align-items-center">
+        <div class="card border-0 shadow-sm rounded-4 mb-4 p-2">
+            <div class="card-body p-2">
+                <form method="GET" class="row g-3 align-items-center w-100 m-0">
                     <!-- Search -->
-                    <div class="col-md-5">
+                    <div class="col-md-5 ps-0">
                         <div class="position-relative">
                             <i class="bi bi-search position-absolute text-muted"
-                                style="top: 50%; left: 15px; transform: translateY(-50%); font-size: 14px;"></i>
-                            <form method="GET" class="w-100">
-                                <input type="text" class="form-control" name="search" placeholder="Search logs..."
-                                    value="<?= htmlspecialchars($search) ?>"
-                                    style="background: #fff; border: 1px solid #dee2e6; padding: 10px 10px 10px 40px; border-radius: 6px; font-size: 14px; box-shadow: none;">
-                            </form>
+                                style="left: 15px; top: 50%; transform: translateY(-50%); z-index: 5;"></i>
+                            <input type="text" class="form-control border-0 bg-light rounded-pill ps-5 py-2"
+                                name="search" id="searchInput" placeholder="Search logs by title, user, or action..."
+                                value="<?= htmlspecialchars($search) ?>" style="font-size: 14px; padding-right: 80px;">
+
+                            <?php if (!empty($search) || !empty($categoryFilter) || $sortBy !== 'newest'): ?>
+                                <a href="history.php"
+                                    class="position-absolute d-flex align-items-center justify-content-center text-muted text-decoration-none"
+                                    style="right: 45px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; z-index: 10;"
+                                    title="Reset Filters">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </a>
+                            <?php endif; ?>
+
+                            <button type="submit"
+                                class="btn position-absolute end-0 top-0 bottom-0 m-1 rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 38px; height: 38px; background-color: #4C3939; color: white; border: none;">
+                                <i class="bi bi-search" style="font-size: 14px;"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Filter Dropdown & Sort -->
-                    <div class="col-md-7 d-flex align-items-center justify-content-end gap-3">
+                    <!-- Filters -->
+                    <div class="col-md-7 d-flex justify-content-end align-items-center gap-2 pe-0">
+                        <select class="form-select border-0 bg-light rounded-pill py-2 ps-3 pe-5 shadow-none"
+                            name="category" onchange="this.form.submit()"
+                            style="width: auto; font-size: 13px; font-weight: 600; cursor: pointer; background-position: right 1rem center;">
+                            <option value="">All Action Types</option>
+                            <option value="create_user" <?= $categoryFilter === 'create_user' ? 'selected' : '' ?>>Create
+                                User</option>
+                            <option value="edit_user" <?= $categoryFilter === 'edit_user' ? 'selected' : '' ?>>Update User
+                            </option>
+                            <option value="delete_user" <?= $categoryFilter === 'delete_user' ? 'selected' : '' ?>>Delete
+                                User</option>
+                            <option value="upload" <?= $categoryFilter === 'upload' ? 'selected' : '' ?>>Create File
+                            </option>
+                            <option value="delete" <?= $categoryFilter === 'delete' ? 'selected' : '' ?>>Delete File
+                            </option>
+                            <option value="edit" <?= $categoryFilter === 'edit' ? 'selected' : '' ?>>Update File</option>
+                            <option value="login" <?= $categoryFilter === 'login' ? 'selected' : '' ?>>Login</option>
+                            <option value="logout" <?= $categoryFilter === 'logout' ? 'selected' : '' ?>>Logout</option>
+                        </select>
 
-                        <!-- Action Filter -->
-                        <div class="dropdown">
-                            <form method="GET" id="categoryForm" class="d-inline">
-                                <?php if ($search): ?><input type="hidden" name="search"
-                                        value="<?= htmlspecialchars($search) ?>">
-                                <?php endif; ?>
-                                <select class="form-select" name="category" onchange="this.form.submit()"
-                                    style="background: #fff; border: 1px solid #dee2e6; padding: 10px 36px 10px 16px; border-radius: 6px; font-size: 14px; min-width: 160px; cursor: pointer;">
-                                    <option value="">All Action Types</option>
-                                    <option value="create_user" <?= $categoryFilter === 'create_user' ? 'selected' : '' ?>>
-                                        Create User</option>
-                                    <option value="edit_user" <?= $categoryFilter === 'edit_user' ? 'selected' : '' ?>>
-                                        Update User</option>
-                                    <option value="delete_user" <?= $categoryFilter === 'delete_user' ? 'selected' : '' ?>>
-                                        Delete User</option>
-                                    <option value="upload" <?= $categoryFilter === 'upload' ? 'selected' : '' ?>>Create
-                                        File</option>
-                                    <option value="delete" <?= $categoryFilter === 'delete' ? 'selected' : '' ?>>Delete
-                                        File</option>
-                                    <option value="edit" <?= $categoryFilter === 'edit' ? 'selected' : '' ?>>Update File
-                                    </option>
-                                    <option value="login" <?= $categoryFilter === 'login' ? 'selected' : '' ?>>Login
-                                    </option>
-                                    <option value="logout" <?= $categoryFilter === 'logout' ? 'selected' : '' ?>>Logout
-                                    </option>
-                                </select>
-                            </form>
-                        </div>
-
-                        <!-- Sort By -->
-                        <div class="d-flex align-items-center">
-                            <span class="text-uppercase text-muted me-2 fw-bold" style="font-size: 11px;">Sort
-                                By:</span>
-                            <form method="GET" id="sortForm" class="d-inline">
-                                <?php if ($search): ?><input type="hidden" name="search"
-                                        value="<?= htmlspecialchars($search) ?>">
-                                <?php endif; ?>
-                                <?php if ($categoryFilter): ?><input type="hidden" name="category"
-                                        value="<?= htmlspecialchars($categoryFilter) ?>">
-                                <?php endif; ?>
-                                <select class="form-select border-0 bg-transparent fw-bold p-0 pe-4" name="sort"
-                                    onchange="this.form.submit()"
-                                    style="font-size: 14px; color: #333; cursor: pointer; background-position: right center; width: auto;">
-                                    <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest First
-                                    </option>
-                                    <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest First
-                                    </option>
-                                </select>
-                            </form>
-                        </div>
+                        <select class="form-select border-0 bg-light rounded-pill py-2 ps-3 pe-5 shadow-none"
+                            name="sort" onchange="this.form.submit()"
+                            style="width: auto; font-size: 13px; font-weight: 600; cursor: pointer; background-position: right 1rem center;">
+                            <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest First</option>
+                            <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
+                        </select>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
         <!-- History Table -->
-        <div class="table-container bg-white shadow-sm" style="border-radius: 8px; overflow: hidden;">
-            <table class="table mb-0 align-middle">
-                <thead style="background-color: #4C3939 !important; color: #fff;">
+        <div class="table-container">
+            <table class="table mb-0">
+                <thead>
                     <tr>
-                        <th class="py-3 ps-4 text-uppercase fw-bold text-start" style="font-size: 11px; letter-spacing: 1px; width: 10%; color: #fff !important; border: none;">ID</th>
-                        <th class="py-3 text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 1px; width: 25%; color: #fff !important; border: none;">User</th>
-                        <th class="py-3 text-center text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 1px; width: 15%; color: #fff !important; border: none;">Action</th>
-                        <th class="py-3 text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 1px; width: 30%; color: #fff !important; border: none;">Title</th>
-                        <th class="py-3 pe-4 text-end text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 1px; width: 20%; color: #fff !important; border: none;">Timestamp</th>
+                        <th class="ps-4 py-3" style="width: 80px;">ID</th>
+                        <th class="py-3 ps-5" style="width: 20%;">USER</th>
+                        <th class="text-center py-3" style="width: 15%;">ACTION</th>
+                        <th class="py-3">TITLE</th>
+                        <th class="text-end pe-4 py-3" style="width: 20%;">TIMESTAMP</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($logs)): ?>
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="5" class="text-center py-5 bg-white">
                                 <span class="text-muted">No activity logs found.</span>
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($logs as $log): ?>
-                            <tr style="border-bottom: 1px solid #f0f0f0;">
-                                <td class="py-4 ps-4 text-start" style="font-size: 13px; font-weight: 500; color: #aaa;">
-                                    #<?= $log['id'] ?>
-                                </td>
-                                <td class="py-4">
+                            <tr>
+                                <td class="ps-4 text-muted fw-bold">#<?= $log['id'] ?></td>
+                                <td class="ps-5">
                                     <div class="d-flex align-items-center">
-                                        <?php
-                                        // Initials
-                                        $initials = strtoupper(substr($log['username'], 0, 2));
-                                        if (!empty($log['full_name'])) {
-                                            $parts = explode(' ', $log['full_name']);
-                                            if (count($parts) >= 2) {
-                                                $initials = strtoupper(substr($parts[0], 0, 1) . substr($parts[count($parts) - 1], 0, 1));
-                                            } else {
-                                                $initials = strtoupper(substr($log['full_name'], 0, 2));
-                                            }
-                                        }
-                                        ?>
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                            style="width: 36px; height: 36px; background-color: #f2f2f2; color: #333; font-weight: 600; font-size: 13px;">
-                                            <?= $initials ?>
-                                        </div>
                                         <div>
-                                            <div style="font-weight: 700; color: #333; font-size: 14px;">
-                                                <?= htmlspecialchars($log['full_name'] ?: $log['username']) ?></div>
-                                            <div
-                                                style="font-size: 10px; color: #999; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">
-                                                <?= htmlspecialchars($log['role']) ?></div>
+                                            <div class="fw-bold text-dark" style="font-size: 14px;">
+                                                <?= htmlspecialchars($log['username']) ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="py-4 text-center">
+                                <td class="text-center">
                                     <?php
                                     $actionRaw = strtolower($log['action']);
                                     $actionLabel = 'UPDATE'; // Default
-                                    $badgeStyle = 'background-color: #FFF8E1; color: #F57F17; border: 1px solid #FFECB3;'; // Yellow/Orange default
+                                    $badgeClass = 'badge-warning'; // Default
                             
                                     if (strpos($actionRaw, 'create') !== false || strpos($actionRaw, 'upload') !== false || strpos($actionRaw, 'restore') !== false) {
                                         $actionLabel = 'CREATE';
-                                        $badgeStyle = 'background-color: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9;'; // Green
+                                        $badgeClass = 'badge-active';
                                     } elseif (strpos($actionRaw, 'delete') !== false || strpos($actionRaw, 'permanent') !== false) {
                                         $actionLabel = 'DELETE';
-                                        $badgeStyle = 'background-color: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2;'; // Red
-                                    } elseif (strpos($actionRaw, 'login') !== false || strpos($actionRaw, 'logout') !== false) {
-                                        $actionLabel = 'LOGIN'; // Or LOGOUT
-                                        if (strpos($actionRaw, 'logout') !== false)
-                                            $actionLabel = 'LOGOUT';
-                                        $badgeStyle = 'background-color: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB;'; // Blue
+                                        $badgeClass = 'badge-danger';
+                                    } elseif (strpos($actionRaw, 'login') !== false) {
+                                        $actionLabel = 'LOGIN';
+                                        $badgeClass = 'badge-info';
+                                    } elseif (strpos($actionRaw, 'logout') !== false) {
+                                        $actionLabel = 'LOGOUT';
+                                        $badgeClass = 'badge-info';
                                     }
-
-                                    // Override label for specific cases if needed, but keeping it simple as per mockup
                                     ?>
-                                    <span class="badge rounded-pill px-3 py-2 fw-bold"
-                                        style="<?= $badgeStyle ?> font-size: 11px; letter-spacing: 0.5px; min-width: 80px;">
+                                    <span class="badge-pill <?= $badgeClass ?> text-uppercase"
+                                        style="font-size: 11px; letter-spacing: 0.5px; padding: 6px 16px;">
                                         <?= $actionLabel ?>
                                     </span>
                                 </td>
-                                <td class="py-4">
-                                    <div class="text-truncate" style="max-width: 250px; font-weight: 500; font-size: 13px; color: #333;">
-                                        <?= htmlspecialchars($log['target_title'] ?? '-') ?>
+                                <td class="fw-medium text-dark">
+                                    <div class="text-truncate" style="max-width: 300px;">
+                                        <span class="text-dark"><?= htmlspecialchars($log['target_title'] ?? '-') ?></span>
                                     </div>
                                 </td>
-                                <td class="py-4 text-end pe-4">
-                                    <span style="color: #333; font-weight: 600; font-size: 13px; margin-right: 8px;">
+                                <td class="text-end pe-4">
+                                    <span class="text-dark fw-medium" style="font-size: 13px;">
                                         <?= date('M d, Y', strtotime($log['created_at'])) ?>
                                     </span>
-                                    <span style="color: #aaa; font-size: 13px;">
+                                    <span class="text-muted ms-2" style="font-size: 13px;">
                                         <?= date('H:i:s', strtotime($log['created_at'])) ?>
                                     </span>
                                 </td>
@@ -340,67 +299,63 @@ function getActionLabel($action)
             </table>
 
             <!-- Pagination -->
-            <div class="px-4 py-3 d-flex justify-content-between align-items-center"
-                style="background: #fff; border-top: 1px solid #f0f0f0;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-secondary fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">ROWS PER
-                            PAGE:</span>
-                        <select class="form-select form-select-sm border-0 bg-light" id="rowsPerPage"
-                            style="width: auto; font-size: 12px; font-weight: 600; cursor: pointer; padding-right: 24px;">
-                            <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
-                            <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
-                            <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
-                        </select>
-                    </div>
-                    <span class="text-secondary small" style="font-size: 12px;">
-                        Showing <span
-                            class="fw-bold text-dark"><?= ($pagination['offset'] + 1) ?>-<?= min($pagination['offset'] + $limit, $totalLogs) ?></span>
-                        of <span class="fw-bold text-dark"><?= $totalLogs ?></span> actions
+            <div class="px-4 py-3 d-flex justify-content-between align-items-center bg-white"
+                style="border-top: 1px solid #f0f0f0;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Rows per page:</span>
+                    <select class="form-select form-select-sm border-0 bg-light rounded-2 py-1 pe-4" id="rowsPerPage"
+                        style="width: 60px; font-weight: 500; cursor: pointer; background-position: right 0.5rem center;">
+                        <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
+                        <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
+                        <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
+                    </select>
+                    <span class="text-muted small ms-2">
+                        Showing
+                        <?= ($pagination['offset'] + 1) ?>-<?= min($pagination['offset'] + $limit, $totalLogs) ?> of
+                        <?= $totalLogs ?> actions
                     </span>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
-                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
-                        class="btn btn-sm btn-link text-decoration-none text-secondary d-flex align-items-center gap-1 <?= !$pagination['has_prev'] ? 'disabled' : '' ?>"
-                        style="font-size: 12px; font-weight: 600;">
-                        <i class="bi bi-chevron-left" style="font-size: 10px;"></i> Previous
+                <div class="pagination-circular">
+                    <?php
+                    // Helper function to build pagination URL with existing filters
+                    function getPaginationUrl($page, $limit)
+                    {
+                        $params = $_GET;
+                        $params['page'] = $page;
+                        $params['limit'] = $limit;
+                        return '?' . http_build_query($params);
+                    }
+                    ?>
+
+                    <a href="<?= getPaginationUrl(max(1, $page - 1), $limit) ?>"
+                        class="page-link-square <?= !$pagination['has_prev'] ? 'disabled' : '' ?>">
+                        <i class="bi bi-chevron-left"></i>
                     </a>
 
-                    <div class="d-flex gap-1 mx-2">
-                        <!-- First Page -->
-                        <?php if ($page > 3): ?>
-                            <a href="?page=1&limit=<?= $limit ?>" class="btn btn-sm text-secondary"
-                                style="font-size: 12px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">1</a>
-                            <span class="text-muted d-flex align-items-end pb-1" style="font-size: 10px;">...</span>
-                        <?php endif; ?>
+                    <?php
+                    $totalPages = ceil($totalLogs / $limit);
+                    for ($i = 1; $i <= min(5, $totalPages); $i++):
+                        ?>
+                        <a href="<?= getPaginationUrl($i, $limit) ?>"
+                            class="page-link-square <?= $page == $i ? 'active' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
 
-                        <!-- Page Numbers (Simplified logic for now) -->
-                        <span class="btn btn-sm"
-                            style="background: #4C3939; color: #fff; font-size: 12px; font-weight: 600; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
-                            <?= $page ?>
-                        </span>
+                    <?php if ($totalPages > 5): ?>
+                        <span class="text-muted px-1 small">...</span>
+                        <a href="<?= getPaginationUrl($totalPages, $limit) ?>"
+                            class="page-link-square"><?= $totalPages ?></a>
+                    <?php endif; ?>
 
-                        <?php if ($pagination['has_next']): ?>
-                            <!-- Just showing next page number for simplicity if exists, full pagination logic would be more complex -->
-                            <a href="?page=<?= $page + 1 ?>&limit=<?= $limit ?>" class="btn btn-sm text-secondary"
-                                style="font-size: 12px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;"><?= $page + 1 ?></a>
-                        <?php endif; ?>
-
-                        <?php if ($page < $totalPages - 1): ?>
-                            <span class="text-muted d-flex align-items-end pb-1" style="font-size: 10px;">...</span>
-                            <a href="?page=<?= $totalPages ?>&limit=<?= $limit ?>" class="btn btn-sm text-secondary"
-                                style="font-size: 12px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;"><?= $totalPages ?></a>
-                        <?php endif; ?>
-                    </div>
-
-                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>"
-                        class="btn btn-sm btn-link text-decoration-none text-secondary d-flex align-items-center gap-1 <?= !$pagination['has_next'] ? 'disabled' : '' ?>"
-                        style="font-size: 12px; font-weight: 600;">
-                        Next <i class="bi bi-chevron-right" style="font-size: 10px;"></i>
+                    <a href="<?= getPaginationUrl(min($totalPages, $page + 1), $limit) ?>"
+                        class="page-link-square <?= !$pagination['has_next'] ? 'disabled' : '' ?>">
+                        <i class="bi bi-chevron-right"></i>
                     </a>
                 </div>
             </div>
+        </div>
     </main>
 
 
@@ -414,6 +369,26 @@ function getActionLabel($action)
             url.searchParams.set('page', '1');
             window.location.href = url.toString();
         });
+
+        // Live Search
+        let debounceTimer;
+        const searchInput = document.getElementById('searchInput');
+        const form = searchInput.closest('form');
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                form.submit();
+            }, 600); // 600ms debounce
+        });
+
+        // Focus search input if it has value (after reload)
+        if (searchInput.value) {
+            searchInput.focus();
+            // Move cursor to end
+            const len = searchInput.value.length;
+            searchInput.setSelectionRange(len, len);
+        }
     </script>
 </body>
 

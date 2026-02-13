@@ -224,14 +224,15 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                     </a>
                 </div>
                 <?php if (empty($searchResults)): ?>
-                    <div class="alert"
-                        style="background: #FFF8F6; border: 1px solid #E6D5C9; color: #8B5A3C; border-radius: 12px;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-info-circle me-2"></i>No results found for your search criteria.</span>
-                            <a href="<?= APP_URL ?>/pages/dashboard.php" class="text-decoration-none" style="color: #8B5A3C;">
-                                <i class="bi bi-x-lg"></i>
-                            </a>
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-search" style="font-size: 40px; color: #ddd;"></i>
                         </div>
+                        <h5 class="fw-bold text-secondary">No Results Found</h5>
+                        <p class="text-muted small">We couldn't find any documents matching your criteria.</p>
+                        <a href="<?= APP_URL ?>/pages/dashboard.php" class="btn btn-outline-secondary btn-sm mt-2 rounded-pill px-4">
+                            Clear Filters
+                        </a>
                     </div>
                 <?php else: ?>
                     <div class="row g-4">
@@ -272,8 +273,19 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
             </div>
 
             <?php if (empty($recentNewspapers)): ?>
-                <div class="alert alert-info">No newspapers uploaded yet. <a href="<?= APP_URL ?>/pages/upload.php">Upload
-                        your first newspaper</a>.</div>
+                <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                    <div class="mb-3">
+                         <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
+                            <i class="bi bi-cloud-upload text-secondary" style="font-size: 24px;"></i>
+                         </div>
+                    </div>
+                    <h5 class="fw-bold text-secondary">No Archives Yet</h5>
+                    <p class="text-muted small mb-3">Start building your repository by uploading documents.</p>
+                    <a href="<?= APP_URL ?>/pages/upload.php" class="btn btn-primary rounded-pill px-4" 
+                       style="background: #4C3939; border: none;">
+                       <i class="bi bi-plus-lg me-2"></i>Upload Now
+                    </a>
+                </div>
             <?php else: ?>
                 <div class="row g-4">
                     <?php foreach ($recentNewspapers as $paper): ?>
@@ -338,19 +350,23 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                                         style="display: none; padding: 60px; background: #333; text-align: center;">
                                         <i class="bi bi-file-earmark-text" style="font-size: 60px; color: #666;"></i>
                                     </div>
-                                    
+
                                     <!-- Image Slider Navigation (Bulk Images) -->
-                                    <div id="sliderControls" style="display: none; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); pointer-events: none;">
-                                        <button id="sliderPrevBtn" class="btn btn-sm" style="position: absolute; left: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
+                                    <div id="sliderControls"
+                                        style="display: none; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); pointer-events: none;">
+                                        <button id="sliderPrevBtn" class="btn btn-sm"
+                                            style="position: absolute; left: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
                                             <i class="bi bi-chevron-left"></i>
                                         </button>
-                                        <button id="sliderNextBtn" class="btn btn-sm" style="position: absolute; right: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
+                                        <button id="sliderNextBtn" class="btn btn-sm"
+                                            style="position: absolute; right: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
                                             <i class="bi bi-chevron-right"></i>
                                         </button>
                                     </div>
 
                                     <!-- Image Counter (Bulk Images) -->
-                                    <div id="imageCounter" style="display: none; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+                                    <div id="imageCounter"
+                                        style="display: none; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
                                         <span id="currentImage">1</span> / <span id="totalImages">1</span>
                                     </div>
                                 </div>
@@ -384,9 +400,11 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                             <div class="d-flex flex-column h-100">
                                 <!-- Header -->
                                 <div class="mb-4">
-                                    <h5 class="fw-bold mb-1" style="color: #1a1a1a; font-size: 18px;">File Preview</h5>
-                                    <p id="previewCategory" class="text-muted mb-0" style="font-size: 12px;">Archive
-                                        Management System</p>
+                                    <h5 id="previewTitle" class="fw-bold mb-1" style="color: #1a1a1a; font-size: 18px;">
+                                        File Preview</h5>
+                                    <div id="previewCategory" class="newspaper-category mb-0" style="font-size: 12px;">
+                                        ARCHIVE MANAGEMENT SYSTEM
+                                    </div>
                                 </div>
 
                                 <!-- Metadata -->
@@ -482,6 +500,25 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
         </div>
     </div>
 
+    <!-- Upload Success Modal -->
+    <div class="modal fade" id="uploadSuccessModal" tabindex="-1">
+         <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Upload Complete!</h5>
+                    <p class="text-muted small mb-4">Your document has been successfully added to the archive.</p>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php include __DIR__ . '/../layouts/footer.php'; ?>
 
     <script>
@@ -531,12 +568,12 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                 const sliderControls = document.getElementById('sliderControls');
                 const imageCounter = document.getElementById('imageCounter');
                 const readNowBtn = document.getElementById('readNowBtn');
-                
+
                 if (isBulk && imagePaths.length > 0) {
                     // Bulk Image Mode
                     bulkImagePaths = imagePaths;
                     currentImageIndex = 0;
-                    
+
                     // Show slider controls and counter
                     if (sliderControls) sliderControls.style.display = 'block';
                     if (imageCounter) imageCounter.style.display = 'block';
@@ -598,10 +635,18 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                 const uploaderEl = document.getElementById('metaUploader');
                 if (uploaderEl) uploaderEl.textContent = uploader || 'Admin';
 
+                // Update Title
+                const titleEl = document.getElementById('previewTitle');
+                if (titleEl) titleEl.textContent = title || 'File Preview';
+
                 // Update Category subtitle
                 const categoryEl = document.getElementById('previewCategory');
                 const category = card.dataset.category;
-                if (categoryEl) categoryEl.textContent = category || 'Uncategorized';
+                if (categoryEl) {
+                    categoryEl.textContent = (category || 'UNCATEGORIZED').toUpperCase();
+                    // Reset classes and add the dynamic one from dataset
+                    categoryEl.className = 'newspaper-category mb-0 ' + (category ? category.toLowerCase() : '');
+                }
 
                 // Update Tags
                 const tagsContainer = document.getElementById('metaTags');
@@ -640,9 +685,9 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
             // Image Slider Navigation
             const sliderPrevBtn = document.getElementById('sliderPrevBtn');
             const sliderNextBtn = document.getElementById('sliderNextBtn');
-            
+
             if (sliderPrevBtn) {
-                sliderPrevBtn.addEventListener('click', function() {
+                sliderPrevBtn.addEventListener('click', function () {
                     if (currentImageIndex > 0) {
                         currentImageIndex--;
                         updateSliderImage();
@@ -651,7 +696,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
             }
 
             if (sliderNextBtn) {
-                sliderNextBtn.addEventListener('click', function() {
+                sliderNextBtn.addEventListener('click', function () {
                     if (currentImageIndex < bulkImagePaths.length - 1) {
                         currentImageIndex++;
                         updateSliderImage();
@@ -666,7 +711,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
                 if (previewImg && bulkImagePaths.length > 0) {
                     previewImg.src = bulkImagePaths[currentImageIndex];
                     if (currentImageEl) currentImageEl.textContent = (currentImageIndex + 1);
-                    
+
                     // Update button states
                     if (sliderPrevBtn) sliderPrevBtn.disabled = currentImageIndex === 0;
                     if (sliderNextBtn) sliderNextBtn.disabled = currentImageIndex === bulkImagePaths.length - 1;
