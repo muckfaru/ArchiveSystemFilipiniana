@@ -1,0 +1,88 @@
+/**
+ * Dashboard Page Styles
+ * Archive System - Quezon City Public Library
+ */
+
+/* ==================== Dashboard Specifics ==================== */
+
+/* Recent Activities Section */
+.recent-activities {
+    margin-top: 30px;
+}
+
+.recent-activities-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.recent-activities-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.view-all-link {
+    color: var(--primary-color);
+    font-size: 14px;
+}
+
+/* Newspaper Card */
+.newspaper-card {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.newspaper-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.newspaper-thumbnail {
+    height: 280px;
+    object-fit: cover;
+    width: 100%;
+}
+
+.newspaper-info {
+    padding: 15px;
+}
+
+.newspaper-category {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.newspaper-category.culture {
+    color: #9C27B0;
+}
+
+.newspaper-category.politics {
+    color: #1976D2;
+}
+
+.newspaper-category.sports {
+    color: #388E3C;
+}
+
+.newspaper-category.business {
+    color: #F57C00;
+}
+
+.newspaper-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.newspaper-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}

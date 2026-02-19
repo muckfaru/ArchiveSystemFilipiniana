@@ -3,7 +3,7 @@
  * Quezon City Public Library
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-hide alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert-dismissible');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
+    alerts.forEach(function (alert) {
+        setTimeout(function () {
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         }, 5000);
@@ -35,10 +35,10 @@ document.addEventListener('DOMContentLoaded', function() {
             darkModeToggle.checked = true;
         }
 
-        darkModeToggle.addEventListener('change', function() {
+        darkModeToggle.addEventListener('change', function () {
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', this.checked);
-            
+
             // Save to server (optional)
             fetch(APP_URL + '/api/settings.php', {
                 method: 'POST',
@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show/hide password toggle
     const passwordToggles = document.querySelectorAll('.password-toggle');
-    passwordToggles.forEach(function(toggle) {
-        toggle.addEventListener('click', function() {
+    passwordToggles.forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
             const input = document.querySelector(this.dataset.target);
             if (input) {
                 if (input.type === 'password') {
@@ -74,15 +74,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
     if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', function() {
+        sidebarToggle.addEventListener('click', function () {
             sidebar.classList.toggle('show');
         });
     }
 
     // Confirm delete actions
     const deleteButtons = document.querySelectorAll('[data-confirm-delete]');
-    deleteButtons.forEach(function(button) {
-        button.addEventListener('click', function(e) {
+    deleteButtons.forEach(function (button) {
+        button.addEventListener('click', function (e) {
             if (!confirm('Are you sure you want to delete this item?')) {
                 e.preventDefault();
             }
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Confirm permanent delete
     const permanentDeleteButtons = document.querySelectorAll('[data-confirm-permanent]');
-    permanentDeleteButtons.forEach(function(button) {
-        button.addEventListener('click', function(e) {
+    permanentDeleteButtons.forEach(function (button) {
+        button.addEventListener('click', function (e) {
             if (!confirm('This action cannot be undone. Are you sure you want to permanently delete this item?')) {
                 e.preventDefault();
             }
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Rows per page change
     const rowsPerPage = document.getElementById('rowsPerPage');
     if (rowsPerPage) {
-        rowsPerPage.addEventListener('change', function() {
+        rowsPerPage.addEventListener('change', function () {
             const url = new URL(window.location.href);
             url.searchParams.set('limit', this.value);
             url.searchParams.set('page', '1');
@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Search form submit on enter
     const searchInputs = document.querySelectorAll('.search-input');
-    searchInputs.forEach(function(input) {
-        input.addEventListener('keypress', function(e) {
+    searchInputs.forEach(function (input) {
+        input.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 this.closest('form').submit();
             }
@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Remove recent tag
     const removeTagButtons = document.querySelectorAll('.recent-tag .remove');
-    removeTagButtons.forEach(function(button) {
-        button.addEventListener('click', function() {
+    removeTagButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
             this.closest('.recent-tag').remove();
         });
     });
@@ -181,7 +181,7 @@ function hideLoading() {
  */
 function showToast(message, type = 'success') {
     const toastContainer = document.getElementById('toastContainer') || createToastContainer();
-    
+
     const toast = document.createElement('div');
     toast.className = `toast align-items-center text-white bg-${type} border-0`;
     toast.setAttribute('role', 'alert');
@@ -191,12 +191,12 @@ function showToast(message, type = 'success') {
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     `;
-    
+
     toastContainer.appendChild(toast);
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
-    
-    toast.addEventListener('hidden.bs.toast', function() {
+
+    toast.addEventListener('hidden.bs.toast', function () {
         toast.remove();
     });
 }
@@ -209,3 +209,5 @@ function createToastContainer() {
     document.body.appendChild(container);
     return container;
 }
+
+

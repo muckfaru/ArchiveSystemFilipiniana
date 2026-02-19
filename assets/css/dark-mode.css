@@ -170,15 +170,7 @@ body.dark-mode .modal-body p {
 }
 
 /* Danger Zone */
-body.dark-mode .settings-card.danger-zone,
-body.dark-mode .settings-section.danger {
-    background-color: rgba(220, 53, 69, 0.08) !important;
-    border-left-color: #e57373 !important;
-}
 
-body.dark-mode .danger-zone h5 {
-    color: var(--text-primary) !important;
-}
 
 /* Tabs */
 body.dark-mode .nav-tabs-custom .nav-link {
@@ -359,43 +351,7 @@ body.dark-mode .stat-label {
 /* Close Button */
 
 /* Upload Page Dark Mode Overrides */
-body.dark-mode .content-card,
-body.dark-mode .upload-drop-zone {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-}
 
-body.dark-mode .section-title {
-    color: var(--accent-color);
-}
-
-body.dark-mode .form-label-custom {
-    color: var(--text-muted);
-}
-
-body.dark-mode .form-control-custom {
-    background-color: var(--bg-light);
-    color: var(--text-primary);
-}
-
-body.dark-mode .form-control-custom:focus {
-    background-color: var(--bg-card);
-    box-shadow: 0 0 0 2px rgba(192, 139, 92, 0.2);
-}
-
-body.dark-mode .upload-icon-wrapper {
-    background-color: var(--bg-light);
-}
-
-body.dark-mode .upload-tab-btn:not(.active) {
-    background-color: var(--bg-light);
-    color: var(--text-muted);
-}
-
-body.dark-mode .bulk-list-container {
-    background-color: var(--bg-light);
-    border-color: var(--border-color);
-}
 
 /* ==================== Additional Dark Mode Overrides for Inline Styles ==================== */
 
@@ -447,48 +403,10 @@ body.dark-mode [style*="border-bottom: 2px solid #eee"] {
 }
 
 /* History page table overrides */
-body.dark-mode .table-container[style*="background: white"] {
-    background-color: var(--bg-card) !important;
-}
 
-body.dark-mode .table thead tr[style*="background: #f8f9fa"] {
-    background-color: var(--bg-light) !important;
-}
-
-body.dark-mode .table thead tr[style*="background: #f8f9fa"] th {
-    background-color: var(--bg-light) !important;
-    color: var(--text-muted) !important;
-}
-
-body.dark-mode .table tbody tr[style*="border-bottom: 1px solid #f0f0f0"] {
-    border-bottom-color: var(--border-light) !important;
-}
-
-body.dark-mode .table tbody td[style*="color: #333"] span,
-body.dark-mode .table tbody td span[style*="color: #333"] {
-    color: var(--text-primary) !important;
-}
-
-body.dark-mode .table tbody td[style*="color: #666"],
-body.dark-mode .table tbody td[style*="color: #999"] {
-    color: var(--text-secondary) !important;
-}
 
 /* Users page stat cards override */
-body.dark-mode .row.g-4>div>[style*="background: white"] {
-    background-color: var(--bg-card) !important;
-    border: 1px solid var(--border-color) !important;
-}
 
-body.dark-mode [style*="background: white"] span[style*="color: #888"],
-body.dark-mode [style*="background: white"] span[style*="color: #333"] {
-    color: var(--text-muted) !important;
-}
-
-body.dark-mode [style*="background: white"] div[style*="color: #333"],
-body.dark-mode [style*="background: white"] [style*="font-size: 36px"] {
-    color: var(--text-primary) !important;
-}
 
 /* Search/filter form overrides */
 body.dark-mode [style*="background: white"][style*="border-radius: 16px"] {
@@ -534,49 +452,7 @@ body.dark-mode .page-actions .btn[style*="background-color: white"] {
 }
 
 /* Upload page dark mode overrides */
-body.dark-mode .upload-drop-zone {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
 
-body.dark-mode .upload-drop-zone h3 {
-    color: var(--text-primary) !important;
-}
-
-body.dark-mode .upload-drop-zone p {
-    color: var(--text-muted) !important;
-}
-
-body.dark-mode #filePreview {
-    background-color: var(--bg-card) !important;
-    border-color: var(--accent-primary) !important;
-}
-
-body.dark-mode #filePreview [style*="color: #4C3939"] {
-    color: var(--text-primary) !important;
-}
-
-body.dark-mode #filePreview [style*="color: #8D6E63"] {
-    color: var(--text-muted) !important;
-}
-
-/* Bulk upload header */
-body.dark-mode .bulk-header {
-    background-color: var(--bg-light) !important;
-}
-
-body.dark-mode .bulk-file-tab {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-primary) !important;
-}
-
-body.dark-mode .bulk-file-tab.active,
-body.dark-mode .bulk-file-tab[style*="background: #C08B5C"],
-body.dark-mode .bulk-file-tab[style*="background: rgb(192, 139, 92)"] {
-    background-color: var(--accent-primary) !important;
-    color: white !important;
-}
 
 /* Modal dark mode fixes */
 body.dark-mode .modal-content input[style*="background: linear-gradient"],

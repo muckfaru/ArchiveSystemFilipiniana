@@ -4,7 +4,7 @@
  * Archive System - Quezon City Public Library
  */
 
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../backend/core/auth.php';
 
 // Get alert message
 $alert = getAlert();
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt->execute([$currentUser['id']]);
             // showAlert('success', 'Profile photo removed.');
-             redirect($_SERVER['PHP_SELF'] . '?photo_removed=true');
+            redirect($_SERVER['PHP_SELF'] . '?photo_removed=true');
         }
         redirect($_SERVER['PHP_SELF']);
     }
@@ -162,10 +162,11 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
     <!-- Custom CSS -->
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/pages/settings.css" rel="stylesheet">
 </head>
 
 <body class="<?= $darkMode === '1' ? 'dark-mode' : '' ?>">
-    <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+    <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
@@ -445,7 +446,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         </div>
     </div>
 
-    <?php include __DIR__ . '/../layouts/footer.php'; ?>
+    <?php include __DIR__ . '/../views/layouts/footer.php'; ?>
 
     <!-- Generic Success Modal -->
     <div class="modal fade" id="genericSuccessModal" tabindex="-1">
@@ -453,7 +454,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             <div class="modal-content border-0 shadow" style="border-radius: 16px;">
                 <div class="modal-body text-center p-4">
                     <div class="mb-3">
-                         <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
                             style="width: 64px; height: 64px;">
                             <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
                         </div>
@@ -470,7 +471,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
     <div class="modal fade" id="settingsErrorModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content border-0 shadow" style="border-radius: 16px;">
-                 <div class="modal-body text-center p-4">
+                <div class="modal-body text-center p-4">
                     <div class="mb-3">
                         <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center mx-auto"
                             style="width: 64px; height: 64px;">
@@ -488,7 +489,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
     <script>
         // Check for URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        
+
         function showSuccessModal(title, message) {
             document.getElementById('successModalTitle').textContent = title;
             document.getElementById('successModalMessage').textContent = message;
@@ -501,9 +502,9 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         } else if (urlParams.get('appearance_updated') === 'true') {
             showSuccessModal('Appearance Updated', 'Your appearance settings have been saved.');
         } else if (urlParams.get('storage_updated') === 'true') {
-             showSuccessModal('Storage Updated', 'Storage path has been updated.');
+            showSuccessModal('Storage Updated', 'Storage path has been updated.');
         } else if (urlParams.get('photo_removed') === 'true') {
-             showSuccessModal('Photo Removed', 'Your profile photo has been removed.');
+            showSuccessModal('Photo Removed', 'Your profile photo has been removed.');
         }
 
         // Show Error Modal if PHP alert exists

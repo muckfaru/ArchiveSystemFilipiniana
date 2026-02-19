@@ -4,7 +4,7 @@
  * Archive System - Quezon City Public Library
  */
 
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../backend/core/auth.php';
 
 // Get alert message
 $alert = getAlert();
@@ -92,15 +92,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'edit') {
         $userId = intval($_POST['user_id']);
-        $fullName = sanitize($_POST['full_name']);
+        // $fullName = sanitize($_POST['full_name']); // Removed
+        $username = sanitize($_POST['username']); // Added
         $email = sanitize($_POST['email']);
         $role = $_POST['role'];
         $status = $_POST['status'];
 
-        $updateStmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, role = ?, status = ? WHERE id = ?");
-        $updateStmt->execute([$fullName, $email, $role, $status, $userId]);
+        // Check for duplicates (server-side)
+        $checkStmt = $pdo->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?");
+        $checkStmt->execute([$username, $email, $userId]);
+        if ($checkStmt->fetch()) {
+            redirect($_SERVER['PHP_SELF'] . '?error=duplicate_edit&user_id=' . $userId);
+        }
 
-        logActivity($currentUser['id'], 'edit_user', $fullName);
+        $updateStmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, role = ?, status = ? WHERE id = ?");
+        $updateStmt->execute([$username, $email, $role, $status, $userId]);
+
+        logActivity($currentUser['id'], 'edit_user', $username);
         // showAlert('success', 'User updated successfully.');
         redirect($_SERVER['PHP_SELF'] . '?updated=true');
     }
@@ -146,10 +154,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Custom CSS -->
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/pages/users.css" rel="stylesheet">
 </head>
 
 <body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
-    <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+    <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
@@ -249,6 +258,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <th class="ps-4 py-3 text-uppercase text-secondary"
                             style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Username</th>
                         <th class="py-3 text-uppercase text-secondary"
+                            style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Email</th>
+                        <th class="py-3 text-uppercase text-secondary"
                             style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Role</th>
                         <th class="py-3 text-uppercase text-secondary"
                             style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Status</th>
@@ -261,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="5" class="text-center py-5 bg-white">
+                            <td colspan="6" class="text-center py-5 bg-white">
                                 <span class="text-muted">No users found.</span>
                             </td>
                         </tr>
@@ -269,19 +280,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php foreach ($users as $user): ?>
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3"
-                                            style="width: 40px; height: 40px; color: #5F6368;">
-                                            <i class="bi bi-person-fill fs-5"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark" style="font-size: 14px;">
-                                                <?= htmlspecialchars($user['username']) ?>
-                                            </div>
-                                            <div class="text-muted" style="font-size: 12px;">
-                                                <?= htmlspecialchars($user['email']) ?>
-                                            </div>
-                                        </div>
+                                    <div class="text-dark fw-medium" style="font-size: 14px;">
+                                        <?= htmlspecialchars($user['username']) ?>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="text-muted" style="font-size: 14px;">
+                                        <?= htmlspecialchars($user['email']) ?>
                                     </div>
                                 </td>
                                 <td class="py-3">
@@ -306,20 +311,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <?= $user['last_login'] ? date('Y-m-d h:i A', strtotime($user['last_login'])) : 'Never' ?>
                                 </td>
                                 <td class="text-end pe-4 py-3">
-                                    <button type="button" class="btn btn-link p-0 text-muted me-3" data-bs-toggle="modal"
-                                        data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>' title="Edit">
-                                        <button type="button" class="btn btn-link p-0 text-muted me-2" data-bs-toggle="modal"
-                                            data-bs-target="#editUserModal" data-user='<?= json_encode($user) ?>' title="Edit">
-                                            <i class="bi bi-pencil-fill" style="font-size: 14px;"></i>
+                                    <button type="button" class="btn btn-link p-0 text-muted me-2" data-bs-toggle="modal"
+                                        data-bs-target="#editUserModal"
+                                        data-user='<?= htmlspecialchars(json_encode($user), ENT_QUOTES, 'UTF-8') ?>'
+                                        title="Edit">
+                                        <i class="bi bi-pencil-fill" style="font-size: 14px;"></i>
+                                    </button>
+                                    <?php if ($user['id'] !== $currentUser['id']): ?>
+                                        <button type="button" class="btn btn-link p-0 text-danger ms-2"
+                                            onclick="confirmDelete(<?= $user['id'] ?>, '<?= htmlspecialchars($user['username']) ?>')"
+                                            title="Delete"
+                                            style="width: 24px; height: 24px; border-radius: 50%; background-color: rgba(220, 53, 69, 0.1); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                                            <i class="bi bi-trash-fill" style="font-size: 14px;"></i>
                                         </button>
-                                        <?php if ($user['id'] !== $currentUser['id']): ?>
-                                            <button type="button" class="btn btn-link p-0 text-danger ms-2"
-                                                onclick="confirmDelete(<?= $user['id'] ?>, '<?= htmlspecialchars($user['username']) ?>')"
-                                                title="Delete"
-                                                style="width: 24px; height: 24px; border-radius: 50%; background-color: rgba(220, 53, 69, 0.1); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
-                                                <i class="bi bi-trash-fill" style="font-size: 14px;"></i>
-                                            </button>
-                                        <?php endif; ?>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -404,9 +409,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <form method="POST" id="createAccountForm">
                     <div class="modal-body px-4 py-4">
                         <input type="hidden" name="action" value="create">
-                        
+
                         <!-- Error Alert -->
-                        <div id="createAccountError" class="alert alert-danger d-none py-2 px-3 mb-3 small fw-bold border-0 bg-danger-subtle text-danger" style="border-radius: 8px;">
+                        <div id="createAccountError"
+                            class="alert alert-danger d-none py-2 px-3 mb-3 small fw-bold border-0 bg-danger-subtle text-danger"
+                            style="border-radius: 8px;">
                         </div>
 
                         <!-- Email -->
@@ -416,7 +423,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="email" class="form-control py-2 px-3 rounded-3" name="email"
                                 placeholder="email@example.com" required
                                 style="font-size: 14px; border: 1px solid #dee2e6;">
-                            <div id="emailError" class="text-danger small mt-1 d-none" style="font-size: 11px; font-weight: 600;"></div>
+                            <div id="emailError" class="text-danger small mt-1 d-none"
+                                style="font-size: 11px; font-weight: 600;"></div>
                         </div>
 
                         <!-- Username & Role -->
@@ -427,7 +435,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="text" class="form-control py-2 px-3 rounded-3" name="username"
                                     placeholder="jdoe_admin" required
                                     style="font-size: 14px; border: 1px solid #dee2e6;">
-                                <div id="usernameError" class="text-danger small mt-1 d-none" style="font-size: 11px; font-weight: 600;"></div>
+                                <div id="usernameError" class="text-danger small mt-1 d-none"
+                                    style="font-size: 11px; font-weight: 600;"></div>
                             </div>
                             <div class="col-6">
                                 <label class="form-label small fw-bold text-secondary text-uppercase"
@@ -495,11 +504,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="modal fade" id="editUserModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content"
-                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.25);">
+                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.25); font-family: 'Poppins', sans-serif;">
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
                     <h4 class="modal-title"
-                        style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Playfair Display', Georgia, serif; font-style: italic;">
+                        style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Poppins', sans-serif;">
                         Edit User</h4>
+                    <p style="color: #888; font-size: 14px; margin: 0;">Update user account details and permissions</p>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
                 </div>
                 <form method="POST" id="editUserForm">
@@ -507,51 +517,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="hidden" name="action" value="edit">
                         <input type="hidden" name="user_id" id="editUserId">
 
-                        <div class="mb-3">
-                            <label class="form-label"
-                                style="font-size: 12px; font-weight: 600; color: #333;">Username</label>
-                            <input type="text" class="form-control" id="editUsername" disabled
-                                style="background: linear-gradient(135deg, #e8d5c4 0%, #dcc9b8 100%); border: none; padding: 14px 16px; border-radius: 8px; font-size: 14px; color: #666;">
-                        </div>
+                        <!-- Error Alert for Edit Modal (Removed as per request) -->
 
                         <div class="mb-3">
-                            <label class="form-label" style="font-size: 12px; font-weight: 600; color: #333;">Full
-                                Name</label>
-                            <input type="text" class="form-control" name="full_name" id="editFullName" required
-                                style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label"
-                                style="font-size: 12px; font-weight: 600; color: #333;">Email</label>
+                            <label class="form-label text-uppercase text-secondary small fw-bold"
+                                style="font-size: 11px; letter-spacing: 0.5px;">Email</label>
                             <input type="email" class="form-control" name="email" id="editEmail" required
-                                style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
+                                style="background: white; border: 1px solid #dee2e6; padding: 10px 16px; border-radius: 8px; font-size: 14px;">
+                            <div class="invalid-feedback custom-feedback" id="editEmailFeedback"
+                                style="display: none; font-size: 11px; font-weight: 600;"></div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-6">
-                                <label class="form-label"
-                                    style="font-size: 12px; font-weight: 600; color: #333;">Role</label>
-                                <select class="form-select" name="role" id="editRole" required
-                                    style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
-                                    <option value="admin">Admin</option>
-                                </select>
+                                <label class="form-label text-uppercase text-secondary small fw-bold"
+                                    style="font-size: 11px; letter-spacing: 0.5px;">Username</label>
+                                <input type="text" class="form-control" name="username" id="editUsername" required
+                                    style="background: white; border: 1px solid #dee2e6; padding: 10px 16px; border-radius: 8px; font-size: 14px;">
+                                <div class="invalid-feedback custom-feedback" id="editUsernameFeedback"
+                                    style="display: none; font-size: 11px; font-weight: 600;"></div>
                             </div>
                             <div class="col-6">
-                                <label class="form-label"
-                                    style="font-size: 12px; font-weight: 600; color: #333;">Status</label>
-                                <select class="form-select" name="status" id="editStatus" required
-                                    style="background: white; border: 1px solid #e0e0e0; padding: 14px 16px; border-radius: 8px; font-size: 14px;">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
+                                <label class="form-label text-uppercase text-secondary small fw-bold"
+                                    style="font-size: 11px; letter-spacing: 0.5px;">Role</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control py-2 px-3 rounded-3 text-dark"
+                                        id="editRoleDisplay" value="Admin" readonly
+                                        style="font-size: 14px; color: #495057; border: 1px solid #dee2e6; background-color: #f8f9fa;">
+                                    <i class="bi bi-lock-fill position-absolute text-secondary"
+                                        style="right: 12px; top: 50%; transform: translateY(-50%); font-size: 14px;"></i>
+                                    <input type="hidden" name="role" id="editRole" value="admin">
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-uppercase text-secondary small fw-bold"
+                                style="font-size: 11px; letter-spacing: 0.5px;">Status</label>
+                            <select class="form-select" name="status" id="editStatus" required
+                                style="background: white; border: 1px solid #dee2e6; padding: 10px 16px; border-radius: 8px; font-size: 14px;">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0 justify-content-center gap-3">
                         <button type="button" class="btn px-4 py-2" data-bs-dismiss="modal"
                             style="background: white; border: 1px solid #ddd; color: #333; border-radius: 8px; font-weight: 500; font-size: 14px;">Cancel</button>
-                        <button type="button" class="btn px-4 py-2" onclick="showSaveConfirmation()"
+                        <button type="button" class="btn px-4 py-2" id="editSaveBtn" onclick="showSaveConfirmation()"
                             style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Save
                             Changes</button>
                     </div>
@@ -658,7 +671,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <h5 class="fw-bold mb-2">Account Updated!</h5>
                     <p class="text-muted small mb-4">The user account details have been successfully updated.</p>
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Done</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal"
+                        style="background-color: #4C3939; border-color: #4C3939;">Done</button>
                 </div>
             </div>
         </div>
@@ -683,7 +697,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <?php include __DIR__ . '/../layouts/footer.php'; ?>
+    <?php include __DIR__ . '/../views/layouts/footer.php'; ?>
 
     <script>
         // Password toggle for Create Account modal
@@ -727,18 +741,178 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Edit user modal
+        // Validation Helper Functions
+        function showValidation(input, feedbackId, message, isValid) {
+            const feedback = document.getElementById(feedbackId);
+            if (!isValid) {
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+                feedback.textContent = message;
+                feedback.style.display = 'block';
+                feedback.className = 'invalid-feedback custom-feedback text-danger';
+            } else {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                feedback.style.display = 'none';
+            }
+        }
+
+        function clearValidation(input, feedbackId) {
+            input.classList.remove('is-invalid');
+            input.classList.remove('is-valid');
+            document.getElementById(feedbackId).style.display = 'none';
+        }
+
+        // Functions for Edit User Modal
+        async function checkAvailability(email, username, userId) {
+            const formData = new FormData();
+            if (email) formData.append('email', email);
+            if (username) formData.append('username', username);
+            formData.append('exclude_id', userId);
+
+            try {
+                const response = await fetch('check_user_availability.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error checking availability:', error);
+                return { status: 'error' };
+            }
+        }
+
+        // Real-time Validation for Edit Modal
+        const editEmailInput = document.getElementById('editEmail');
+        const editUsernameInput = document.getElementById('editUsername');
+        const confirmSaveBtn = document.getElementById('confirmSaveBtn'); // Modal confirmation button
+        const editSaveBtn = document.getElementById('editSaveBtn');     // Edit Form button
+        const editUserError = document.getElementById('editUserError');
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        async function validateEditForm() {
+            const email = editEmailInput.value.trim();
+            const username = editUsernameInput.value.trim();
+            const userId = document.getElementById('editUserId').value;
+
+            let isValid = true;
+            let errorMessage = '';
+
+            // 1. Basic Validation (Empty & Format)
+            if (!email) {
+                showValidation(editEmailInput, 'editEmailFeedback', 'Email is required.', false);
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                showValidation(editEmailInput, 'editEmailFeedback', 'Invalid email format.', false);
+                isValid = false;
+            } else {
+                showValidation(editEmailInput, 'editEmailFeedback', '', true);
+            }
+
+            if (!username) {
+                showValidation(editUsernameInput, 'editUsernameFeedback', 'Username is required.', false);
+                isValid = false;
+            } else {
+                showValidation(editUsernameInput, 'editUsernameFeedback', '', true);
+            }
+
+            // If basic checks failed
+            if (!isValid) {
+                editSaveBtn.disabled = true;
+                return;
+            }
+
+            // 2. Duplicate Check (Async)
+            editSaveBtn.disabled = true;
+
+            const result = await checkAvailability(email, username, userId);
+
+            if (result.email_status === 'taken') {
+                showValidation(editEmailInput, 'editEmailFeedback', 'Email is already in use.', false);
+                errorMessage = 'Email address is already in use by another user.';
+                isValid = false;
+            }
+
+            if (result.username_status === 'taken') {
+                showValidation(editUsernameInput, 'editUsernameFeedback', 'Username is already in use.', false);
+                if (errorMessage) errorMessage = 'Both Email and Username are already in use.';
+                else errorMessage = 'Username is already in use by another user.';
+                isValid = false;
+            }
+
+            // Show/Hide Global Alert - REMOVED redundant top alert
+            if (!isValid && errorMessage) {
+                // Logic to show top alert removed
+            } else {
+                // Logic to hide top alert removed
+                // Re-confirm valid status visuals
+                if (result.email_status !== 'taken') showValidation(editEmailInput, 'editEmailFeedback', '', true);
+                if (result.username_status !== 'taken') showValidation(editUsernameInput, 'editUsernameFeedback', '', true);
+            }
+
+            editSaveBtn.disabled = !isValid;
+        }
+
+        editEmailInput.addEventListener('blur', validateEditForm);
+        editUsernameInput.addEventListener('blur', validateEditForm);
+
+        const initialCheck = () => {
+            if (!editEmailInput.value.trim() || !editUsernameInput.value.trim()) {
+                editSaveBtn.disabled = true;
+            }
+            debounceValidation();
+        };
+
+        // Edit user modal - Reset state
         document.getElementById('editUserModal').addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const user = JSON.parse(button.dataset.user);
+            let button = event.relatedTarget;
+            // Ensure we handle clicks on the icon inside the button
+            if (!button.hasAttribute('data-user') && button.closest('[data-user]')) {
+                button = button.closest('[data-user]');
+            }
+
+            if (!button || !button.dataset.user) {
+                console.error('User data not found on edit button');
+                return;
+            }
+
+            let user;
+            try {
+                user = JSON.parse(button.dataset.user);
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+                return;
+            }
 
             document.getElementById('editUserId').value = user.id;
             document.getElementById('editUsername').value = user.username;
-            document.getElementById('editFullName').value = user.full_name;
             document.getElementById('editEmail').value = user.email;
             document.getElementById('editRole').value = user.role;
+            // Update visible role display
+            const roleDisplay = user.role === 'super_admin' ? 'Administrator' : user.role.charAt(0).toUpperCase() + user.role.slice(1);
+            const roleDisplayInput = document.getElementById('editRoleDisplay');
+            if (roleDisplayInput) roleDisplayInput.value = roleDisplay;
+
             document.getElementById('editStatus').value = user.status;
+
+            // Reset validation state
+            clearValidation(document.getElementById('editEmail'), 'editEmailFeedback');
+            clearValidation(document.getElementById('editUsername'), 'editUsernameFeedback');
+
+            document.getElementById('editSaveBtn').disabled = false;
         });
+
+        let validatingTimeout;
+        const debounceValidation = () => {
+            clearTimeout(validatingTimeout);
+            validatingTimeout = setTimeout(validateEditForm, 500);
+        };
+        editEmailInput.addEventListener('input', initialCheck);
+        editUsernameInput.addEventListener('input', initialCheck);
+
 
         // Delete User Confirmation
         function confirmDelete(userId, username) {
@@ -791,26 +965,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const createModalElement = document.getElementById('createUserModal');
             const createModal = new bootstrap.Modal(createModalElement);
             createModal.show();
-            
+
             // Repopulate fields using specific selectors for the create modal
             const usernameInput = createModalElement.querySelector('input[name="username"]');
             const emailInput = createModalElement.querySelector('input[name="email"]');
-            
+
             if (usernameInput) usernameInput.value = urlParams.get('old_username') || '';
             if (emailInput) emailInput.value = urlParams.get('old_email') || '';
-            
-            // Show error
-            const errorContainer = document.getElementById('createAccountError');
-            if (errorContainer) {
-                errorContainer.classList.remove('d-none');
-                errorContainer.innerHTML = errorParam === 'username_exists' 
-                    ? '<i class="bi bi-exclamation-circle-fill me-2"></i>Username is already taken' 
-                    : '<i class="bi bi-exclamation-circle-fill me-2"></i>Email is already registered';
-            }
-            
-            // Clean URL
-            window.history.replaceState({}, document.title, window.location.pathname);
         }
+
+        // Handle Edit Account Duplicate Error
+        if (errorParam === 'duplicate_edit') {
+            const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            editModal.show();
+            // Alert removed as per request to avoid redundancy
+        }
+
+        // Show error
+        const errorContainer = document.getElementById('createAccountError');
+        if (errorContainer && (errorParam === 'username_exists' || errorParam === 'email_exists')) {
+            errorContainer.classList.remove('d-none');
+            errorContainer.innerHTML = errorParam === 'username_exists'
+                ? '<i class="bi bi-exclamation-circle-fill me-2"></i>Username is already taken'
+                : '<i class="bi bi-exclamation-circle-fill me-2"></i>Email is already registered';
+        }
+
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+
 
         // Show Error Modal if PHP alert exists
         <?php if ($alert && $alert['type'] === 'danger'): ?>
@@ -852,7 +1034,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const confirmPassword = document.getElementById('confirmPassword');
         const matchMessage = document.getElementById('passwordMatchMessage');
         const createAccountForm = document.getElementById('createAccountForm');
-        
+
         // New elements for validation
         const createUsernameInput = document.querySelector('#createUserModal input[name="username"]');
         const createEmailInput = document.querySelector('#createUserModal input[name="email"]');
@@ -870,7 +1052,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const password = createPassword.value;
             const confirm = confirmPassword.value;
             const isPasswordMatch = password.length >= 6 && password === confirm;
-            
+
             // Check if errors are displayed
             const hasUsernameError = !usernameErrorEl.classList.contains('d-none');
             const hasEmailError = !emailErrorEl.classList.contains('d-none');
@@ -902,23 +1084,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    errorEl.textContent = type === 'username' ? 'Username is already taken.' : 'Email is already registered.';
-                    errorEl.classList.remove('d-none');
-                } else {
-                    errorEl.classList.add('d-none');
-                }
-                checkFormValidity();
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        errorEl.textContent = type === 'username' ? 'Username is already taken.' : 'Email is already registered.';
+                        errorEl.classList.remove('d-none');
+                    } else {
+                        errorEl.classList.add('d-none');
+                    }
+                    checkFormValidity();
+                })
+                .catch(error => console.error('Error:', error));
         }
 
         // Debounce Function
         function debounce(func, wait) {
             let timeout;
-            return function(...args) {
+            return function (...args) {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
@@ -926,13 +1108,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Attach Duplicate Check Listeners
         if (createUsernameInput) {
-            createUsernameInput.addEventListener('input', debounce(function() {
+            createUsernameInput.addEventListener('input', debounce(function () {
                 checkDuplicate('username', this.value.trim(), usernameErrorEl);
             }, 500));
         }
 
         if (createEmailInput) {
-            createEmailInput.addEventListener('input', debounce(function() {
+            createEmailInput.addEventListener('input', debounce(function () {
                 checkDuplicate('email', this.value.trim(), emailErrorEl);
             }, 500));
         }

@@ -6,8 +6,8 @@
  * Serves a single image file from within a .cbz (zip) archive.
  */
 
-require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../backend/core/config.php';
+require_once __DIR__ . '/../backend/core/auth.php';
 
 // Validate inputs
 $fileId = isset($_GET['file_id']) ? intval($_GET['file_id']) : 0;

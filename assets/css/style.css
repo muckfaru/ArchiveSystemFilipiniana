@@ -109,15 +109,15 @@ a {
 }
 
 .sidebar-title {
-    font-family: 'IM Fell English', serif;
-    font-size: 13px;
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    margin: 0 0 12px;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.2;
-    padding: 0 10px;
+    font-family: 'IM Fell English', serif !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.5px !important;
+    margin: 0 0 12px !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    line-height: 1.2 !important;
+    padding: 0 10px !important;
 }
 
 .sidebar-subtitle-container {
@@ -144,14 +144,14 @@ a {
 }
 
 .sidebar-subtitle {
-    font-family: 'IM Fell English', serif;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    display: block;
-    text-align: center;
+    font-family: 'IM Fell English', serif !important;
+    font-size: 11px !important;
+    letter-spacing: 1.5px !important;
+    font-weight: 400 !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    text-transform: uppercase !important;
+    display: block !important;
+    text-align: center !important;
 }
 
 .sidebar-nav {
@@ -839,42 +839,7 @@ a {
 }
 
 /* ==================== Upload Area ==================== */
-.upload-area {
-    border: 2px dashed var(--border-color);
-    border-radius: 12px;
-    padding: 40px;
-    text-align: center;
-    background-color: var(--bg-light);
-    transition: var(--transition);
-    cursor: pointer;
-}
 
-.upload-area:hover {
-    border-color: var(--primary-color);
-    background-color: rgba(93, 64, 55, 0.05);
-}
-
-.upload-area.dragover {
-    border-color: var(--primary-color);
-    background-color: rgba(93, 64, 55, 0.1);
-}
-
-.upload-icon {
-    font-size: 48px;
-    color: var(--text-muted);
-    margin-bottom: 15px;
-}
-
-.upload-text {
-    font-size: 16px;
-    color: var(--text-secondary);
-    margin-bottom: 5px;
-}
-
-.upload-hint {
-    font-size: 12px;
-    color: var(--text-muted);
-}
 
 /* ==================== Alert Banner ==================== */
 .alert-banner {
@@ -941,216 +906,18 @@ a {
 }
 
 /* ==================== Settings Sections ==================== */
-.settings-section {
-    background-color: var(--bg-white);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-}
 
-.settings-section-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 20px;
-}
-
-.settings-section.danger {
-    border-color: #FFCDD2;
-    background-color: #FFEBEE;
-}
-
-.danger-title {
-    color: var(--danger-color);
-}
 
 /* Profile Photo */
-.profile-photo-wrapper {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    margin-bottom: 15px;
-}
 
-.profile-photo {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--border-light);
-}
-
-.profile-photo-edit {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 28px;
-    height: 28px;
-    background-color: var(--bg-white);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
 
 /* ==================== Login Page ==================== */
-.login-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('../images/library-bg.jpg');
-    background-size: cover;
-    background-position: center;
-}
 
-.login-card {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 16px;
-    padding: 40px;
-    width: 100%;
-    max-width: 450px;
-    box-shadow: var(--shadow-lg);
-    backdrop-filter: blur(10px);
-}
-
-.login-logo {
-    width: 120px;
-    margin: 0 auto 20px;
-    height: 300px;
-
-}
-
-.login-title {
-    font-size: 20px;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 5px;
-    letter-spacing: 1px;
-}
-
-.login-subtitle {
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.login-btn {
-    width: 100%;
-    padding: 14px;
-    background-color: var(--primary-color);
-    border: none;
-    color: var(--text-white);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    border-radius: 8px;
-    margin-top: 10px;
-}
-
-.login-btn:hover {
-    background-color: var(--primary-dark);
-}
-
-.forgot-password {
-    display: block;
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 13px;
-    margin-top: 15px;
-}
-
-.forgot-password:hover {
-    color: var(--primary-color);
-}
 
 /* ==================== Carousel / Recent Activities ==================== */
-.recent-activities {
-    margin-top: 30px;
-}
 
-.recent-activities-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
 
-.recent-activities-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
 
-.view-all-link {
-    color: var(--primary-color);
-    font-size: 14px;
-}
-
-.newspaper-card {
-    background-color: var(--bg-white);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: var(--transition);
-}
-
-.newspaper-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-}
-
-.newspaper-thumbnail {
-    height: 280px;
-    object-fit: cover;
-    width: 100%;
-}
-
-.newspaper-info {
-    padding: 15px;
-}
-
-.newspaper-category {
-    font-size: 11px;
-    text-transform: uppercase;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.newspaper-category.culture {
-    color: #9C27B0;
-}
-
-.newspaper-category.politics {
-    color: #1976D2;
-}
-
-.newspaper-category.sports {
-    color: #388E3C;
-}
-
-.newspaper-category.business {
-    color: #F57C00;
-}
-
-.newspaper-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.newspaper-date {
-    font-size: 12px;
-    color: var(--text-muted);
-}
 
 /* ==================== Tabs ==================== */
 .nav-tabs-custom {

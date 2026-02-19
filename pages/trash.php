@@ -4,7 +4,7 @@
  * Archive System - Quezon City Public Library
  */
 
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../backend/core/auth.php';
 
 // Get alert message
 // Get alert message
@@ -14,7 +14,7 @@ require_once __DIR__ . '/../includes/auth.php';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 4;
 $search = $_GET['search'] ?? '';
-$categoryFilter = $_GET['category'] ?? ''; // Keep for files if needed, or ignore
+$typeFilter = $_GET['type'] ?? '';
 $dateFilter = $_GET['date'] ?? '';
 $sortBy = $_GET['sort'] ?? 'newest';
 
@@ -32,11 +32,11 @@ if ($search) {
     $params[] = "%$search%"; // For email
 }
 
-// Apply Category (Files only)
-if ($categoryFilter) {
-    $fileWhere .= " AND n.category_id = ?";
-    $userWhere .= " AND 1=0"; // Users don't have categories
-    $params[] = $categoryFilter;
+// Apply Type Filter
+if ($typeFilter === 'file') {
+    $userWhere .= " AND 1=0"; // Exclude users
+} elseif ($typeFilter === 'user') {
+    $fileWhere .= " AND 1=0"; // Exclude files
 }
 
 // Apply Date
@@ -100,8 +100,8 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $trashedItems = $stmt->fetchAll();
 
-// Get categories for filter (for file filtering)
-$categories = getCategories();
+// Get categories for filter (Removed as requested: Files and Users only)
+// $categories = getCategories();
 
 // Calculate days until auto-delete
 $autoDeleteDays = intval(getSetting('auto_delete_days', 30));
@@ -217,30 +217,243 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <!-- Custom CSS -->
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
-</head>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .search-bar-custom {
+            background: #fff;
+            border-radius: 50px;
+            padding: 4px 4px 4px 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .search-input-custom {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: #666;
+            width: 100%;
+            padding: 8px;
+        }
+
+        .search-input-custom:focus {
+            outline: none;
+        }
+
+        .search-btn-custom {
+            background: #4C3939;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .search-btn-custom:hover {
+            background: #3A2B2B;
+        }
+
+        .filter-pill {
+            background: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4B5563;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s;
+            white-space: nowrap;
+            text-decoration: none;
+            overflow: visible;
+            /* Ensure dropdowns are not clipped */
+        }
+
+
+
+        .clear-date-icon {
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+
+        .clear-date-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .filter-pill:hover {
+            background: #F9FAFB;
+            transform: translateY(-1px);
+            color: #4B5563;
+        }
+
+        .trash-table th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #9CA3AF;
+            border-bottom: none;
+            padding: 20px 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .trash-table td {
+            vertical-align: middle;
+            padding: 20px 24px;
+            border-bottom: 1px solid #F3F4F6;
+            color: #374151;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .trash-table tr:first-child td {
+            border-top: 1px solid #F3F4F6;
+        }
+
+        .trash-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .trash-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+        }
+
+        .trash-action-btn.restore {
+            color: #3B82F6;
+        }
+
+        .trash-action-btn.restore:hover {
+            background: #EFF6FF;
+        }
+
+        .trash-action-btn.delete {
+            color: #EF4444;
+        }
+
+        .trash-action-btn.delete:hover {
+            background: #FEF2F2;
+        }
+
+        .pagination-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6B7280;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .pagination-circle:hover {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .pagination-circle.active {
+            background: #4C3939;
+            color: #fff;
+        }
+
+        .pagination-circle.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .rows-per-page-select {
+            background-color: #F3F4F6;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .btn-restore-all {
+            background-color: #2563EB;
+            color: white;
+            border: none;
+        }
+
+        .btn-restore-all:hover {
+            background-color: #1D4ED8;
+        }
+
+        .btn-empty-trash {
+            background-color: #DC2626;
+            color: white;
+            border: none;
+        }
+
+        .btn-empty-trash:hover {
+            background-color: #B91C1C;
+        }
+    </style>
 
 <body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
-    <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+    <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
         <div class="mb-4">
-            <h1 class="fw-bold m-0" style="font-size: 24px; color: #3D2D2D;">Trash</h1>
-            <div class="text-muted" style="font-size: 14px;">Recover or permanently remove archived content</div>
+            <h1 class="fw-bold m-0" style="font-size: 32px; color: #3D2D2D; font-family: 'Poppins', sans-serif;">
+                Trash</h1>
+            <div class="text-muted" style="font-size: 14px;">Recover or permanently remove content</div>
         </div>
 
         <!-- Auto-Delete Info Card -->
-        <div class="card border-0 mb-4 bg-light shadow-sm" style="border-radius: 12px;">
+        <div class="card border-0 mb-4 bg-warning-subtle shadow-sm" style="border-radius: 12px;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle bg-white d-flex align-items-center justify-content-center"
-                        style="width: 40px; height: 40px; color: #ff9800;">
-                        <i class="bi bi-clock-history fs-5"></i>
+                        style="width: 40px; height: 40px; color: #b91c1c;">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
                     </div>
                     <div>
                         <div class="fw-bold text-dark" style="font-size: 14px;">Auto-Deletion Policy</div>
                         <div class="text-muted small">Items in trash are automatically permanently deleted after
-                            <?= $autoDeleteDays ?> days.</div>
+                            <?= $autoDeleteDays ?> days.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,46 +462,76 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         <!-- Alerts replaced by Modals -->
 
         <!-- Search & Filter Bar -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4 p-3">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                <!-- Search -->
-                <div class="input-group input-group-attached flex-grow-1" style="max-width: 500px;">
-                    <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3">
-                        <i class="bi bi-search text-muted"></i>
-                    </span>
-                    <form method="GET" class="d-flex flex-grow-1" id="searchForm">
-                        <input type="text" class="form-control border-start-0 py-2" name="search"
-                            placeholder="Search deleted items..." value="<?= htmlspecialchars($search) ?>"
-                            style="font-size: 14px;">
-                        <button class="btn btn-primary px-3 rounded-end-pill" type="submit">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </form>
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
+            <!-- Search Bar -->
+            <div class="flex-grow-1">
+                <form method="GET" id="searchForm" class="search-bar-custom">
+                    <i class="bi bi-search text-muted fs-5 ms-1"></i>
+                    <input type="text" class="search-input-custom" name="search"
+                        placeholder="Search deleted documents..." value="<?= htmlspecialchars($search) ?>">
+                    <button class="search-btn-custom" type="submit">
+                        <i class="bi bi-search" style="font-size: 14px;"></i>
+                    </button>
+                    <!-- Preserving other filters in search -->
+                    <?php if ($typeFilter): ?><input type="hidden" name="type"
+                            value="<?= htmlspecialchars($typeFilter) ?>"><?php endif; ?>
+                    <?php if ($dateFilter): ?><input type="hidden" name="date"
+                            value="<?= htmlspecialchars($dateFilter) ?>"><?php endif; ?>
+                    <?php if ($sortBy): ?><input type="hidden" name="sort"
+                            value="<?= htmlspecialchars($sortBy) ?>"><?php endif; ?>
+                    <?php if ($limit !== 4): ?><input type="hidden" name="limit"
+                            value="<?= htmlspecialchars($limit) ?>"><?php endif; ?>
+                </form>
+            </div>
+
+            <!-- Filters -->
+            <div class="d-flex gap-2">
+                <!-- Type Filter Dropdown (Replaces Categories) -->
+                <div class="dropdown">
+                    <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <?= $typeFilter === 'file' ? 'Files' : ($typeFilter === 'user' ? 'Users' : 'All Types') ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm"
+                        style="font-size: 13px; z-index: 1055;">
+                        <li><a class="dropdown-item type-filter-item <?= empty($typeFilter) ? 'active' : '' ?>" href="#"
+                                data-value="">All Types</a></li>
+                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'file' ? 'active' : '' ?>"
+                                href="#" data-value="file">Files Only</a></li>
+                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'user' ? 'active' : '' ?>"
+                                href="#" data-value="user">Users Only</a></li>
+                    </ul>
                 </div>
 
-                <!-- Filters -->
-                <div class="d-flex gap-2">
-                    <select class="form-select bg-light border-0 py-2 fw-medium" name="category"
-                        onchange="window.location.href='?category='+this.value"
-                        style="width: auto; font-size: 13px; border-radius: 8px;">
-                        <option value="">Categories</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?= $cat['id'] ?>" <?= $categoryFilter == $cat['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($cat['name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <!-- Date Filter -->
+                <div class="dropdown">
+                    <button class="filter-pill <?= $dateFilter ? 'text-primary' : 'dropdown-toggle' ?>" type="button"
+                        data-bs-toggle="dropdown">
+                        <?= $dateFilter ? date('M d, Y', strtotime($dateFilter)) : 'Date' ?>
+                        <?php if ($dateFilter): ?>
+                            <i class="bi bi-x-lg ms-2 text-danger clear-date-icon" role="button"
+                                style="font-size: 12px;"></i>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-sm p-3" style="width: 250px;">
+                        <label class="form-label small text-muted">Filter by Date</label>
+                        <input type="date" class="form-control form-control-sm mb-2" id="dateFilterInput"
+                            value="<?= htmlspecialchars($dateFilter) ?>">
+                        <!-- Removed clear button inside dropdown as requested -->
+                    </div>
+                </div>
 
-                    <input type="date" class="form-control bg-light border-0 py-2 fw-medium" name="date"
-                        value="<?= htmlspecialchars($dateFilter) ?>" onchange="window.location.href='?date='+this.value"
-                        style="width: auto; font-size: 13px; border-radius: 8px;">
-
-                    <select class="form-select bg-light border-0 py-2 fw-medium" name="sort"
-                        onchange="window.location.href='?sort='+this.value"
-                        style="width: auto; font-size: 13px; border-radius: 8px;">
-                        <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest</option>
-                        <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest</option>
-                    </select>
+                <!-- Sort By -->
+                <div class="dropdown">
+                    <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <?= $sortBy === 'oldest' ? 'Oldest First' : 'Newest First' ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm"
+                        style="font-size: 13px; z-index: 1055;">
+                        <li><a class="dropdown-item sort-filter-item <?= $sortBy === 'newest' ? 'active' : '' ?>"
+                                href="#" data-value="newest">Newest First</a></li>
+                        <li><a class="dropdown-item sort-filter-item <?= $sortBy === 'oldest' ? 'active' : '' ?>"
+                                href="#" data-value="oldest">Oldest First</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -296,21 +539,15 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         <!-- Unified Trash Table -->
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-body p-0">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table trash-table mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4 py-3 text-secondary text-uppercase"
-                                style="font-size: 11px; font-weight: 700; width: 60px;">ID</th>
-                            <th class="py-3 text-secondary text-uppercase" style="font-size: 11px; font-weight: 700;">
-                                TITLE</th>
-                            <th class="py-3 text-secondary text-uppercase" style="font-size: 11px; font-weight: 700;">
-                                DELETED BY</th>
-                            <th class="py-3 text-secondary text-uppercase" style="font-size: 11px; font-weight: 700;">
-                                DATE</th>
-                            <th class="py-3 text-secondary text-uppercase" style="font-size: 11px; font-weight: 700;">
-                                SIZE</th>
-                            <th class="text-end pe-4 py-3 text-secondary text-uppercase"
-                                style="font-size: 11px; font-weight: 700; width: 120px;">ACTIONS</th>
+                            <th class="ps-4" style="width: 5%;">ID</th>
+                            <th style="width: 35%;">TITLE</th>
+                            <th style="width: 20%;">DELETED BY</th>
+                            <th style="width: 20%;">DATE</th>
+                            <th style="width: 10%;">SIZE</th>
+                            <th class="text-end pe-4" style="width: 10%;">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -329,59 +566,46 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <?php else: ?>
                             <?php foreach ($trashedItems as $item): ?>
                                 <tr>
-                                    <td class="ps-4 text-secondary fw-medium" style="font-size: 14px;">
-                                        <?= $item['id'] ?>
+                                    <td class="ps-4 text-muted" style="font-family: monospace;">
+                                        #<?= $item['id'] ?>
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center gap-3">
                                             <?php if ($item['type'] === 'file'): ?>
-                                                <div class="rounded p-1 bg-light text-primary">
-                                                    <i class="bi bi-file-earmark-text"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-bold text-dark" style="font-size: 14px; line-height: 1.2;">
-                                                        <?= htmlspecialchars($item['title']) ?>
-                                                    </div>
+                                                <i class="bi bi-file-earmark-text text-secondary opacity-75 fs-5"></i>
+                                                <div class="fw-bold text-dark">
+                                                    <?= htmlspecialchars($item['title']) ?>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="rounded p-1 bg-light text-success">
-                                                    <i class="bi bi-person"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-bold text-dark" style="font-size: 14px; line-height: 1.2;">
-                                                        <?= htmlspecialchars($item['title']) ?>
-                                                    </div>
-                                                    <?php if (!empty($item['email'])): ?>
-                                                        <div class="text-muted small" style="font-size: 11px;">
-                                                            <?= htmlspecialchars($item['email']) ?>
-                                                        </div>
-                                                    <?php endif; ?>
+                                                <i class="bi bi-person text-secondary opacity-75 fs-5"></i>
+                                                <div class="fw-bold text-dark">
+                                                    <?= htmlspecialchars($item['title']) ?>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td class="text-secondary" style="font-size: 14px;">
-                                        <?= htmlspecialchars($item['deleted_by_name'] ?? 'Unknown') ?>
+                                    <td>
+                                        <div class="fw-bold text-dark">
+                                            <?= htmlspecialchars($item['deleted_by_name'] ?? 'Unknown') ?>
+                                        </div>
                                     </td>
-                                    <td class="text-secondary" style="font-size: 14px;">
-                                        <?= date('Y-m-d h:i A', strtotime($item['deleted_at'])) ?>
+                                    <td class="text-secondary">
+                                        <?= date('M d, Y, H:i', strtotime($item['deleted_at'])) ?>
                                     </td>
-                                    <td class="text-secondary" style="font-size: 14px;">
+                                    <td class="text-secondary">
                                         <?= $item['type'] === 'file' ? formatFileSize($item['file_size'] ?? 0) : '-' ?>
                                     </td>
                                     <td class="text-end pe-4">
                                         <div class="d-flex justify-content-end gap-2">
-                                            <button type="button" class="btn btn-link p-0 text-success"
+                                            <button type="button" class="trash-action-btn restore"
                                                 onclick="showRestoreModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'])) ?>', '<?= $item['type'] ?>')"
-                                                title="Restore"
-                                                style="width: 24px; height: 24px; border-radius: 4px; background-color: rgba(25, 135, 84, 0.1); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
-                                                <i class="bi bi-arrow-counterclockwise" style="font-size: 14px;"></i>
+                                                title="Restore">
+                                                <i class="bi bi-clock-history"></i>
                                             </button>
-                                            <button type="button" class="btn btn-link p-0 text-danger"
+                                            <button type="button" class="trash-action-btn delete"
                                                 onclick="showDeleteModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'])) ?>', '<?= $item['type'] ?>')"
-                                                title="Delete Permanently"
-                                                style="width: 24px; height: 24px; border-radius: 4px; background-color: rgba(220, 53, 69, 0.1); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
-                                                <i class="bi bi-trash-fill" style="font-size: 14px;"></i>
+                                                title="Delete Permanently">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -392,25 +616,53 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                 </table>
 
                 <!-- Pagination -->
-                <div class="px-4 py-3 d-flex justify-content-between align-items-center border-top">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-secondary fw-bold" style="font-size: 11px;">ROWS:</span>
-                        <select class="form-select form-select-sm border bg-light py-1 ps-2 pe-4"
-                            onchange="window.location.href='?limit='+this.value+'&page=1'"
-                            style="width: auto; cursor: pointer;">
+                <div class="px-4 py-4 d-flex justify-content-between align-items-center">
+                    <!-- Limit Selector and Showing Text -->
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-secondary small fw-medium">Rows per page:</span>
+                        <select class="rows-per-page-select" id="rowsPerPage">
                             <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
                             <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
+                            <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
                         </select>
-                        <span class="text-muted small ms-2">Showing <?= count($trashedItems) ?> item(s)</span>
+
+                        <span class="text-secondary small ms-2">
+                            Showing <?= ($offset + 1) ?>-<?= min($offset + $limit, $totalItems) ?> of <?= $totalItems ?>
+                            documents
+                        </span>
                     </div>
-                    <div class="pagination-circular">
+
+                    <!-- Circular Pagination Controls -->
+                    <div class="d-flex align-items-center gap-1">
+                        <!-- Previous Page -->
                         <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
-                            class="page-link-circle <?= !$pagination['has_prev'] ? 'disabled' : '' ?>">
+                            class="pagination-circle <?= $page <= 1 ? 'disabled' : '' ?>">
                             <i class="bi bi-chevron-left"></i>
                         </a>
-                        <span class="mx-2 small text-muted">Page <?= $page ?></span>
+
+                        <!-- Page Numbers -->
+                        <?php
+                        $startPage = max(1, $page - 2);
+                        $endPage = min(ceil($totalItems / $limit), $page + 2);
+
+                        for ($i = $startPage; $i <= $endPage; $i++):
+                            ?>
+                            <a href="?page=<?= $i ?>&limit=<?= $limit ?>"
+                                class="pagination-circle <?= $i == $page ? 'active' : '' ?>">
+                                <?= $i ?>
+                            </a>
+                        <?php endfor; ?>
+
+                        <?php if (ceil($totalItems / $limit) > $endPage): ?>
+                            <span class="text-muted small px-1">...</span>
+                            <a href="?page=<?= ceil($totalItems / $limit) ?>&limit=<?= $limit ?>" class="pagination-circle">
+                                <?= ceil($totalItems / $limit) ?>
+                            </a>
+                        <?php endif; ?>
+
+                        <!-- Next Page -->
                         <a href="?page=<?= min(max(1, ceil($totalItems / $limit)), $page + 1) ?>&limit=<?= $limit ?>"
-                            class="page-link-circle <?= !$pagination['has_next'] ? 'disabled' : '' ?>">
+                            class="pagination-circle <?= $page >= ceil($totalItems / $limit) ? 'disabled' : '' ?>">
                             <i class="bi bi-chevron-right"></i>
                         </a>
                     </div>
@@ -421,11 +673,11 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         <!-- Footer Buttons -->
         <?php if (!empty($trashedItems)): ?>
             <div class="d-flex justify-content-end gap-3 mt-4">
-                <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-medium shadow-sm border-0"
-                    onclick="showRestoreAllModal()" style="background-color: #10B981;">
+                <button type="button" class="btn btn-restore-all rounded-3 px-4 py-2 fw-medium shadow-sm"
+                    onclick="showRestoreAllModal()">
                     <i class="bi bi-arrow-counterclockwise me-2"></i>Restore All
                 </button>
-                <button type="button" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-medium shadow-sm bg-white"
+                <button type="button" class="btn btn-empty-trash rounded-3 px-4 py-2 fw-medium shadow-sm"
                     onclick="showEmptyTrashModal()">
                     <i class="bi bi-trash-fill me-2"></i>Empty Trash
                 </button>
@@ -457,7 +709,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4">
                 <div class="modal-body p-4 text-center">
-                    <div class="mb-3 text-success">
+                    <div class="mb-3 text-primary">
                         <i class="bi bi-arrow-counterclockwise display-4"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Restore Item?</h5>
@@ -470,8 +722,8 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <div class="d-flex justify-content-center gap-2">
                             <button type="button" class="btn btn-light rounded-pill px-4"
                                 data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success rounded-pill px-4"
-                                style="background-color: #2E7D32;">Yes, Restore</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4"
+                                style="background-color: #3B82F6; border-color: #3B82F6;">Yes, Restore</button>
                         </div>
                     </form>
                 </div>
@@ -510,7 +762,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4">
                 <div class="modal-body p-4 text-center">
-                    <div class="mb-3 text-success">
+                    <div class="mb-3 text-primary">
                         <i class="bi bi-collection display-4"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Restore All Items?</h5>
@@ -520,8 +772,8 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <div class="d-flex justify-content-center gap-2">
                             <button type="button" class="btn btn-light rounded-pill px-4"
                                 data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success rounded-pill px-4"
-                                style="background-color: #2E7D32;">Restore All</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4"
+                                style="background-color: #2563EB; border-color: #2563EB;">Restore All</button>
                         </div>
                     </form>
                 </div>
@@ -553,9 +805,9 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         </div>
     </div>
 
-    <?php include __DIR__ . '/../layouts/footer.php'; ?>
+    <?php include __DIR__ . '/../views/layouts/footer.php'; ?>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Scripts -->
     <script>
         function showRestoreModal(id, title, type) {
             document.getElementById('restoreItemId').value = id;
@@ -578,6 +830,88 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         function showEmptyTrashModal() {
             new bootstrap.Modal(document.getElementById('emptyTrashModal')).show();
         }
+
+        // Live Search & Filters
+        document.addEventListener('DOMContentLoaded', function () {
+            // Helper to update filter
+            function updateFilter(name, value) {
+                const form = document.getElementById('searchForm');
+                let input = form.querySelector(`input[name="${name}"]`);
+                if (input) {
+                    input.value = value;
+                    form.submit();
+                } else {
+                    const newInput = document.createElement('input');
+                    newInput.type = 'hidden';
+                    newInput.name = name;
+                    newInput.value = value;
+                    form.appendChild(newInput);
+                    form.submit();
+                }
+            }
+
+            // Type Items
+            document.querySelectorAll('.type-filter-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    updateFilter('type', this.dataset.value);
+                });
+            });
+
+            // Sort Items
+            document.querySelectorAll('.sort-filter-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    updateFilter('sort', this.dataset.value);
+                });
+            });
+
+            // Clear Date Icon
+            document.querySelectorAll('.clear-date-icon').forEach(icon => {
+                icon.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Prevent dropdown toggle
+                    updateFilter('date', '');
+                });
+            });
+
+            // Rows per page
+            const rowsPerPage = document.getElementById('rowsPerPage');
+            if (rowsPerPage) {
+                rowsPerPage.addEventListener('change', function () {
+                    updateFilter('limit', this.value);
+                });
+            }
+
+            // Date Filter
+            const dateInput = document.getElementById('dateFilterInput');
+            if (dateInput) {
+                dateInput.addEventListener('change', function () {
+                    updateFilter('date', this.value);
+                });
+            }
+
+            // Live Search
+            let debounceTimer;
+            const searchInput = document.getElementById('searchForm').querySelector('input[name="search"]');
+            const searchForm = document.getElementById('searchForm');
+
+            if (searchInput && searchForm) {
+                searchInput.addEventListener('input', function () {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        searchForm.submit();
+                    }, 600); // 600ms debounce
+                });
+
+                // Focus search input if it has value (after reload)
+                if (searchInput.value) {
+                    searchInput.focus();
+                    const len = searchInput.value.length;
+                    searchInput.setSelectionRange(len, len);
+                }
+            }
+        });
 
         // Check for success params
         document.addEventListener('DOMContentLoaded', function () {
