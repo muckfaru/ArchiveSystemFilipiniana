@@ -729,12 +729,15 @@ document.addEventListener('DOMContentLoaded', function () {
         reader.readAsDataURL(file);
     }
 
-    // Ensure remove button is correctly positioned and visible
+    /* Ensure remove button is correctly positioned and visible */
     const style = document.createElement('style');
     style.textContent = `
     #removeThumbnailBtn {
-        z-index: 10;
+        z-index: 100; /* Increased z-index */
         cursor: pointer;
+        display: none; /* Hidden by default */
+        align-items: center;
+        justify-content: center;
     }
 `;
     document.head.appendChild(style);
@@ -1597,6 +1600,105 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Determine mode if needed or just add
                 // If in bulk mode, just add
                 addBulkFiles(e.dataTransfer.files);
+            }
+        });
+    }
+
+    // --- Global Functions for Inline Handlers ---
+    window.switchTab = function (index) {
+        if (bulkFiles[index]) {
+            // Save current data before switching
+            if (activeFileIndex !== -1 && bulkFiles[activeFileIndex]) {
+                saveCurrentFormData();
+            }
+
+            activeFileIndex = index;
+            loadFileData(index);
+            renderTabs();
+            updateButtons();
+        }
+    };
+
+    window.removeFile = function (e, index) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Confirm? Maybe not needed for quick action, but good UX.
+        // For now, direct remove.
+
+        const fileToRemove = bulkFiles[index];
+
+        // Remove from array
+        bulkFiles.splice(index, 1);
+
+        // Adjust active index
+        if (bulkFiles.length === 0) {
+            // No files left -> Reset
+            resetForm();
+        } else {
+            if (index === activeFileIndex) {
+                // Removed active -> Switch to 0 or previous
+                activeFileIndex = 0;
+                loadFileData(0);
+            } else if (index < activeFileIndex) {
+                // Removed one before active -> decrement active index
+                activeFileIndex--;
+            }
+            // IF index > active, no change to activeIndex
+
+            updateBulkControls();
+            renderTabs();
+            updateButtons();
+
+            // Re-render grid if in bind mode
+            if (isBindMode) renderImageGrid();
+        }
+    };
+
+    // Helper to save current form data to the object
+    function saveCurrentFormData() {
+        if (activeFileIndex === -1 || !bulkFiles[activeFileIndex]) return;
+
+        const f = bulkFiles[activeFileIndex];
+        const m = f.metadata;
+
+        m.title = document.getElementById('title')?.value?.trim() || '';
+        m.publisher = document.getElementById('publisher')?.value?.trim() || '';
+        m.publication_date = document.getElementById('publication_date')?.value || '';
+        m.edition = document.getElementById('edition')?.value || '';
+        m.category_id = document.getElementById('category_id')?.value || '';
+        m.language_id = document.getElementById('language_id')?.value || '';
+        m.page_count = document.getElementById('page_count')?.value || '';
+        m.volume_issue = document.getElementById('volume_issue')?.value?.trim() || '';
+        m.description = document.getElementById('description')?.value?.trim() || '';
+
+        // Tags
+        m.tags = document.getElementById('keywordsHidden')?.value || '';
+
+        // Update Status based on completion
+        validateFile(activeFileIndex);
+    }
+
+    // Check duplication when file name changes? 
+    // Usually file name doesn't change, but title does.
+    // We already have checkAllDuplicates.
+
+    // --- Add More Files Logic ---
+    const addMoreBtn = document.getElementById('addMoreBtn');
+    const addMoreInput = document.getElementById('addMoreInput');
+
+    if (addMoreBtn && addMoreInput) {
+        addMoreBtn.addEventListener('click', () => {
+            addMoreInput.click();
+        });
+
+        addMoreInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                addBulkFiles(e.target.files);
+                // Reset value to allow selecting same file again if needed (though we filter dups)
+                addMoreInput.value = '';
             }
         });
     }
