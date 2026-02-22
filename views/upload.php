@@ -38,19 +38,17 @@
         </div>
 
         <!-- Drop Zone (Full Width - Hidden when files uploaded) -->
-        <div class="drop-zone-container" id="dropZoneContainer">
-            <?php if (!$editMode): ?>
-                <div class="drop-zone" id="mainDropZone">
-                    <input type="file" id="fileInput" name="file" hidden multiple
-                        accept=".pdf,.doc,.docx,.xml,.tiff,.tif,.jpg,.jpeg,.png,.mobi,.epub">
-                    
-                    <svg class="drop-icon" width="64" height="64" viewBox="0 0 24 24" fill="none">
-                        <path d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM6 20V4H13V9H18V20H6Z" fill="#94A3B8"/>
-                    </svg>
-                    <p class="drop-title">Drag and drop files here</p>
-                    <p class="drop-subtitle">or <span class="click-browse" onclick="document.getElementById('fileInput').click()">click to browse</span> your computer</p>
-                </div>
-            <?php endif; ?>
+        <div class="drop-zone-container" id="dropZoneContainer" <?= $editMode ? 'style="display: none;"' : '' ?>>
+            <div class="drop-zone" id="mainDropZone">
+                <input type="file" id="fileInput" name="file" hidden multiple
+                    accept=".pdf,.doc,.docx,.xml,.tiff,.tif,.jpg,.jpeg,.png,.mobi,.epub">
+                
+                <svg class="drop-icon" width="64" height="64" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM6 20V4H13V9H18V20H6Z" fill="#94A3B8"/>
+                </svg>
+                <p class="drop-title">Drag and drop files here</p>
+                <p class="drop-subtitle">or <span class="click-browse" onclick="document.getElementById('fileInput').click()">click to browse</span> your computer</p>
+            </div>
         </div>
 
         <!-- Selected File Preview (Hidden by default) -->
@@ -99,7 +97,7 @@
 
         <!-- Edit Mode Indicator (Refactored) -->
         <?php if ($editMode && !empty($editItem['file_name'])): ?>
-            <div class="card border-0 shadow-sm mb-4" style="border-left: 5px solid #C08B5C !important; background-color: #fff;">
+            <div class="card border-0 shadow-sm mb-4" id="editModeIndicator" style="border-left: 5px solid #C08B5C !important; background-color: #fff;">
                 <div class="card-body d-flex align-items-center justify-content-between p-4">
                     <div class="d-flex align-items-center">
                         <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: rgba(192, 139, 92, 0.1); color: #C08B5C;">
@@ -121,7 +119,8 @@
         <div id="bulkUploadContainer" class="mb-4" style="display: none;">
             <!-- New Stats Bar Design -->
             <div class="bulk-stats-container mb-4">
-                <div class="bulk-stats-wrapper">
+                <!-- Document Stats (PDF/MOBI) -->
+                <div class="bulk-stats-wrapper" id="docStatsWrapper">
                     <div class="stat-col">
                         <span class="stat-label">TOTAL FILES</span>
                         <span class="stat-number" id="totalFilesCount">0</span>
@@ -147,13 +146,35 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Photo Stats (Images) -->
+                <div class="bulk-stats-wrapper" id="photoStatsWrapper" style="display: none;">
+                    <div class="stat-col">
+                        <span class="stat-label">TOTAL PHOTOS</span>
+                        <span class="stat-number" id="totalPhotosCount">0</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-col action-col" style="flex: 1; justify-content: flex-end; padding-right: 2rem;">
+                         <!-- Dropdown / Add Photos action can go here if needed later -->
+                        <button type="button" class="btn btn-add-files" id="addMorePhotosBtn" onclick="document.getElementById('fileInput').click()">
+                            + ADD PHOTOS
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- Tabs Scroll Container -->
-            <div class="tabs-container border-bottom">
+            <div id="tabsWrapper" class="tabs-container border-bottom">
                 <ul class="nav nav-tabs border-bottom-0 flex-nowrap overflow-auto" id="bulkTabs" role="tablist" style="scrollbar-width: thin;">
                     <!-- Tabs injected via JS -->
                 </ul>
+            </div>
+
+            <!-- Photo Gallery Grid Container -->
+            <div id="pageOrderGridWrapper" class="border-bottom p-3 bg-light" style="display: none; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
+                <div id="pageOrderGrid" class="d-inline-flex gap-3 align-items-center">
+                    <!-- Photo thumbnails injected via JS -->
+                </div>
             </div>
         </div>
 
@@ -169,31 +190,11 @@
                     <input type="hidden" name="action" value="<?= $editMode ? 'edit' : 'upload' ?>">
                     <?php if ($editMode): ?>
                         <input type="hidden" name="edit_id" value="<?= $editItem['id'] ?>">
+                        <input type="hidden" name="existing_thumbnail" id="existing_thumbnail" value="<?= htmlspecialchars($editItem['thumbnail_path']) ?>">
                     <?php endif; ?>
 
                     <!-- Old Bulk Section Removed -->
                     
-                    <!-- Edit Mode Indicator -->
-                    <?php if ($editMode && !empty($editItem['file_name'])): ?>
-
-
-                        <!-- Current File Badge (Retained for functionality, but visually subdued or integrated) -->
-
-                             <div class="d-flex align-items-center gap-3 p-3 bg-white border rounded">
-                                <div class="file-icon text-primary">
-                                    <i class="bi bi-file-earmark-text fs-3"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0 fw-bold text-dark"><?= htmlspecialchars($editItem['file_name']) ?></h6>
-                                    <small class="text-muted">Current file on server • <?= formatFileSize($editItem['file_size']) ?></small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('fileInput').click()">
-                                    Change File
-                                </button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
                     <!-- Bulk Upload Controls & Tabs MOVED UP -->
 
                     <!-- General Information Card -->
@@ -204,6 +205,11 @@
                                 <span class="header-title">GENERAL INFORMATION</span>
                             </div>
                             <span id="currentFileName" class="badge bg-light text-dark border d-none"></span>
+                        </div>
+
+                        <div id="bulkPhotoInfoMessage" class="d-none mx-4 mt-3 mb-0">
+                            <i class="bi bi-info-circle-fill"></i>
+                            All photos in this bulk upload share a single metadata entry.
                         </div>
 
                         <div class="form-row-2col">
@@ -350,6 +356,7 @@
                 <div class="modal-body text-center p-4">
                     <h5 class="fw-bold mb-3 text-dark" style="font-size: 24px;">Upload Files?</h5>
                     <p class="text-muted mb-4" style="font-size: 16px;">Are you sure you want to upload the selected files?</p>
+                    <div id="uploadFileList" class="text-start mb-4" style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 8px; display: none;"></div>
                     <div class="d-flex justify-content-center gap-3">
                         <button type="button" class="btn px-5 py-2 rounded-3 fw-bold" style="border: 1px solid #E5E7EB; color: #374151; background: white;" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn px-5 py-2 rounded-3 text-white fw-bold" id="confirmUploadBtn" style="background-color: #4C3939 !important;">Confirm Upload</button>

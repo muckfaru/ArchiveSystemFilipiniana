@@ -158,15 +158,34 @@
                                 </div>
                             <?php endif; ?>
                             <div class="newspaper-info">
-                                <div class="newspaper-category">
-                                    <?= $paper['category_name'] ?? 'Uncategorized' ?>
+                                <div class="newspaper-category <?= strtolower($paper['category_name'] ?? '') ?>">
+                                    <?= strtoupper($paper['category_name'] ?? 'UNCATEGORIZED') ?>
                                 </div>
                                 <h6 class="newspaper-title">
                                     <?= htmlspecialchars($paper['title']) ?>
                                 </h6>
-                                <div class="newspaper-date">
+                                <div class="newspaper-date mb-2">
                                     <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : 'N/A' ?>
                                 </div>
+                                <?php if (!empty($paper['keywords'])): ?>
+                                    <div class="mt-auto pt-2 d-flex gap-1 flex-wrap">
+                                        <?php
+                                        $tags = array_filter(array_map('trim', explode(',', $paper['keywords'])));
+                                        foreach (array_slice($tags, 0, 3) as $tag):
+                                            ?>
+                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
+                                                style="font-size: 10px;">
+                                                <?= htmlspecialchars($tag) ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                        <?php if (count($tags) > 3): ?>
+                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
+                                                style="font-size: 10px;">
+                                                +<?= count($tags) - 3 ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -246,9 +265,28 @@
                             <h6 class="newspaper-title">
                                 <?= htmlspecialchars($paper['title']) ?>
                             </h6>
-                            <div class="newspaper-date">
+                            <div class="newspaper-date mb-2">
                                 <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : date('d F Y', strtotime($paper['created_at'])) ?>
                             </div>
+                            <?php if (!empty($paper['keywords'])): ?>
+                                <div class="mt-auto pt-2 d-flex gap-1 flex-wrap">
+                                    <?php
+                                    $tags = array_filter(array_map('trim', explode(',', $paper['keywords'])));
+                                    foreach (array_slice($tags, 0, 3) as $tag):
+                                        ?>
+                                        <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
+                                            style="font-size: 10px;">
+                                            <?= htmlspecialchars($tag) ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                    <?php if (count($tags) > 3): ?>
+                                        <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
+                                            style="font-size: 10px;">
+                                            +<?= count($tags) - 3 ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -269,32 +307,11 @@
                         <!-- Image Container -->
                         <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4 position-relative"
                             style="min-height: 300px;">
-                            <div class="preview-image-container position-relative"
-                                style="background: #1a1a1a; border-radius: 4px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
-                                <img id="previewImage" src="" alt="Preview"
-                                    style="display: block; max-height: 280px; max-width: 100%; width: auto;">
-                                <div id="noPreviewIcon"
-                                    style="display: none; padding: 60px; background: #333; text-align: center;">
+                            <div class="photo-viewer-container position-relative">
+                                <img id="photoViewerImg" src="" class="w-100 rounded"
+                                    style="max-height:480px; object-fit:contain; display: block;">
+                                <div id="noPreviewIcon" style="display: none; padding: 60px; text-align: center;">
                                     <i class="bi bi-file-earmark-text" style="font-size: 60px; color: #666;"></i>
-                                </div>
-
-                                <!-- Image Slider Navigation (Bulk Images) -->
-                                <div id="sliderControls"
-                                    style="display: none; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); pointer-events: none;">
-                                    <button id="sliderPrevBtn" class="btn btn-sm"
-                                        style="position: absolute; left: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
-                                        <i class="bi bi-chevron-left"></i>
-                                    </button>
-                                    <button id="sliderNextBtn" class="btn btn-sm"
-                                        style="position: absolute; right: 10px; background: rgba(255,255,255,0.3); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: all;">
-                                        <i class="bi bi-chevron-right"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Image Counter (Bulk Images) -->
-                                <div id="imageCounter"
-                                    style="display: none; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
-                                    <span id="currentImage">1</span> / <span id="totalImages">1</span>
                                 </div>
                             </div>
                         </div>

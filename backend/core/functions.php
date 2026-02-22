@@ -41,10 +41,10 @@ function redirect($url)
 function logActivity($userId, $action, $targetTitle = null, $referenceId = null)
 {
     global $pdo;
+    // Simply use the raw targetTitle for logging so the ID doesn't pollute the history view.
+    // The reference_id column should be added to the DB if the ID is needed programmatically,
+    // but the user expressly wants the ID hidden from the front-end string.
     $logTitle = $targetTitle;
-    if ($referenceId) {
-        $logTitle .= " (ID: $referenceId)";
-    }
     $stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, action, target_title) VALUES (?, ?, ?)");
     $stmt->execute([$userId, $action, $logTitle]);
 }

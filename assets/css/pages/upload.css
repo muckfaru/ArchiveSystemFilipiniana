@@ -1364,3 +1364,39 @@ body .main-content {
 .btn-add-file:active {
     transform: translateY(0);
 }
+/* Photo Gallery Drag & Drop Grid Styling */
+.drop-shadow {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+.drag-active-card {
+    opacity: 0.5;
+    transform: scale(0.95);
+    border: 2px dashed #D28F5A !important;
+}
+.photo-gallery-item-hover {
+    transition: all 0.3s ease;
+}
+.photo-gallery-item-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+
+/* Bulk Photo Info Banner */
+#bulkPhotoInfoMessage {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #FDF6F0;
+    border-left: 4px solid #C08B5C;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4C3939;
+}
+#bulkPhotoInfoMessage i {
+    color: #C08B5C;
+    font-size: 16px;
+    flex-shrink: 0;
+}

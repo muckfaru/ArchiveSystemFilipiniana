@@ -57,22 +57,66 @@
     text-transform: uppercase;
     font-weight: 600;
     margin-bottom: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    background-color: #ECEFF1;
+    /* Default Fallback */
+    color: #546E7A;
 }
 
 .newspaper-category.culture {
-    color: #9C27B0;
+    color: #E65100;
+    background-color: #FFF3E0;
 }
 
 .newspaper-category.politics {
-    color: #1976D2;
+    color: #1565C0;
+    background-color: #E3F2FD;
 }
 
 .newspaper-category.sports {
-    color: #388E3C;
+    color: #2E7D32;
+    background-color: #E8F5E9;
 }
 
 .newspaper-category.business {
-    color: #F57C00;
+    color: #BF360C;
+    background-color: #FBE9E7;
+}
+
+.newspaper-category.news {
+    color: #7B1FA2;
+    background-color: #F3E5F5;
+}
+
+.newspaper-category.entertainment {
+    color: #C2185B;
+    background-color: #FCE4EC;
+}
+
+.newspaper-category.technology {
+    color: #00838F;
+    /* Cyan */
+    background-color: #E0F7FA;
+}
+
+.newspaper-category.health {
+    color: #C62828;
+    /* Red */
+    background-color: #FFEBEE;
+}
+
+.newspaper-category.education {
+    color: #283593;
+    /* Indigo */
+    background-color: #E8EAF6;
+}
+
+.newspaper-category.science {
+    color: #00695C;
+    /* Teal */
+    background-color: #E0F2F1;
 }
 
 .newspaper-title {
@@ -85,4 +129,21 @@
 .newspaper-date {
     font-size: 12px;
     color: var(--text-muted);
+}
+/* Dashboard Photo Viewer */
+.photo-viewer-container { position: relative; background: #F5F6F8; border-radius: 8px; overflow: hidden; }
+.photo-viewer-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(76,57,57,0.7); color: white; border: none;
+    border-radius: 50%; width: 40px; height: 40px;
+    font-size: 22px; cursor: pointer; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+.photo-viewer-arrow:hover { background: rgba(76,57,57,0.95); }
+.photo-viewer-arrow.left { left: 12px; }
+.photo-viewer-arrow.right { right: 12px; }
+.photo-viewer-counter {
+    text-align: center; font-size: 12px; color: #6B7280;
+    padding: 8px 0; font-weight: 500;
 }

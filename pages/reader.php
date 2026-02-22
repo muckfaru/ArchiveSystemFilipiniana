@@ -70,6 +70,11 @@ if ($fileType === 'cbz') {
     }
 }
 
+// Handle Gallery - JSON array
+if ($fileType === 'gallery' && !empty($file['image_paths'])) {
+    $cbzImages = json_decode($file['image_paths'], true) ?: [];
+}
+
 // Reader type determination
 $readerType = 'unknown';
 $pdfViewerUrl = '';
@@ -80,7 +85,7 @@ if ($fileType === 'pdf') {
 
 } elseif ($fileType === 'epub' || ($fileType === 'mobi' && $epubUrl)) {
     $readerType = 'epub';
-} elseif ($fileType === 'cbz') {
+} elseif ($fileType === 'cbz' || $fileType === 'gallery') {
     $readerType = 'cbz';
 } elseif (in_array($fileType, ['jpg', 'jpeg', 'png', 'tiff', 'tif'])) {
     $readerType = 'image';
@@ -168,16 +173,90 @@ logActivity($currentUser['id'], 'read', $file['title']);
             </div>
 
         <?php elseif ($readerType === 'cbz'): ?>
-            <!-- CBZ Viewer (Simplified for compatibility) -->
-            <div id="cbz-viewer" style="display:flex; justify-content:center; align-items:center; height:100%;">
-                <img id="cbz-image" src="" style="max-height:90vh; max-width:100%;">
+            <!-- CBZ / Gallery Viewer -->
+            <div id="cbz-viewer"
+                style="display:flex; justify-content:center; align-items:center; height:100%; position:relative;">
+                <img id="cbz-image" src=""
+                    style="max-height:90vh; max-width:100%; object-fit:contain; border-radius:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+
+                <!-- Left/Right Nav Arrows -->
+                <button class="gallery-arrow gallery-left" id="galleryPrev"
+                    style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: background 0.2s;">&#8249;</button>
+                <button class="gallery-arrow gallery-right" id="galleryNext"
+                    style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: background 0.2s;">&#8250;</button>
             </div>
+
             <script>
                 const cbzImages = <?= json_encode($cbzImages) ?>;
-                const fileId = <?= $fileId ?>;
-                // Basic CBZ logic to be enhanced by main script
-            </script>
+                const fileType = '<?= $fileType ?>';
+                const appUrl = '<?= APP_URL ?>';
+                let currentGalleryIndex = 0;
 
+                function renderGalleryImage() {
+                    if (cbzImages.length > 0) {
+                        const imgPath = cbzImages[currentGalleryIndex];
+
+                        // For gallery it's a relative path from app root, for CBZ it's a temp extracted path 
+                        // Note: actual CBZ extract logic would serve via serve_file.php or similar, 
+                        // but gallery specifically uses direct uploads path natively
+                        if (fileType === 'gallery') {
+                            document.getElementById('cbz-image').src = appUrl + '/' + imgPath;
+                        } else {
+                            // Basic CBZ fallback placeholder logic 
+                            // (If CBZ extraction is not fully implemented on server yet)
+                            document.getElementById('cbz-image').src = appUrl + '/' + imgPath;
+                        }
+
+                        // Update Progress Counter in Footer
+                        const progressPercent = document.getElementById('progress-percent');
+                        const locationRef = document.getElementById('location-ref');
+                        const progressFill = document.getElementById('progress-fill');
+
+                        if (progressPercent && locationRef && progressFill) {
+                            const pct = Math.round(((currentGalleryIndex + 1) / cbzImages.length) * 100);
+                            progressPercent.textContent = pct + '%';
+                            locationRef.textContent = `Image ${currentGalleryIndex + 1} of ${cbzImages.length}`;
+                            progressFill.style.width = pct + '%';
+                        }
+                    }
+                }
+
+                document.getElementById('galleryPrev').onclick = function () {
+                    if (cbzImages.length > 0) {
+                        currentGalleryIndex = (currentGalleryIndex - 1 + cbzImages.length) % cbzImages.length;
+                        renderGalleryImage();
+                    }
+                };
+
+                document.getElementById('galleryNext').onclick = function () {
+                    if (cbzImages.length > 0) {
+                        currentGalleryIndex = (currentGalleryIndex + 1) % cbzImages.length;
+                        renderGalleryImage();
+                    }
+                };
+
+                document.addEventListener('keydown', function (e) {
+                    if (cbzImages.length > 0) {
+                        if (e.key === 'ArrowLeft') {
+                            currentGalleryIndex = (currentGalleryIndex - 1 + cbzImages.length) % cbzImages.length;
+                            renderGalleryImage();
+                        }
+                        if (e.key === 'ArrowRight') {
+                            currentGalleryIndex = (currentGalleryIndex + 1) % cbzImages.length;
+                            renderGalleryImage();
+                        }
+                    }
+                });
+
+                // Hide loading overlay explicitly since book.epub logic won't run
+                setTimeout(() => {
+                    const loadingMenu = document.getElementById('epub-loading');
+                    if (loadingMenu) loadingMenu.style.display = 'none';
+                }, 500);
+
+                // Init rendering
+                renderGalleryImage();
+            </script>
         <?php else: ?>
             <div class="reader-fallback">
                 <div class="fallback-card">

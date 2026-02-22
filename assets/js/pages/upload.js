@@ -45,6 +45,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // Capture Original State if Edit Mode
     if (isEditMode) {
         captureOriginalState();
+
+        // Change "Add File" to "Change File"
+        const btnAddFile = document.querySelector('.btn-add-file');
+        if (btnAddFile) btnAddFile.textContent = 'CHANGE FILE';
+
+        // Initialize Tags visually
+        const keywordsHidden = document.getElementById('keywordsHidden');
+        if (keywordsHidden && keywordsHidden.value && typeof setTags === 'function') {
+            const tagsList = keywordsHidden.value.split(',').map(t => t.trim()).filter(t => t);
+            setTags(tagsList);
+        }
     }
 
     // --- Event Listeners ---
@@ -96,13 +107,16 @@ document.addEventListener('DOMContentLoaded', function () {
             // Show Discard Modal instead of resetting immediately
             if (hasUnsavedChanges()) {
                 const modalEl = document.getElementById('discardModal');
-                let m = bootstrap.Modal.getInstance(modalEl);
-                if (!m) m = new bootstrap.Modal(modalEl);
+                let m = bootstrap.Modal.getOrCreateInstance(modalEl);
                 m.show();
             } else {
-                // If nothing to discard, just reset (or do nothing? usually reset implies clearing even empty state if dirty)
-                // Actually if no changes, maybe just reset anyway to be sure.
-                if (typeof window.resetForm === 'function') window.resetForm();
+                const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
+                if (isEdit) {
+                    window.isNavigatingAway = true;
+                    window.location.href = APP_URL + '/dashboard.php';
+                } else if (typeof window.resetForm === 'function') {
+                    window.resetForm();
+                }
             }
         });
     });
@@ -159,21 +173,63 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // If Valid, Show Confirmation Modal
-            const m = new bootstrap.Modal(document.getElementById('confirmUploadModal'));
+            const modalEl = document.getElementById('confirmUploadModal');
+
+            // Populate file list
+            const fileListContainer = document.getElementById('uploadFileList');
+            if (fileListContainer) {
+                fileListContainer.innerHTML = '';
+                fileListContainer.style.display = 'block';
+                if (activeFileIndex !== -1) {
+                    const readyFiles = bulkFiles.filter(f => f.status === 'ready');
+                    const ul = document.createElement('ul');
+                    ul.className = 'list-unstyled mb-0 text-start';
+                    readyFiles.forEach(f => {
+                        const li = document.createElement('li');
+                        li.innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + f.name;
+                        ul.appendChild(li);
+                    });
+                    fileListContainer.appendChild(ul);
+                } else {
+                    const fileToUpload = (fileInput.files.length > 0) ? fileInput.files[0] : selectedFile;
+                    if (fileToUpload) {
+                        fileListContainer.innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + fileToUpload.name;
+                    } else if (isEdit) {
+                        fileListContainer.innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + (document.getElementById('previewFilename')?.textContent || 'Current File');
+                    }
+                }
+            }
+
+            const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+            // Edit Mode Modal Text Update
+            if (isEdit) {
+                const modalTitle = modalEl.querySelector('h5');
+                const modalBodyParams = modalEl.querySelector('p');
+                const confirmButton = document.getElementById('confirmUploadBtn');
+                if (modalTitle) modalTitle.textContent = 'Save Changes?';
+                if (modalBodyParams) modalBodyParams.textContent = 'Are you sure you want to save these changes?';
+                if (confirmButton) {
+                    // Temporarily remove spinner span if present so we can just set text
+                    confirmButton.innerHTML = 'Save Changes';
+                }
+            }
+
             m.show();
         });
     });
 
     // Form Field Event Listeners - Update buttons when metadata changes
-    // Form Field Event Listeners - Update buttons when metadata changes
-    const formFields = ['title', 'publisher', 'publication_date', 'edition', 'category_id', 'language_id'];
+    const formFields = ['title', 'publisher', 'publication_date', 'edition', 'category_id', 'language_id', 'page_count', 'volume_issue', 'description', 'keywordsHidden'];
     formFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
             field.addEventListener('input', function () {
                 // Clear invalid state on input
                 this.classList.remove('is-invalid');
-                if (activeFileIndex !== -1) {
+                if (isBindMode) {
+                    validateBindModeForm();
+                } else if (activeFileIndex !== -1) {
                     saveCurrentFormData();
                 } else {
                     updateButtons();
@@ -182,7 +238,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // Also clear on change for selects
             field.addEventListener('change', function () {
                 this.classList.remove('is-invalid');
-                if (activeFileIndex !== -1) {
+                if (isBindMode) {
+                    validateBindModeForm();
+                } else if (activeFileIndex !== -1) {
                     saveCurrentFormData();
                 } else {
                     updateButtons();
@@ -194,11 +252,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Mode Toggle Logic
     if (modeIndividual && modeBind) {
         modeIndividual.addEventListener('change', () => {
-            isBindMode = false;
+            isBindMode = false; // Individual files
             updateBulkUI();
         });
         modeBind.addEventListener('change', () => {
-            isBindMode = true;
+            isBindMode = true; // Photo Gallery
             updateBulkUI();
         });
     }
@@ -222,7 +280,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const currentCat = document.getElementById('category_id')?.value || '';
             const currentLang = document.getElementById('language_id')?.value || '';
             const currentEd = document.getElementById('edition')?.value || '';
-            // Add other fields as needed
+            const currentPc = document.getElementById('page_count')?.value || '';
+            const currentVol = document.getElementById('volume_issue')?.value?.trim() || '';
+            const currentTags = document.getElementById('keywordsHidden')?.value?.trim() || '';
 
             if (currentTitle !== (originalFormData.title || '')) return true;
             if (currentPub !== (originalFormData.publisher || '')) return true;
@@ -230,7 +290,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (currentDate !== (originalFormData.publication_date || '')) return true;
             if (currentCat != (originalFormData.category_id || '')) return true; // loose comparison for string/int
             if (currentLang != (originalFormData.language_id || '')) return true;
-            if (currentEd !== (originalFormData.edition || '')) return true;
+            if (currentEd.trim() !== (originalFormData.edition || '').trim()) return true;
+            if (currentPc != (originalFormData.page_count || '')) return true;
+            if (currentVol !== (originalFormData.volume_issue || '')) return true;
+            if (currentTags !== (originalFormData.tags || '')) return true;
 
             return false;
         } else {
@@ -252,14 +315,19 @@ document.addEventListener('DOMContentLoaded', function () {
             publication_date: document.getElementById('publication_date')?.value || '',
             category_id: document.getElementById('category_id')?.value || '',
             language_id: document.getElementById('language_id')?.value || '',
-            edition: document.getElementById('edition')?.value || ''
+            edition: document.getElementById('edition')?.value || '',
+            page_count: document.getElementById('page_count')?.value || '',
+            volume_issue: document.getElementById('volume_issue')?.value?.trim() || '',
+            tags: document.getElementById('keywordsHidden')?.value?.trim() || ''
         };
         console.log('Original state captured:', originalFormData);
     }
 
     // 2. Browser Native Warning (Reload / Close Tab)
     window.addEventListener('beforeunload', function (e) {
-        if (window.hasUnsavedChanges()) {
+        if (window.isNavigatingAway) return; // Allow approved navigation
+        const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
+        if (window.hasUnsavedChanges() || isEdit) {
             // Cancel the event
             e.preventDefault();
             // Chrome requires returnValue to be set
@@ -280,14 +348,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const url = new URL(link.href, window.location.origin);
         if (url.origin === window.location.origin && url.pathname === window.location.pathname && url.hash) return;
 
-        // If it's a real navigation and we have unsaved changes
-        if (window.hasUnsavedChanges()) {
+        const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
+
+        // If it's a real navigation and we have unsaved changes or we are in edit mode
+        if (!window.isNavigatingAway && (window.hasUnsavedChanges() || isEdit)) {
             e.preventDefault();
             e.stopPropagation();
 
             // Show Custom Modal
             pendingNavigationUrl = link.href;
-            const m = new bootstrap.Modal(document.getElementById('unsavedChangesModal'));
+            const m = bootstrap.Modal.getOrCreateInstance(document.getElementById('unsavedChangesModal'));
             m.show();
         }
     });
@@ -301,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmLeaveBtn.addEventListener('click', () => {
             if (pendingNavigationUrl) {
                 // Skip check and navigate
-                window.hasUnsavedChanges = () => false;
+                window.isNavigatingAway = true;
                 window.location.href = pendingNavigationUrl;
             }
         });
@@ -317,13 +387,13 @@ document.addEventListener('DOMContentLoaded', function () {
     window.confirmDiscardAction = function () {
         const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
         const modalEl = document.getElementById('discardModal');
-
-        // Try to get existing instance
-        const modal = bootstrap.Modal.getInstance(modalEl);
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl); // Use getOrCreateInstance
 
         try {
             if (isEdit) {
-                window.location.reload();
+                window.isNavigatingAway = true;
+                window.hasUnsavedChanges = () => false;
+                window.location.href = APP_URL + '/dashboard.php';
             } else {
                 if (typeof window.resetForm === 'function') window.resetForm();
             }
@@ -331,13 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Error in discard action:', e);
         }
 
-        if (modal) {
-            modal.hide();
-        } else {
-            // Fallback if no instance found but element exists (rare if opened via JS)
-            const m = new bootstrap.Modal(modalEl);
-            m.hide();
-        }
+        modal.hide();
 
         // Ensure backdrop is removed even if bootstrap fails
         setTimeout(() => {
@@ -352,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (confirmUploadBtn) {
         confirmUploadBtn.addEventListener('click', async function () {
             const modalEl = document.getElementById('confirmUploadModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             const originalText = confirmUploadBtn.innerText;
 
             // Show loading state
@@ -421,13 +485,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         singleFormData.append('category_id', m.category_id || '');
                         singleFormData.append('language_id', m.language_id || '');
                         if (m.page_count) singleFormData.append('page_count', m.page_count);
+                        if (m.volume_issue) singleFormData.append('volume_issue', m.volume_issue);
                         if (m.description) singleFormData.append('description', m.description);
+                        if (m.tags) singleFormData.append('keywords', m.tags);
 
-                        // Note: Tags are handled via hidden input usually? 
-                        // If tags are in m.tags array, we should format them.
-                        // Assuming server expects 'tags' string or array.
-                        // Existing code uses 'tags' input from form.
-                        // We'll skip tags for now or append if we saved them in metadata.
+                        // Append thumbnail if present
+                        if (f.customThumbnail) {
+                            singleFormData.append('thumbnail', f.customThumbnail, 'thumbnail.jpg');
+                        }
 
                         try {
                             const res = await fetch(uploadForm.getAttribute('action'), {
@@ -458,6 +523,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // Result Handling
                     if (successCount > 0) {
+                        window.isNavigatingAway = true;
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
                         window.location.href = APP_URL + '/dashboard.php?success=upload&count=' + successCount;
@@ -484,6 +550,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Append Thumbnail if selected (Optional upgrade)
                     if (thumbnailInput && thumbnailInput.files.length > 0) {
                         formData.set('thumbnail', thumbnailInput.files[0]);
+                        console.log('📸 Thumbnail attached to FormData:', thumbnailInput.files[0].name);
                     }
 
                     await uploadData(formData, modal, confirmUploadBtn, originalText);
@@ -506,6 +573,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Thumbnail input is also outside the form — attach manually
                     if (thumbnailInput && thumbnailInput.files.length > 0) {
                         formData.set('thumbnail', thumbnailInput.files[0]);
+                        console.log('📸 Thumbnail attached to FormData:', thumbnailInput.files[0].name);
                     }
 
                     await uploadData(formData, modal, confirmUploadBtn, originalText);
@@ -536,14 +604,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (contentType && contentType.indexOf("application/json") !== -1) {
                 const result = await response.json();
                 if (result.success) {
+                    window.isNavigatingAway = true;
                     const isEdit = document.querySelector('input[name="action"]').value === 'edit';
                     if (isEdit) {
-                        showAlert('success', 'Changes saved successfully.');
-                        resetBtn(btn, text);
-                        if (modal) modal.hide();
-                        if (typeof captureOriginalState === 'function') captureOriginalState();
-                        // Also clear dirty state check just in case until next input
-                        // But captureOriginalState handles it by updating reference.
+                        window.hasUnsavedChanges = function () { return false; };
+                        window.onbeforeunload = null;
+                        window.location.href = APP_URL + '/dashboard.php?success=edit';
                     } else {
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
@@ -557,12 +623,12 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 // Assumed HTML redirect or error
                 if (response.ok) {
+                    window.isNavigatingAway = true;
                     const isEdit = document.querySelector('input[name="action"]').value === 'edit';
                     if (isEdit) {
-                        showAlert('success', 'Changes saved successfully.');
-                        resetBtn(btn, text);
-                        if (modal) modal.hide();
-                        if (typeof captureOriginalState === 'function') captureOriginalState();
+                        window.hasUnsavedChanges = function () { return false; };
+                        window.onbeforeunload = null;
+                        window.location.href = APP_URL + '/dashboard.php?success=edit';
                     } else {
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
@@ -617,6 +683,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.removeThumbnail(e);
             }
         });
+    }
+
+    // Show the remove button on page load in edit mode
+    const isEditModeCurrent = document.querySelector('input[name="action"]')?.value === 'edit';
+    if (isEditModeCurrent && thumbnailPreview && thumbnailPreview.src &&
+        !thumbnailPreview.src.endsWith('#') &&
+        thumbnailPreview.src !== window.location.href) {
+        if (removeThumbnailBtn) removeThumbnailBtn.style.display = 'flex';
+        if (thumbnailPlaceholder) thumbnailPlaceholder.style.display = 'none';
     }
 
     // 3. File Input Change (The actual upload)
@@ -677,6 +752,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clear Input
         if (thumbnailInput) thumbnailInput.value = '';
 
+        // Clear existing_thumbnail input
+        const existingThumb = document.getElementById('existing_thumbnail');
+        if (existingThumb) existingThumb.value = '';
+
         // Reset Image
         if (thumbnailPreview) {
             thumbnailPreview.src = '#';
@@ -730,17 +809,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* Ensure remove button is correctly positioned and visible */
-    const style = document.createElement('style');
-    style.textContent = `
-    #removeThumbnailBtn {
-        z-index: 100; /* Increased z-index */
-        cursor: pointer;
-        display: none; /* Hidden by default */
-        align-items: center;
-        justify-content: center;
-    }
-`;
-    document.head.appendChild(style);
 
     // --- Helper Functions ---
 
@@ -798,8 +866,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (bulkFiles.length === 0) {
                 const firstFile = files[0];
                 if (firstFile.type.startsWith('image/')) {
-                    isBindMode = true; // Images -> Bind/Grid Mode
+                    isBindMode = true; // Images -> Photo Gallery / Grid Mode
                     isBulkMode = true; // Still bulk
+                    activeFileIndex = -1; // Bind Mode shares a single metadata entry
                 } else {
                     isBindMode = false; // Documents -> Tab Mode
                     isBulkMode = true;
@@ -820,8 +889,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log('✅ File selected:', file.name);
 
-            // Hide drop zone, show file preview
+            // Hide drop zone and edit mode indicator, show file preview
             if (dropZoneContainer) dropZoneContainer.style.display = 'none';
+            const editModeIndicator = document.getElementById('editModeIndicator');
+            if (editModeIndicator) editModeIndicator.style.display = 'none';
 
             if (selectedFilePreview) {
                 selectedFilePreview.style.display = 'flex';
@@ -896,20 +967,23 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // 2. Refresh UI Counts & Tabs (Critical Step - Must run before data loading)
-            updateBulkControls();
-            renderTabs();
+            updateBulkUI();
 
             // 3. Load Data & Async Checks
             if (activeFileIndex === -1) {
-                activeFileIndex = 0;
-                // Safe load
-                try {
-                    loadFileData(0);
-                } catch (e) {
-                    console.error('Autoload error:', e);
+                if (!isBindMode) {
+                    activeFileIndex = 0;
+                    try {
+                        loadFileData(0);
+                    } catch (e) {
+                        console.error('Autoload error:', e);
+                    }
+                } else {
+                    validateBindModeForm();
                 }
             } else {
-                // If we already have an active file, just ensure tabs are refreshed (done above)
+                // If we already have an active file
+                if (isBindMode) validateBindModeForm();
             }
 
             checkAllDuplicates(); // Async check
@@ -930,6 +1004,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function loadFileData(index) {
+        if (isBindMode) return; // Skip in Bind Mode as metadata is shared
         const file = bulkFiles[index];
         if (!file) return;
 
@@ -953,8 +1028,8 @@ document.addEventListener('DOMContentLoaded', function () {
         safelySetValue('keywordsHidden', file.metadata.tags);
 
         // Update Tag Visuals if available
-        if (typeof setTags === 'function' && file.metadata.tags) {
-            setTags(file.metadata.tags.split(',').filter(t => t.trim() !== ''));
+        if (typeof setTags === 'function') {
+            setTags(file.metadata.tags ? file.metadata.tags.split(',').filter(t => t.trim() !== '') : []);
         }
 
         // Current File Badge
@@ -1047,8 +1122,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${file.name}
                 </div>
                 <div class="card-footer-row">
-                    <span class="card-status-text">${statusText}</span>
-                    <div class="status-dot"></div>
+                    <span class="card-status-text ${isReady ? 'text-success' : ''}" ${isReady ? 'style="color: #22c55e !important;"' : ''}>${statusText}</span>
+                    <div class="status-dot" ${isReady ? 'style="background-color: #22c55e !important;"' : ''}></div>
                 </div>
             </div>
             `;
@@ -1069,6 +1144,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const duplicates = bulkFiles.filter(f => f.isDuplicate).length;
 
         document.getElementById('totalFilesCount').textContent = total;
+
+        const photoTotalSpan = document.getElementById('totalPhotosCount');
+        if (photoTotalSpan) photoTotalSpan.textContent = total;
+
         document.getElementById('readyFilesCount').textContent = ready;
         document.getElementById('pendingFilesCount').textContent = pending;
 
@@ -1079,6 +1158,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 dupStatus.style.display = 'flex';
                 dupStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> NO DUPLICATE FILES DETECTED';
                 dupStatus.className = 'duplicate-status'; // Ensure green
+                dupStatus.style.color = '#22c55e';
             } else if (duplicates > 0) {
                 dupStatus.style.display = 'flex';
                 dupStatus.innerHTML = `<i class="bi bi-exclamation-circle-fill"></i> ${duplicates} DUPLICATE FOUND`;
@@ -1101,6 +1181,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectedFilePreview) selectedFilePreview.style.display = 'none';
         if (dropZoneContainer) dropZoneContainer.style.display = 'block';
 
+        // Check for edit mode
+        const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
+        const editModeIndicator = document.getElementById('editModeIndicator');
+        if (isEdit && editModeIndicator) {
+            editModeIndicator.style.display = '';
+        }
+
         updateButtons();
     }
 
@@ -1122,7 +1209,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const dropZoneContainer = document.getElementById('dropZoneContainer');
 
         if (selectedFilePreview) selectedFilePreview.style.display = 'none';
-        if (dropZoneContainer) dropZoneContainer.style.display = 'block';
+
+        const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
+        if (!isEdit && dropZoneContainer) {
+            dropZoneContainer.style.display = 'block';
+        }
+
+        const editModeIndicator = document.getElementById('editModeIndicator');
+        if (isEdit && editModeIndicator) {
+            editModeIndicator.style.display = '';
+        }
 
         // Clear Current File Badge (Gen Info)
         const badge = document.getElementById('currentFileName');
@@ -1150,6 +1246,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const bulkUploadContainer = document.getElementById('bulkUploadContainer');
         if (bulkUploadContainer) bulkUploadContainer.style.display = 'none';
+
+        const photoMsg = document.getElementById('bulkPhotoInfoMessage');
+        if (photoMsg) photoMsg.classList.add('d-none');
+
+        const photoStats = document.getElementById('photoStatsWrapper');
+        if (photoStats) photoStats.style.display = 'none';
+
+        const docStats = document.getElementById('docStatsWrapper');
+        if (docStats) docStats.style.display = 'none';
 
         // Reset Counts
         document.getElementById('totalFilesCount').textContent = '0';
@@ -1201,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateButtons() {
-        const hasFile = (fileInput.files.length > 0 || bulkFiles.length > 0 || selectedFile !== null);
+        const hasFile = ((fileInput && fileInput.files) ? fileInput.files.length > 0 : false) || bulkFiles.length > 0 || selectedFile !== null;
         const isEdit = document.querySelector('input[name="action"]').value === 'edit';
 
         // Check Dirty State for Discard Button
@@ -1228,7 +1333,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isEdit) {
                 // Edit Mode: Enable only if Dirty AND Valid
-                shouldEnable = isDirty && isFormValid;
+                const newFileSelected = (fileInput && fileInput.files) ? fileInput.files.length > 0 : false;
+                shouldEnable = (isDirty || newFileSelected) && isFormValid;
             } else {
                 // Upload Mode: Enable ONLY if File Selected AND Form Valid AND No Error
                 shouldEnable = hasFile && isFormValid && !hasError;
@@ -1256,7 +1362,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         discardBtns.forEach(btn => {
-            if (btn) btn.disabled = !isDirty;
+            if (btn) {
+                if (isEdit) {
+                    btn.disabled = false; // Always allow discard in edit mode
+                } else {
+                    const newFileSelected = (fileInput && fileInput.files) ? fileInput.files.length > 0 : false;
+                    btn.disabled = !(isDirty || newFileSelected);
+                }
+            }
         });
     }
 
@@ -1335,13 +1448,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function validateFile(index) {
+        if (isBindMode) return; // Managed globally for photos
         const file = bulkFiles[index];
         if (!file) return;
 
         // Check Metadata
         const m = file.metadata;
-        // We can also allow some optional fields? 
-        // Requirement said: "Validation: Prevent submission if required metadata... is missing."
         const isMetaComplete = (m.title && m.publication_date && m.category_id && m.language_id);
 
         if (file.isDuplicate) {
@@ -1352,28 +1464,72 @@ document.addEventListener('DOMContentLoaded', function () {
             file.status = 'pending';
         }
 
-        updateBulkControls();
-        renderTabs();
+        updateBulkUI();
         updateButtons();
+    }
+
+    window.validateBindModeForm = function () {
+        const title = document.getElementById('title')?.value?.trim();
+        const date = document.getElementById('publication_date')?.value?.trim();
+        const category = document.getElementById('category_id')?.value?.trim();
+        const language = document.getElementById('language_id')?.value?.trim();
+        const hasFiles = bulkFiles.length > 0;
+
+        const isValid = title && date && category && language && hasFiles;
+
+        const uploadBtns = [
+            document.getElementById('uploadBtnDesktop'),
+            document.getElementById('uploadBtnMobile'),
+            document.getElementById('uploadBtn')
+        ];
+        uploadBtns.forEach(btn => {
+            if (btn) btn.disabled = !isValid;
+        });
     }
 
     // Override validateCurrentFile to use validateFile (if called from other places)
     window.validateCurrentFile = function () {
-        if (activeFileIndex !== -1) validateFile(activeFileIndex);
+        if (isBindMode) {
+            validateBindModeForm();
+        } else if (activeFileIndex !== -1) {
+            validateFile(activeFileIndex);
+        }
     }
 
     // Compatibility for Bind Mode
     function updateBulkUI() {
         updateBulkControls();
-        renderTabs();
+        const tabsWrapper = document.getElementById('tabsWrapper');
+        const gridWrapper = document.getElementById('pageOrderGridWrapper');
+        const photoMsg = document.getElementById('bulkPhotoInfoMessage');
+        const docStats = document.getElementById('docStatsWrapper');
+        const photoStats = document.getElementById('photoStatsWrapper');
+
         if (isBindMode) {
+            if (tabsWrapper) tabsWrapper.style.display = 'none';
+            if (gridWrapper) gridWrapper.style.display = 'block';
+            if (photoMsg) photoMsg.classList.remove('d-none');
+            if (docStats) docStats.style.display = 'none';
+            if (photoStats) photoStats.style.display = 'flex';
+
+            // Hide the "Editing: [filename]" badge during Bulk Photo config
+            const currentObjCountBadge = document.getElementById('currentFileName');
+            if (currentObjCountBadge) currentObjCountBadge.classList.add('d-none');
+
             renderImageGrid();
+        } else {
+            if (tabsWrapper) tabsWrapper.style.display = 'block';
+            if (gridWrapper) gridWrapper.style.display = 'none';
+            if (photoMsg) photoMsg.classList.add('d-none');
+            if (docStats) docStats.style.display = 'flex';
+            if (photoStats) photoStats.style.display = 'none';
+            renderTabs();
         }
     }
 
     // Replaces renderBulkList (Legacy) - Now handled by renderTabs
     function renderBulkList() {
-        renderTabs();
+        updateBulkUI();
     }
 
     window.removeBulkFile = function (id) {
@@ -1384,44 +1540,86 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    // --- Image Grid (Bind Mode) ---
     function renderImageGrid() {
         const grid = document.getElementById('pageOrderGrid');
         grid.innerHTML = '';
 
         bulkFiles.forEach((file, index) => {
             const col = document.createElement('div');
-            col.className = 'page-order-item position-relative m-1';
-            col.style.width = '140px'; // Slightly wider for buttons
-            col.style.height = '180px';
+            // Adding a container specifically for hover and scaling
+            col.className = 'd-inline-flex flex-column align-items-center m-2';
+            col.style.width = '160px';
+            col.style.cursor = 'pointer';
+            col.style.transition = 'all 0.3s ease';
+            col.onmouseover = () => col.style.transform = 'translateY(-5px)';
+            col.onmouseout = () => col.style.transform = 'translateY(0)';
             col.draggable = true;
             col.dataset.index = index;
 
+            // Ensure first item is cover if nothing is selected
+            if (!coverFileId && index === 0) coverFileId = file.id;
             const isCover = (coverFileId === file.id);
+
+            // Container for the image itself
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'position-relative rounded shadow-sm w-100 mb-2 bg-white photo-gallery-item-hover';
+            imgContainer.style.height = '220px';
+            imgContainer.style.padding = '8px';
+            imgContainer.style.border = isCover ? '3px solid #3d8a7d' : '1px solid #e2e8f0';
+            imgContainer.style.backgroundColor = isCover ? '#28756a' : '#fff'; // Dark green background for primary like mockup
+            imgContainer.style.transition = 'all 0.3s ease';
+
+            // Allow clicking anywhere on the thumbnail to set it as primary
+            imgContainer.onclick = (e) => {
+                setAsCover(file.id);
+            };
 
             // Preview
             let preview = '';
             if (file.type.startsWith('image/')) {
                 const url = URL.createObjectURL(file.file);
-                preview = `<img src="${url}" class="w-100 h-100 rounded border shadow-sm ${isCover ? 'border-primary border-3' : ''}" style="object-fit: cover;">`;
+                // The image gets centered within the container like a paper
+                preview = `<img src="${url}" class="w-100 h-100 rounded shadow-sm" style="object-fit: contain; background-color: white;">`;
             } else {
-                preview = `<div class="w-100 h-100 rounded border bg-light d-flex align-items-center justify-content-center text-muted"><i class="bi bi-file-earmark-text fs-2"></i></div>`;
+                preview = `<div class="w-100 h-100 rounded bg-light d-flex align-items-center justify-content-center text-muted"><i class="bi bi-file-earmark-text fs-2"></i></div>`;
             }
 
-            col.innerHTML = `
+            // Star Icon Configuration
+            const starIcon = isCover
+                ? `<i class="bi bi-star-fill text-warning fs-5 drop-shadow"></i>`
+                : `<i class="bi bi-star text-secondary fs-5"></i>`;
+
+            // Adding elements inside the Image Container
+            imgContainer.innerHTML = `
                 ${preview}
                 
-                ${isCover ? '<span class="position-absolute top-0 start-0 badge bg-primary m-1 shadow-sm">Cover</span>' : ''}
+                ${isCover ? '<span class="badge position-absolute shadow-sm" style="top: 12px; left: 12px; background-color: #5d4037; color: white; border-radius: 12px; font-size: 0.70rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; opacity: 0.9;">PRIMARY</span>' : ''}
 
-                <div class="position-absolute top-0 end-0 p-1">
-                     <button class="btn btn-sm btn-danger py-0 px-1 rounded-circle" style="width:20px;height:20px;line-height:1;" onclick="removeBulkFile('${file.id}')" title="Remove">&times;</button>
-                </div>
-
-                <div class="position-absolute bottom-0 w-100 p-1 bg-white bg-opacity-90 d-flex flex-column gap-1 align-items-center">
-                    <small class="fw-bold text-dark" style="font-size:10px;">Pg ${index + 1}</small>
-                    ${!isCover ? `<button class="btn btn-xs btn-outline-primary py-0" style="font-size:10px;" onclick="setAsCover('${file.id}')">Set Cover</button>` : ''}
+                <!-- Remove Button -->
+                <div class="position-absolute d-flex justify-content-center align-items-center rounded-circle shadow-sm bg-danger text-light" 
+                     style="top: -10px; left: -10px; width: 24px; height: 24px; cursor: pointer; z-index: 10;" 
+                     onclick="removeBulkFile('${file.id}'); event.stopPropagation();" title="Remove Photo">
+                     <i class="bi bi-x pb-0 mb-0" style="font-size: 16px; line-height: 1;"></i>
                 </div>
             `;
+
+            // Filename layout and separate Star outside the image bounding box below it
+            const titleRow = document.createElement('div');
+            titleRow.className = 'd-flex justify-content-between align-items-center w-100 px-1 mt-1';
+
+            const fileTitle = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
+            titleRow.innerHTML = `
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden mr-2">
+                    <span class="badge bg-secondary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 20px; height: 20px; font-size: 0.65rem;">${index + 1}</span>
+                    <span class="text-secondary fw-semibold text-truncate" style="font-size: 0.8rem;">${fileTitle}</span>
+                </div>
+                <div class="cursor-pointer ms-1" onclick="setAsCover('${file.id}'); event.stopPropagation();" title="Select as Primary">
+                    ${starIcon}
+                </div>
+            `;
+
+            col.appendChild(imgContainer);
+            col.appendChild(titleRow);
 
             addDragEvents(col);
             grid.appendChild(col);
@@ -1452,8 +1650,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Update Global Remove to clear cover selection
     const originalRemoveThumbnail = window.removeThumbnail;
     window.removeThumbnail = function (e) {
-        coverFileId = null; // Clear selection
-        renderImageGrid(); // Remove badge
+        if (isBindMode) {
+            coverFileId = null; // Clear selection
+            renderImageGrid(); // Remove badge
+        }
         if (originalRemoveThumbnail) originalRemoveThumbnail(e);
     }
 
@@ -1473,7 +1673,7 @@ document.addEventListener('DOMContentLoaded', function () {
         dragSrcEl = this;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/html', this.innerHTML);
-        this.classList.add('dragging');
+        this.classList.add('drag-active-card');
     }
 
     function handleDragOver(e) {
@@ -1507,7 +1707,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleDragEnd(e) {
-        this.classList.remove('dragging');
+        this.classList.remove('drag-active-card');
         document.querySelectorAll('.page-order-item').forEach(item => {
             item.classList.remove('drag-over');
         });
@@ -1614,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             activeFileIndex = index;
             loadFileData(index);
-            renderTabs();
+            updateBulkUI();
             updateButtons();
         }
     };
@@ -1648,17 +1848,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             // IF index > active, no change to activeIndex
 
-            updateBulkControls();
-            renderTabs();
+            updateBulkUI();
             updateButtons();
-
-            // Re-render grid if in bind mode
-            if (isBindMode) renderImageGrid();
         }
     };
 
     // Helper to save current form data to the object
     function saveCurrentFormData() {
+        if (isBindMode) return; // Skip in Bind Mode as metadata is globally shared
         if (activeFileIndex === -1 || !bulkFiles[activeFileIndex]) return;
 
         const f = bulkFiles[activeFileIndex];

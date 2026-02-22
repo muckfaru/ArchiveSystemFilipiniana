@@ -253,99 +253,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fileCount = count($_FILES['files']['name']);
 
             if ($fileCount > 0) {
-                // Create minimal filename for the archive based on title
-                $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
-                $cbzFileName = time() . '_' . ($slug ?: 'archive') . '.cbz';
-                $cbzPath = UPLOAD_PATH . 'newspapers/' . $cbzFileName;
+                $totalSize = 0;
+                $savedPaths = [];
+                $thumbnailPath = null;
+                $bulkDir = UPLOAD_PATH . 'newspapers/bulk_' . time();
 
-                $zip = new ZipArchive();
-                if ($zip->open($cbzPath, ZipArchive::CREATE) === TRUE) {
+                if (!is_dir($bulkDir)) {
+                    mkdir($bulkDir, 0777, true);
+                }
 
-                    $totalSize = 0;
+                // Process each file sequentially to maintain order
+                for ($i = 0; $i < $fileCount; $i++) {
+                    if ($_FILES['files']['error'][$i] === UPLOAD_ERR_OK) {
+                        $tmpName = $_FILES['files']['tmp_name'][$i];
+                        $name = $_FILES['files']['name'][$i];
+                        $size = $_FILES['files']['size'][$i];
+                        $totalSize += $size;
 
-                    // Add each file to the zip
-                    for ($i = 0; $i < $fileCount; $i++) {
-                        if ($_FILES['files']['error'][$i] === UPLOAD_ERR_OK) {
-                            $tmpName = $_FILES['files']['tmp_name'][$i];
-                            $name = $_FILES['files']['name'][$i];
-                            $totalSize += $_FILES['files']['size'][$i];
+                        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                            // Generate safe sequential filename
+                            $cleanName = sprintf("%03d_%s_%s", $i + 1, time(), generateRandomString(5)) . '.' . $ext;
+                            $destination = $bulkDir . '/' . $cleanName;
 
-                            // Clean filename to ensure order and compatibility
-                            $ext = pathinfo($name, PATHINFO_EXTENSION);
-                            $cleanName = sprintf("%03d_%s", $i + 1, $name);
-
-                            $zip->addFile($tmpName, $cleanName);
-                            // Optimize: Store images without re-compression (fastest)
-                            if (method_exists($zip, 'setCompressionName')) {
-                                $zip->setCompressionName($cleanName, ZipArchive::CM_STORE);
+                            if (move_uploaded_file($tmpName, $destination)) {
+                                $relativePath = 'uploads/newspapers/' . basename($bulkDir) . '/' . $cleanName;
+                                $savedPaths[] = $relativePath;
                             }
                         }
                     }
+                }
 
-                    $zip->close();
-
-                    // Handle thumbnail (use first image if no thumbnail uploaded)
-                    $thumbnailPath = null;
-                    if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                        $thumbFile = $_FILES['thumbnail'];
-                        $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
-                        if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
-                            $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                            $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
-                            if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                                $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
-                            }
-                        }
-                    }
-
-                    // Insert into Database
-                    $stmt = $pdo->prepare("
-                            INSERT INTO newspapers (title, publication_date, edition, category_id, language_id, page_count, 
-                                                   keywords, publisher, volume_issue, description, file_path, file_name, 
-                                                   file_type, file_size, thumbnail_path, uploaded_by, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                        ");
-
-                    if (
-                        $stmt->execute([
-                            $title,
-                            $publicationDate,
-                            $edition,
-                            $categoryId,
-                            $languageId,
-                            $pageCount,
-                            $keywords,
-                            $publisher,
-                            $volumeIssue,
-                            $description,
-                            'uploads/newspapers/' . $cbzFileName,
-                            $cbzFileName,
-                            'cbz', // Custom type for our Comic Book Zip
-                            $totalSize,
-                            $thumbnailPath,
-                            $currentUser['id']
-                        ])
-                    ) {
-                        $newId = $pdo->lastInsertId();
-                        logActivity($currentUser['id'], 'upload', $title, $newId);
-
-                        echo json_encode(['success' => true, 'id' => $newId, 'message' => 'Bulk upload compiled to book successfully']);
-                        exit;
-                    } else {
-                        $errorInfo = $stmt->errorInfo();
-                        error_log("Database Bulk Insert Error: " . print_r($errorInfo, true));
-
-                        if (file_exists($cbzPath))
-                            unlink($cbzPath);
-
-                        http_response_code(500);
-                        echo json_encode(['success' => false, 'message' => 'Database error: ' . $errorInfo[2]]);
-                        exit;
-                    }
-
-                } else {
+                if (empty($savedPaths)) {
                     http_response_code(500);
-                    echo json_encode(['success' => false, 'message' => 'Failed to create archive file']);
+                    echo json_encode(['success' => false, 'message' => 'Failed to upload any valid images']);
+                    exit;
+                }
+
+                // Handle Custom Thumbnail (if selected) or use first image as fallback
+                if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
+                    $thumbFile = $_FILES['thumbnail'];
+                    $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
+                    if (in_array($thumbExt, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
+                        $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
+                        if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
+                            $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                        }
+                    }
+                } else {
+                    $thumbnailPath = $savedPaths[0]; // Fallback to first uploaded image in sequence
+                }
+
+                $imagePathsJson = json_encode($savedPaths);
+
+                // Insert into Database
+                $stmt = $pdo->prepare("
+                        INSERT INTO newspapers (title, publication_date, edition, category_id, language_id, page_count, 
+                                               keywords, publisher, volume_issue, description, file_path, file_name, 
+                                               file_type, file_size, thumbnail_path, uploaded_by, created_at,
+                                               is_bulk_image, image_paths)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, ?)
+                    ");
+
+                if (
+                    $stmt->execute([
+                        $title,
+                        $publicationDate,
+                        $edition,
+                        $categoryId,
+                        $languageId,
+                        $pageCount,
+                        $keywords,
+                        $publisher,
+                        $volumeIssue,
+                        $description,
+                        $savedPaths[0], // Main file path fallback string
+                        'Bulk_Image_Gallery_' . time(),
+                        'gallery',
+                        $totalSize,
+                        $thumbnailPath,
+                        $currentUser['id'],
+                        $imagePathsJson
+                    ])
+                ) {
+                    $newId = $pdo->lastInsertId();
+                    logActivity($currentUser['id'], 'upload', $title, $newId);
+
+                    echo json_encode(['success' => true, 'id' => $newId, 'message' => 'Bulk image sequence saved successfully']);
+                    exit;
+                } else {
+                    $errorInfo = $stmt->errorInfo();
+                    error_log("Database Bulk Gallery Insert Error: " . print_r($errorInfo, true));
+
+                    // Cleanup physical files if DB fails
+                    foreach ($savedPaths as $path) {
+                        $full = dirname(dirname(__DIR__)) . '/' . $path;
+                        if (file_exists($full))
+                            unlink($full);
+                    }
+
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Database error: ' . $errorInfo[2]]);
                     exit;
                 }
             }

@@ -52,55 +52,37 @@ document.addEventListener('DOMContentLoaded', function () {
             currentFileId = id;
 
             // Handle Bulk Image Mode
-            const sliderControls = document.getElementById('sliderControls');
-            const imageCounter = document.getElementById('imageCounter');
+            const photoViewerPrev = document.getElementById('photoViewerPrev');
+            const photoViewerNext = document.getElementById('photoViewerNext');
+            const photoViewerCounter = document.getElementById('photoViewerCounter');
             const readNowBtn = document.getElementById('readNowBtn');
 
             if (isBulk && imagePaths.length > 0) {
                 // Bulk Image Mode
-                bulkImagePaths = imagePaths;
-                currentImageIndex = 0;
+                if (photoViewerPrev) photoViewerPrev.style.display = 'none';
+                if (photoViewerNext) photoViewerNext.style.display = 'none';
+                if (photoViewerCounter) photoViewerCounter.style.display = 'none';
 
-                // Show slider controls and counter
-                if (sliderControls) sliderControls.style.display = 'block';
-                if (imageCounter) imageCounter.style.display = 'block';
                 if (readNowBtn) {
                     readNowBtn.style.display = 'flex';
-                    // Update Read Now Link
-                    if (format === 'cbz') {
-                        readNowBtn.href = APP_URL + `/pages/reader.php?id=${id}`;
-                        readNowBtn.target = '_blank';
-                    } else if (format === 'pdf') {
-                        readNowBtn.href = APP_URL + `/pages/reader.php?id=${id}`;
-                        readNowBtn.target = '_blank';
-                    } else if (format === 'mobi' || format === 'epub') {
-                        readNowBtn.href = APP_URL + `/pages/reader.php?id=${id}`;
-                        readNowBtn.target = '_blank';
-                    } else {
-                        readNowBtn.href = file; // Fallback
-                        readNowBtn.target = '_blank';
-                    }
+                    readNowBtn.href = APP_URL + `/pages/reader.php?id=${id}`;
+                    readNowBtn.target = '_blank';
                 }
 
-                // Update image counter
-                const currentImageEl = document.getElementById('currentImage');
-                const totalImagesEl = document.getElementById('totalImages');
-                if (currentImageEl) currentImageEl.textContent = '1';
-                if (totalImagesEl) totalImagesEl.textContent = imagePaths.length;
-
-                // Display first image
-                const previewImg = document.getElementById('previewImage');
                 const noPreviewIcon = document.getElementById('noPreviewIcon');
+                if (noPreviewIcon) noPreviewIcon.style.display = 'none';
+
+                const previewImg = document.getElementById('photoViewerImg');
                 if (previewImg) {
-                    previewImg.src = imagePaths[0];
+                    previewImg.src = thumbnail || (imagePaths.length > 0 ? imagePaths[0] : '');
                     previewImg.style.display = 'block';
                 }
-                if (noPreviewIcon) noPreviewIcon.style.display = 'none';
             } else {
                 // Normal Document Mode
-                bulkImagePaths = [];
-                if (sliderControls) sliderControls.style.display = 'none';
-                if (imageCounter) imageCounter.style.display = 'none';
+                if (photoViewerPrev) photoViewerPrev.style.display = 'none';
+                if (photoViewerNext) photoViewerNext.style.display = 'none';
+                if (photoViewerCounter) photoViewerCounter.style.display = 'none';
+
                 if (readNowBtn) {
                     readNowBtn.style.display = 'flex';
                     // Update Read Now Link (Normal Mode)
@@ -114,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Handle Image
-                const previewImg = document.getElementById('previewImage');
+                const previewImg = document.getElementById('photoViewerImg');
                 const noPreviewIcon = document.getElementById('noPreviewIcon');
                 if (thumbnail) {
                     if (previewImg) {
@@ -199,41 +181,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Image Slider Navigation
-        const sliderPrevBtn = document.getElementById('sliderPrevBtn');
-        const sliderNextBtn = document.getElementById('sliderNextBtn');
-
-        if (sliderPrevBtn) {
-            sliderPrevBtn.addEventListener('click', function () {
-                if (currentImageIndex > 0) {
-                    currentImageIndex--;
-                    updateSliderImage();
-                }
-            });
-        }
-
-        if (sliderNextBtn) {
-            sliderNextBtn.addEventListener('click', function () {
-                if (currentImageIndex < bulkImagePaths.length - 1) {
-                    currentImageIndex++;
-                    updateSliderImage();
-                }
-            });
-        }
-
-        // Update slider image display
-        function updateSliderImage() {
-            const previewImg = document.getElementById('previewImage');
-            const currentImageEl = document.getElementById('currentImage');
-            if (previewImg && bulkImagePaths.length > 0) {
-                previewImg.src = bulkImagePaths[currentImageIndex];
-                if (currentImageEl) currentImageEl.textContent = (currentImageIndex + 1);
-
-                // Update button states
-                if (sliderPrevBtn) sliderPrevBtn.disabled = currentImageIndex === 0;
-                if (sliderNextBtn) sliderNextBtn.disabled = currentImageIndex === bulkImagePaths.length - 1;
-            }
-        }
     }
 
     // Show delete confirmation (handles modal nesting)
@@ -310,3 +257,4 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+

@@ -492,3 +492,785 @@
 2026-02-20 01:37:37 - Processing upload: pg77886-images-kf8.mobi (724968 bytes)
 2026-02-20 01:37:37 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771522657_aef8a38c.mobi
 2026-02-20 01:37:37 - DB Insert Success. New ID: 50
+2026-02-20 16:33:41 - Request received. Action: upload
+2026-02-20 16:33:41 - POST Data: Array
+(
+    [action] => upload
+    [title] => errte
+    [publisher] => tr
+    [publication_date] => 2026-02-06
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 1
+    [page_count] => 45
+)
+
+2026-02-20 16:33:41 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\phpCC24.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+)
+
+2026-02-20 16:33:41 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 16:33:41 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771576421_93eab6f2.epub
+2026-02-20 16:33:41 - DB Insert Success. New ID: 51
+2026-02-20 17:32:38 - Request received. Action: upload
+2026-02-20 17:32:38 - POST Data: Array
+(
+    [action] => upload
+    [title] => rwerw
+    [publisher] => 456
+    [publication_date] => 2026-02-02
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 12
+    [page_count] => 56
+)
+
+2026-02-20 17:32:38 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\php68CB.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+)
+
+2026-02-20 17:32:38 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 17:32:38 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771579958_356ace29.epub
+2026-02-20 17:32:38 - DB Insert Success. New ID: 52
+2026-02-20 17:32:39 - Request received. Action: upload
+2026-02-20 17:32:39 - POST Data: Array
+(
+    [action] => upload
+    [title] => 4retrty
+    [publisher] => rtyrrt
+    [publication_date] => 1994-06-23
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 12
+    [page_count] => 34
+)
+
+2026-02-20 17:32:39 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1342-images-kf8.mobi
+            [full_path] => pg1342-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php69B6.tmp
+            [error] => 0
+            [size] => 25333240
+        )
+
+)
+
+2026-02-20 17:32:39 - Processing upload: pg1342-images-kf8.mobi (25333240 bytes)
+2026-02-20 17:32:39 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771579959_db9727c2.mobi
+2026-02-20 17:32:39 - DB Insert Success. New ID: 53
+2026-02-20 17:32:48 - Request received. Action: upload
+2026-02-20 17:32:48 - POST Data: Array
+(
+    [action] => upload
+    [title] => rtyrfg
+    [publisher] => tyuty
+    [publication_date] => 2026-02-10
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 9
+    [page_count] => 12
+)
+
+2026-02-20 17:32:48 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1513-images-kf8.mobi
+            [full_path] => pg1513-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php9144.tmp
+            [error] => 0
+            [size] => 648209
+        )
+
+)
+
+2026-02-20 17:32:48 - Processing upload: pg1513-images-kf8.mobi (648209 bytes)
+2026-02-20 17:32:48 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771579968_25cbf42f.mobi
+2026-02-20 17:32:48 - DB Insert Success. New ID: 54
+2026-02-20 18:04:39 - Request received. Action: upload
+2026-02-20 18:04:39 - POST Data: Array
+(
+    [action] => upload
+    [title] => rtrtyr
+    [publisher] => trtyrt
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 12
+    [page_count] => 56
+)
+
+2026-02-20 18:04:39 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\phpB80A.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+)
+
+2026-02-20 18:04:39 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 18:04:39 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771581879_420f4acb.epub
+2026-02-20 18:04:39 - DB Insert Success. New ID: 55
+2026-02-20 18:04:39 - Request received. Action: upload
+2026-02-20 18:04:39 - POST Data: Array
+(
+    [action] => upload
+    [title] => rete
+    [publisher] => ert
+    [publication_date] => 2026-02-07
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 12
+    [page_count] => 45
+)
+
+2026-02-20 18:04:39 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1342-images-kf8.mobi
+            [full_path] => pg1342-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\phpB82A.tmp
+            [error] => 0
+            [size] => 25333240
+        )
+
+)
+
+2026-02-20 18:04:39 - Processing upload: pg1342-images-kf8.mobi (25333240 bytes)
+2026-02-20 18:04:39 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771581879_2bf23613.mobi
+2026-02-20 18:04:39 - DB Insert Success. New ID: 56
+2026-02-20 18:45:34 - Request received. Action: upload
+2026-02-20 18:45:34 - POST Data: Array
+(
+    [action] => upload
+    [title] => test
+    [publisher] => test
+    [publication_date] => 2026-02-11
+    [edition] => Morning
+    [category_id] => 6
+    [language_id] => 6
+)
+
+2026-02-20 18:45:34 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1513-images-kf8.mobi
+            [full_path] => pg1513-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php2DE4.tmp
+            [error] => 0
+            [size] => 648209
+        )
+
+)
+
+2026-02-20 18:45:34 - Processing upload: pg1513-images-kf8.mobi (648209 bytes)
+2026-02-20 18:45:34 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771584334_2d070216.mobi
+2026-02-20 18:45:34 - DB Insert Success. New ID: 57
+2026-02-20 18:49:53 - Request received. Action: upload
+2026-02-20 18:49:53 - POST Data: Array
+(
+    [action] => upload
+    [title] => ytty
+    [publisher] => ujtyutyu
+    [publication_date] => 2023-06-20
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 12
+    [page_count] => 34
+    [volume_issue] => 34
+    [keywords] => r
+    [description] => 
+)
+
+2026-02-20 18:49:53 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1513-images-kf8.mobi
+            [full_path] => pg1513-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php215F.tmp
+            [error] => 0
+            [size] => 648209
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => 29e9a612-84b2-415b-8a8d-04ac74d8d524.jpg
+            [full_path] => 29e9a612-84b2-415b-8a8d-04ac74d8d524.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php2160.tmp
+            [error] => 0
+            [size] => 182578
+        )
+
+)
+
+2026-02-20 18:49:53 - Processing upload: pg1513-images-kf8.mobi (648209 bytes)
+2026-02-20 18:49:53 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771584593_bcfabe06.mobi
+2026-02-20 18:49:53 - DB Insert Success. New ID: 58
+2026-02-20 18:50:58 - Request received. Action: upload
+2026-02-20 18:50:58 - POST Data: Array
+(
+    [action] => upload
+    [title] => ert
+    [publisher] => ydfg
+    [publication_date] => 2026-02-18
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 10
+    [page_count] => 45
+)
+
+2026-02-20 18:50:58 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1342-images-kf8.mobi
+            [full_path] => pg1342-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php210E.tmp
+            [error] => 0
+            [size] => 25333240
+        )
+
+)
+
+2026-02-20 18:50:58 - Processing upload: pg1342-images-kf8.mobi (25333240 bytes)
+2026-02-20 18:50:58 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771584658_bd356af5.mobi
+2026-02-20 18:50:58 - DB Insert Success. New ID: 59
+2026-02-20 18:51:04 - Request received. Action: upload
+2026-02-20 18:51:04 - POST Data: Array
+(
+    [action] => upload
+    [title] => wewrewerdf
+    [publisher] => sdf
+    [publication_date] => 2026-01-15
+    [edition] => Morning
+    [category_id] => 6
+    [language_id] => 10
+)
+
+2026-02-20 18:51:04 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => anthony-berkeley_the-layton-court-mystery.epub
+            [full_path] => anthony-berkeley_the-layton-court-mystery.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\php38BD.tmp
+            [error] => 0
+            [size] => 560059
+        )
+
+)
+
+2026-02-20 18:51:04 - Processing upload: anthony-berkeley_the-layton-court-mystery.epub (560059 bytes)
+2026-02-20 18:51:04 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771584664_c47fdfc1.epub
+2026-02-20 18:51:04 - DB Insert Success. New ID: 60
+2026-02-20 19:07:44 - Request received. Action: edit
+2026-02-20 19:07:44 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 60
+    [existing_thumbnail] => 
+    [title] => wewrewerdf
+    [publisher] => sdf
+    [publication_date] => 2026-01-15
+    [edition] => Morning
+    [category_id] => 6
+    [language_id] => 10
+    [page_count] => 54
+    [volume_issue] => 45
+    [keywords] => werwe
+    [description] => 
+)
+
+2026-02-20 19:07:44 - FILES Data: Array
+(
+    [thumbnail] => Array
+        (
+            [name] => 6e26ec71-7402-4d1b-ae01-2e714871a5a5.jpg
+            [full_path] => 6e26ec71-7402-4d1b-ae01-2e714871a5a5.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php790A.tmp
+            [error] => 0
+            [size] => 58916
+        )
+
+)
+
+2026-02-20 19:08:19 - Request received. Action: upload
+2026-02-20 19:08:19 - POST Data: Array
+(
+    [action] => upload
+    [title] => werwe
+    [publisher] => werwer
+    [publication_date] => 2006-07-04
+    [edition] => Morning
+    [category_id] => 6
+    [language_id] => 12
+    [page_count] => 34
+    [volume_issue] => 33
+)
+
+2026-02-20 19:08:19 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\php2DD.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php2DE.tmp
+            [error] => 0
+            [size] => 74112
+        )
+
+)
+
+2026-02-20 19:08:19 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 19:08:19 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771585699_63ee9c6a.epub
+2026-02-20 19:08:19 - DB Insert Success. New ID: 61
+2026-02-20 19:18:56 - Request received. Action: upload
+2026-02-20 19:18:56 - POST Data: Array
+(
+    [action] => upload
+    [title] => testimg
+    [publisher] => test
+    [publication_date] => 2026-02-11
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 9
+    [page_count] => 23
+    [volume_issue] => 23
+)
+
+2026-02-20 19:18:56 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\phpB933.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpB934.tmp
+            [error] => 0
+            [size] => 74112
+        )
+
+)
+
+2026-02-20 19:18:56 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 19:18:56 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771586336_bfcf7418.epub
+2026-02-20 19:18:56 - DB Insert Success. New ID: 62
+2026-02-20 19:29:27 - Request received. Action: edit
+2026-02-20 19:29:27 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 62
+    [existing_thumbnail] => uploads/thumbnails/1771586336_thumb_fbe6ea3f.jpg
+    [title] => testimg
+    [publisher] => test
+    [publication_date] => 2026-02-11
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 9
+    [page_count] => 23
+    [volume_issue] => 23
+    [keywords] => qwqe
+    [description] => 
+)
+
+2026-02-20 19:29:27 - FILES Data: Array
+(
+)
+
+2026-02-20 19:31:59 - Request received. Action: edit
+2026-02-20 19:31:59 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 49
+    [existing_thumbnail] => uploads/thumbnails/1771522252_thumb_d0b6f7ff.jpg
+    [title] => qwe
+    [publisher] => wewer
+    [publication_date] => 2026-02-04
+    [edition] => Morning
+    [category_id] => 7
+    [language_id] => 10
+    [page_count] => 34
+    [volume_issue] => 7
+    [keywords] => rtyrtyr
+    [description] => 
+)
+
+2026-02-20 19:31:59 - FILES Data: Array
+(
+)
+
+2026-02-20 19:32:40 - Request received. Action: edit
+2026-02-20 19:32:40 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 62
+    [existing_thumbnail] => uploads/thumbnails/1771586336_thumb_fbe6ea3f.jpg
+    [title] => testimg
+    [publisher] => test
+    [publication_date] => 2026-02-11
+    [edition] => Morning
+    [category_id] => 1
+    [language_id] => 9
+    [page_count] => 23
+    [volume_issue] => 23
+    [keywords] => qwqe
+    [description] => 
+)
+
+2026-02-20 19:32:40 - FILES Data: Array
+(
+)
+
+2026-02-20 19:32:52 - Request received. Action: edit
+2026-02-20 19:32:52 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 59
+    [existing_thumbnail] => 
+    [title] => ert
+    [publisher] => ydfg
+    [publication_date] => 2026-02-18
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 10
+    [page_count] => 45
+    [volume_issue] => 
+    [keywords] => werwerwer
+    [description] => 
+)
+
+2026-02-20 19:32:52 - FILES Data: Array
+(
+)
+
+2026-02-20 19:34:03 - Request received. Action: edit
+2026-02-20 19:34:03 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 49
+    [existing_thumbnail] => uploads/thumbnails/1771522252_thumb_d0b6f7ff.jpg
+    [title] => qwe
+    [publisher] => wewer
+    [publication_date] => 2026-02-04
+    [edition] => Morning
+    [category_id] => 10
+    [language_id] => 10
+    [page_count] => 34
+    [volume_issue] => 7
+    [keywords] => rtyrtyr
+    [description] => 
+)
+
+2026-02-20 19:34:03 - FILES Data: Array
+(
+)
+
+2026-02-20 19:34:12 - Request received. Action: edit
+2026-02-20 19:34:12 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 49
+    [existing_thumbnail] => uploads/thumbnails/1771522252_thumb_d0b6f7ff.jpg
+    [title] => qwe
+    [publisher] => wewer
+    [publication_date] => 2026-02-04
+    [edition] => Morning
+    [category_id] => 5
+    [language_id] => 10
+    [page_count] => 34
+    [volume_issue] => 7
+    [keywords] => rtyrtyr
+    [description] => 
+)
+
+2026-02-20 19:34:12 - FILES Data: Array
+(
+)
+
+2026-02-20 19:34:23 - Request received. Action: edit
+2026-02-20 19:34:23 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 49
+    [existing_thumbnail] => uploads/thumbnails/1771522252_thumb_d0b6f7ff.jpg
+    [title] => qwe
+    [publisher] => wewer
+    [publication_date] => 2026-02-04
+    [edition] => Morning
+    [category_id] => 8
+    [language_id] => 10
+    [page_count] => 34
+    [volume_issue] => 7
+    [keywords] => rtyrtyr
+    [description] => 
+)
+
+2026-02-20 19:34:23 - FILES Data: Array
+(
+)
+
+2026-02-20 19:39:06 - Request received. Action: upload
+2026-02-20 19:39:06 - POST Data: Array
+(
+    [action] => upload
+    [title] => erwr
+    [publisher] => werwdf
+    [publication_date] => 2026-02-11
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 12
+    [page_count] => 34
+    [volume_issue] => 45
+    [keywords] => rtyrty
+)
+
+2026-02-20 19:39:06 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\php318A.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php318B.tmp
+            [error] => 0
+            [size] => 104574
+        )
+
+)
+
+2026-02-20 19:39:06 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 19:39:06 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771587546_852e20f7.epub
+2026-02-20 19:39:06 - DB Insert Success. New ID: 63
+2026-02-20 19:39:12 - Request received. Action: edit
+2026-02-20 19:39:12 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 63
+    [existing_thumbnail] => uploads/thumbnails/1771587546_thumb_82ceca0a.jpg
+    [title] => erwr
+    [publisher] => werwdf
+    [publication_date] => 2026-02-11
+    [edition] => Morning
+    [category_id] => 6
+    [language_id] => 12
+    [page_count] => 34
+    [volume_issue] => 45
+    [keywords] => rtyrty
+    [description] => 
+)
+
+2026-02-20 19:39:12 - FILES Data: Array
+(
+)
+
+2026-02-20 19:40:02 - Request received. Action: edit
+2026-02-20 19:40:02 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 59
+    [existing_thumbnail] => 
+    [title] => ert
+    [publisher] => ydfg
+    [publication_date] => 2026-02-18
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 10
+    [page_count] => 45
+    [volume_issue] => 45
+    [keywords] => werwerwer
+    [description] => 
+)
+
+2026-02-20 19:40:02 - FILES Data: Array
+(
+    [thumbnail] => Array
+        (
+            [name] => image_icon.png
+            [full_path] => image_icon.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php2794.tmp
+            [error] => 0
+            [size] => 2457
+        )
+
+)
+
+2026-02-20 20:28:48 - Request received. Action: upload
+2026-02-20 20:28:48 - POST Data: Array
+(
+    [action] => upload
+    [title] => yrt
+    [publisher] => yrtyrty
+    [publication_date] => 2026-02-12
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 9
+    [page_count] => 56
+    [volume_issue] => 4
+    [keywords] => il;i
+    [description] => 
+)
+
+2026-02-20 20:28:48 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg77927-images.epub
+            [full_path] => pg77927-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\phpCC1C.tmp
+            [error] => 0
+            [size] => 155465
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => images.png
+            [full_path] => images.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpCC1D.tmp
+            [error] => 0
+            [size] => 2151
+        )
+
+)
+
+2026-02-20 20:28:48 - Processing upload: pg77927-images.epub (155465 bytes)
+2026-02-20 20:28:48 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771590528_028c48de.epub
+2026-02-20 20:28:48 - DB Insert Success. New ID: 64
+2026-02-20 22:03:45 - Request received. Action: upload
+2026-02-20 22:03:45 - POST Data: Array
+(
+    [action] => upload
+    [title] => qweqw
+    [publisher] => qweqwe
+    [publication_date] => 2026-02-10
+    [edition] => Morning
+    [category_id] => 1
+    [language_id] => 12
+    [page_count] => 78
+    [volume_issue] => 7
+    [keywords] => iuiouiiuo
+)
+
+2026-02-20 22:03:45 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\phpBBE9.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpBBFA.tmp
+            [error] => 0
+            [size] => 175772
+        )
+
+)
+
+2026-02-20 22:03:45 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-20 22:03:45 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771596225_104295f2.epub
+2026-02-20 22:03:45 - DB Insert Success. New ID: 67
+2026-02-20 23:11:49 - Request received. Action: edit
+2026-02-20 23:11:49 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 67
+    [existing_thumbnail] => uploads/thumbnails/1771596225_thumb_5b53c469.jpg
+    [title] => qweqw
+    [publisher] => qweqwe
+    [publication_date] => 2026-02-10
+    [edition] => Morning
+    [category_id] => 1
+    [language_id] => 12
+    [page_count] => 78
+    [volume_issue] => 7
+    [keywords] => iuiouiiuo, rt, tr, erw
+    [description] => 
+)
+
+2026-02-20 23:11:49 - FILES Data: Array
+(
+)
+

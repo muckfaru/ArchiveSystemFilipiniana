@@ -110,6 +110,7 @@ function updateHiddenInput() {
     const keywordsHidden = document.getElementById('keywordsHidden');
     if (keywordsHidden) {
         keywordsHidden.value = tags.join(',');
+        keywordsHidden.dispatchEvent(new Event('input', { bubbles: true }));
     }
 }
 
@@ -122,6 +123,7 @@ function updateHiddenInput() {
     const keywordsHidden = document.getElementById('keywordsHidden');
     if (keywordsHidden) {
         keywordsHidden.value = tags.join(', ');
+        keywordsHidden.dispatchEvent(new Event('input', { bubbles: true }));
     }
 }
 
