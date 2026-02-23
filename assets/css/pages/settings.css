@@ -5,6 +5,32 @@
 
 /* ==================== Settings Page Specifics ==================== */
 
+/* Global settings font override and scroll lock */
+body {
+    overflow: hidden !important;
+}
+
+.main-content {
+    font-family: 'Poppins', sans-serif !important;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.settings-card,
+.btn,
+input,
+label,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: inherit;
+}
+
 .settings-section {
     background-color: var(--bg-white);
     border: 1px solid var(--border-light);
@@ -21,6 +47,21 @@
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 20px;
+}
+
+/* Updated Typography for Settings Page */
+.settings-card-header span,
+.settings-card-header i {
+    color: #C08B5C !important;
+}
+
+.profile-field {
+    opacity: 1 !important;
+    color: #2c3e50 !important;
+}
+
+.nav-link {
+    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-section.danger {

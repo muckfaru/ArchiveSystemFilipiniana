@@ -1274,3 +1274,47 @@
 (
 )
 
+2026-02-23 13:50:30 - Request received. Action: edit
+2026-02-23 13:50:30 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 59
+    [existing_thumbnail] => uploads/thumbnails/1771587602_thumb_f76de867.png
+    [title] => ert
+    [publisher] => ydfg
+    [publication_date] => 2026-02-18
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 10
+    [page_count] => 45
+    [volume_issue] => 45
+    [keywords] => 
+    [description] => 
+)
+
+2026-02-23 13:50:30 - FILES Data: Array
+(
+)
+
+2026-02-23 13:50:42 - Request received. Action: edit
+2026-02-23 13:50:42 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 66
+    [existing_thumbnail] => uploads/thumbnails/1771595163_thumb_73781784.jpg
+    [title] => rturty
+    [publisher] => rtrtr
+    [publication_date] => 2026-02-06
+    [edition] => Morning
+    [category_id] => 4
+    [language_id] => 2
+    [page_count] => 56
+    [volume_issue] => 5
+    [keywords] => werwerew
+    [description] => 
+)
+
+2026-02-23 13:50:42 - FILES Data: Array
+(
+)
+

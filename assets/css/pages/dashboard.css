@@ -3,6 +3,11 @@
  * Archive System - Quezon City Public Library
  */
 
+/* Fix sidebar title typography bleed/scaling issue that happens only on Dashboard */
+body .sidebar-title {
+    font-size: 13px !important;
+}
+
 /* ==================== Dashboard Specifics ==================== */
 
 /* Recent Activities Section */
@@ -35,6 +40,9 @@
     border-radius: 12px;
     overflow: hidden;
     transition: var(--transition);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .newspaper-card:hover {
@@ -43,13 +51,17 @@
 }
 
 .newspaper-thumbnail {
-    height: 280px;
+    height: 200px;
     object-fit: cover;
     width: 100%;
 }
 
 .newspaper-info {
     padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .newspaper-category {
@@ -59,7 +71,9 @@
     margin-bottom: 5px;
     padding: 3px 8px;
     border-radius: 4px;
-    display: inline-block;
+    display: inline-flex;
+    align-self: flex-start;
+    width: max-content;
     background-color: #ECEFF1;
     /* Default Fallback */
     color: #546E7A;
@@ -130,20 +144,130 @@
     font-size: 12px;
     color: var(--text-muted);
 }
+
 /* Dashboard Photo Viewer */
-.photo-viewer-container { position: relative; background: #F5F6F8; border-radius: 8px; overflow: hidden; }
+.photo-viewer-container {
+    position: relative;
+    background: #F5F6F8;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
 .photo-viewer-arrow {
-    position: absolute; top: 50%; transform: translateY(-50%);
-    background: rgba(76,57,57,0.7); color: white; border: none;
-    border-radius: 50%; width: 40px; height: 40px;
-    font-size: 22px; cursor: pointer; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(76, 57, 57, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: background 0.2s;
 }
-.photo-viewer-arrow:hover { background: rgba(76,57,57,0.95); }
-.photo-viewer-arrow.left { left: 12px; }
-.photo-viewer-arrow.right { right: 12px; }
+
+.photo-viewer-arrow:hover {
+    background: rgba(76, 57, 57, 0.95);
+}
+
+.photo-viewer-arrow.left {
+    left: 12px;
+}
+
+.photo-viewer-arrow.right {
+    right: 12px;
+}
+
 .photo-viewer-counter {
-    text-align: center; font-size: 12px; color: #6B7280;
-    padding: 8px 0; font-weight: 500;
+    text-align: center;
+    font-size: 12px;
+    color: #6B7280;
+    padding: 8px 0;
+    font-weight: 500;
+}
+
+/* Dashboard Top Section (Search & Date) */
+.dashboard-top-section {
+    margin: -30px -30px 30px -30px;
+    padding: 20px 30px;
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.top-search-pill {
+    background-color: #F8F9FA;
+    border-radius: 50px;
+    height: 44px;
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.top-search-pill:hover,
+.top-search-pill:focus-within {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    background-color: #ffffff;
+    border: 1px solid #E0E0E0;
+}
+
+.top-search-pill .form-control {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.top-search-pill .form-control::placeholder {
+    color: #6C757D;
+    font-weight: 500;
+}
+
+.filter-dropdown-container select:hover {
+    background-color: #f1f3f5 !important;
+}
+
+.top-search-pill .form-control:focus,
+.filter-dropdown-container select:focus {
+    box-shadow: none;
+}
+
+.top-search-pill i.bi-search {
+    font-size: 1.1rem;
+    color: #6C757D !important;
+}
+
+/* Stat card original layout restored implicitly by removing previous overrides */
+
+/* Responsive adjustments for Top Search Bar */
+@media (max-width: 991.98px) {
+    .dashboard-top-section .text-md-end {
+        text-align: left !important;
+        margin-top: 15px;
+    }
+
+    .current-datetime-display {
+        border-right: none !important;
+        padding-right: 0 !important;
+        text-align: left !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .top-search-pill {
+        flex-direction: column;
+        height: auto;
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    .top-search-pill .form-select {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 10px;
+        border-top: 1px solid #E0E0E0 !important;
+        border-radius: 0;
+    }
 }

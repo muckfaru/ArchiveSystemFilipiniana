@@ -1,131 +1,115 @@
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Overview</p>
-    </div>
-</div>
+<!-- Top Search Bar & Date/Time Section -->
+<div class="dashboard-top-section position-sticky top-0" style="z-index: 1020;">
+    <div class="row align-items-center justify-content-between g-3">
+        <!-- Search and Filter Form -->
+        <div class="col-md-7 col-lg-8">
+            <form method="GET" action="" class="m-0" id="searchFilterForm">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="top-search-pill d-flex align-items-center flex-grow-1 position-relative p-1">
+                        <input type="text" class="form-control border-0 bg-transparent shadow-none px-3" name="q"
+                            placeholder="Search digital archives..." value="<?= htmlspecialchars($searchQuery) ?>">
+                    </div>
 
-<!-- Stats Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-md-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <span class="stat-card-title">Total Archives</span>
-                <i class="bi bi-file-earmark-text stat-card-icon"></i>
-            </div>
-            <div class="stat-card-value">
-                <?= number_format($totalArchives) ?>
-            </div>
+                    <div class="filter-dropdown-container">
+                        <select class="form-select border-0 shadow-none px-4 fw-medium text-dark" name="category"
+                            style="background-color: #F1F5F9; border-radius: 8px; height: 44px; width: auto; min-width: 140px; font-size: 13px; cursor: pointer;"
+                            onchange="document.getElementById('searchFilterForm').submit()">
+                            <option value="">All Categories</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat['id'] ?>" <?= $categoryFilter == $cat['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($cat['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+            </form>
         </div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <span class="stat-card-title">Issues Count</span>
-                <i class="bi bi-files stat-card-icon"></i>
-            </div>
-            <div class="stat-card-value">
-                <?= number_format($totalIssues) ?>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <span class="stat-card-title">Years Covered</span>
-                <i class="bi bi-calendar-range stat-card-icon"></i>
-            </div>
-            <div class="stat-card-value">
-                <?= $yearsCovered ?>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <span class="stat-card-title">Total Categories</span>
-                <i class="bi bi-grid-3x3-gap stat-card-icon"></i>
-            </div>
-            <div class="stat-card-value">
-                <?= $totalCategories ?>
+
+        <!-- Current Date and Time -->
+        <div class="col-md-5 col-lg-4 text-end d-flex justify-content-end align-items-center gap-3">
+            <div class="current-datetime-display d-flex flex-column text-end pe-4"
+                style="border-right: 1px solid #E0E0E0;">
+                <div id="currentDate" class="fw-bold text-dark mb-0" style="font-size: 12px; letter-spacing: 0.2px;">
+                    Monday, 21 October 2024</div>
+                <div id="currentTime" class="text-muted" style="font-size: 11px;">14:32:05 PM</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Advanced Search & Filter -->
-<div class="search-filter-card">
-    <div class="search-filter-title">
-        <i class="bi bi-funnel"></i>
-        Advanced Search & Filter
-    </div>
-
-    <form method="GET" action="">
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="search-input-wrapper">
-                    <i class="bi bi-search"></i>
-                    <input type="text" class="form-control" name="q" placeholder="Search titles, headlines, keywords..."
-                        value="<?= htmlspecialchars($searchQuery) ?>">
+<?php if (empty($searchQuery) && empty($categoryFilter) && empty($languageFilter) && empty($dateFrom) && empty($dateTo)): ?>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Total Archives</span>
+                    <i class="bi bi-file-earmark-text-fill stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                </div>
+                <div class="stat-card-value">
+                    <?= number_format($totalArchives) ?>
                 </div>
             </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Categories</label>
-                <select class="form-select" name="category">
-                    <option value="">All Categories</option>
-                    <?php foreach ($categories as $cat): ?>
-                        <option value="<?= $cat['id'] ?>" <?= $categoryFilter == $cat['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($cat['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Language</label>
-                <select class="form-select" name="language">
-                    <option value="">All Language</option>
-                    <?php foreach ($languages as $lang): ?>
-                        <option value="<?= $lang['id'] ?>" <?= $languageFilter == $lang['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($lang['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">DATE RANGE</label>
-                <input type="date" class="form-control" name="date_from" value="<?= $dateFrom ?>">
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <input type="date" class="form-control" name="date_to" value="<?= $dateTo ?>">
-            </div>
-
-            <div class="col-12">
-                <button type="submit" class="search-btn w-100">
-                    <i class="bi bi-search"></i>
-                    Search
-                </button>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Issues Count</span>
+                    <i class="bi bi-files-alt stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                </div>
+                <div class="stat-card-value">
+                    <?= number_format($totalIssues) ?>
+                </div>
             </div>
         </div>
-    </form>
-</div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Years Covered</span>
+                    <i class="bi bi-calendar-range-fill stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                </div>
+                <div class="stat-card-value">
+                    <?= $yearsCovered ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Total Categories</span>
+                    <i class="bi bi-grid-3x3-gap-fill stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                </div>
+                <div class="stat-card-value">
+                    <?= $totalCategories ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <!-- Search Results (if any) -->
 <?php if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo): ?>
     <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Search Results (
-                <?= count($searchResults) ?> found)
-            </h5>
-            <a href="<?= APP_URL ?>/dashboard.php" class="btn btn-sm"
-                style="background: #f5f5f5; border: 1px solid #ddd; color: #666; border-radius: 6px;">
-                <i class="bi bi-x"></i> Clear Search
+        <!-- New Mockup Header for Search Results -->
+        <div class="search-results-banner p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center"
+            style="background-color: #F5F6F8; border: 1px solid #EBEBEB;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle-fill" style="color: #4C3939;"></i>
+                <span class="text-secondary fw-medium" style="font-size: 13px;">Showing results for
+                    <strong>"<?= htmlspecialchars($searchQuery ?: 'Selected Filters') ?>"</strong></span>
+            </div>
+            <a href="<?= APP_URL ?>/dashboard.php" class="btn btn-link p-0 text-uppercase fw-bold text-decoration-none"
+                style="color: #4C3939; font-size: 11px; letter-spacing: 1px;">
+                Clear Search
             </a>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <h4 class="fw-bold mb-0 text-dark">Search Results</h4>
+            <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">
+                <?= count($searchResults) ?> Documents Found
+            </span>
         </div>
         <?php if (empty($searchResults)): ?>
             <div class="text-center py-5">
@@ -142,13 +126,28 @@
             <div class="row g-4">
                 <?php foreach ($searchResults as $paper): ?>
                     <div class="col-md-6 col-lg-3">
-                        <div class="newspaper-card">
+                        <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
+                            data-bs-target="#filePreviewModal" data-id="<?= $paper['id'] ?>"
+                            data-title="<?= htmlspecialchars($paper['title']) ?>"
+                            data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
+                            data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
+                            data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
+                            data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
+                            data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
+                            data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
+                            data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
+                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
+                            data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
                             <?php if ($paper['thumbnail_path']): ?>
                                 <div class="position-relative">
                                     <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
                                     <?php if (!empty($paper['is_bulk_image'])): ?>
-                                        <div class="position-absolute top-0 end-0 m-2 badge bg-primary shadow-sm" style="font-size: 10px;">
-                                            <i class="bi bi-collection-fill"></i>
+                                        <div class="position-absolute top-0 end-0 m-2 badge shadow-sm"
+                                            style="font-size: 10px; background-color: #4C3939; color: white;">
+                                            <i class="bi bi-images"></i>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -195,105 +194,108 @@
     </div>
 <?php endif; ?>
 
-<!-- Recent Activities -->
-<div class="recent-activities">
-    <div class="recent-activities-header">
-        <h2 class="recent-activities-title">Recent Activities</h2>
-        <a href="<?= APP_URL ?>/pages/history.php" class="view-all-link">View all</a>
-    </div>
-
-    <?php if (empty($recentNewspapers)): ?>
-        <div class="text-center py-5 bg-light rounded-4 border border-dashed">
-            <div class="mb-3">
-                <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-cloud-upload text-secondary" style="font-size: 24px;"></i>
-                </div>
-            </div>
-            <h5 class="fw-bold text-secondary">No Archives Yet</h5>
-            <p class="text-muted small mb-3">Start building your repository by uploading documents.</p>
-            <a href="<?= APP_URL ?>/pages/upload.php" class="btn btn-primary rounded-pill px-4"
-                style="background: #4C3939; border: none;">
-                <i class="bi bi-plus-lg me-2"></i>Upload Now
-            </a>
+<?php if (empty($searchQuery) && empty($categoryFilter) && empty($languageFilter) && empty($dateFrom) && empty($dateTo)): ?>
+    <!-- Recent Activities -->
+    <div class="recent-activities">
+        <div class="recent-activities-header">
+            <h2 class="recent-activities-title">Recent Activities</h2>
+            <a href="<?= APP_URL ?>/pages/collections.php" class="view-all-link">View all</a>
         </div>
-    <?php else: ?>
-        <div class="row g-4">
-            <?php foreach ($recentNewspapers as $paper): ?>
-                <div class="col-md-6 col-lg-3">
-                    <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
-                        data-bs-target="#filePreviewModal" data-id="<?= $paper['id'] ?>"
-                        data-title="<?= htmlspecialchars($paper['title']) ?>"
-                        data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                        data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
-                        data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
-                        data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
-                        data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
-                        data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
-                        data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
-                        data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                        data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
-                        data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
-                        data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                        data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
-                        <?php if ($paper['thumbnail_path']): ?>
-                            <div class="position-relative">
-                                <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
-                                <?php if (!empty($paper['is_bulk_image'])): ?>
-                                    <div class="position-absolute top-0 end-0 m-2 badge bg-primary shadow-sm" style="font-size: 10px;">
-                                        <i class="bi bi-collection-fill"></i>
+
+        <?php if (empty($recentNewspapers)): ?>
+            <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                <div class="mb-3">
+                    <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm"
+                        style="width: 60px; height: 60px;">
+                        <i class="bi bi-cloud-upload text-secondary" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold text-secondary">No Archives Yet</h5>
+                <p class="text-muted small mb-3">Start building your repository by uploading documents.</p>
+                <a href="<?= APP_URL ?>/pages/upload.php" class="btn btn-primary rounded-pill px-4"
+                    style="background: #4C3939; border: none;">
+                    <i class="bi bi-plus-lg me-2"></i>Upload Now
+                </a>
+            </div>
+        <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($recentNewspapers as $paper): ?>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
+                            data-bs-target="#filePreviewModal" data-id="<?= $paper['id'] ?>"
+                            data-title="<?= htmlspecialchars($paper['title']) ?>"
+                            data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
+                            data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
+                            data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
+                            data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
+                            data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
+                            data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
+                            data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
+                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
+                            data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
+                            <?php if ($paper['thumbnail_path']): ?>
+                                <div class="position-relative">
+                                    <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
+                                    <?php if (!empty($paper['is_bulk_image'])): ?>
+                                        <div class="position-absolute top-0 end-0 m-2 badge shadow-sm"
+                                            style="font-size: 10px; background-color: #4C3939; color: white;">
+                                            <i class="bi bi-images"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="newspaper-thumbnail bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-newspaper text-white" style="font-size: 48px;"></i>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
+                                <div class="position-absolute top-0 start-0 m-2 badge bg-success shadow-sm"
+                                    style="font-size: 10px; z-index: 2;">
+                                    NEW
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="newspaper-info">
+                                <div class="newspaper-category <?= strtolower($paper['category_name'] ?? '') ?>">
+                                    <?= strtoupper($paper['category_name'] ?? 'UNCATEGORIZED') ?>
+                                </div>
+                                <h6 class="newspaper-title">
+                                    <?= htmlspecialchars($paper['title']) ?>
+                                </h6>
+                                <div class="newspaper-date mb-2">
+                                    <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : date('d F Y', strtotime($paper['created_at'])) ?>
+                                </div>
+                                <?php if (!empty($paper['keywords'])): ?>
+                                    <div class="mt-auto pt-2 d-flex gap-1 flex-wrap">
+                                        <?php
+                                        $tags = array_filter(array_map('trim', explode(',', $paper['keywords'])));
+                                        foreach (array_slice($tags, 0, 3) as $tag):
+                                            ?>
+                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
+                                                style="font-size: 10px;">
+                                                <?= htmlspecialchars($tag) ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                        <?php if (count($tags) > 3): ?>
+                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
+                                                style="font-size: 10px;">
+                                                +<?= count($tags) - 3 ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                        <?php else: ?>
-                            <div class="newspaper-thumbnail bg-secondary d-flex align-items-center justify-content-center">
-                                <i class="bi bi-newspaper text-white" style="font-size: 48px;"></i>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
-                            <div class="position-absolute top-0 start-0 m-2 badge bg-success shadow-sm"
-                                style="font-size: 10px; z-index: 2;">
-                                NEW
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="newspaper-info">
-                            <div class="newspaper-category <?= strtolower($paper['category_name'] ?? '') ?>">
-                                <?= strtoupper($paper['category_name'] ?? 'UNCATEGORIZED') ?>
-                            </div>
-                            <h6 class="newspaper-title">
-                                <?= htmlspecialchars($paper['title']) ?>
-                            </h6>
-                            <div class="newspaper-date mb-2">
-                                <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : date('d F Y', strtotime($paper['created_at'])) ?>
-                            </div>
-                            <?php if (!empty($paper['keywords'])): ?>
-                                <div class="mt-auto pt-2 d-flex gap-1 flex-wrap">
-                                    <?php
-                                    $tags = array_filter(array_map('trim', explode(',', $paper['keywords'])));
-                                    foreach (array_slice($tags, 0, 3) as $tag):
-                                        ?>
-                                        <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
-                                            style="font-size: 10px;">
-                                            <?= htmlspecialchars($tag) ?>
-                                        </span>
-                                    <?php endforeach; ?>
-                                    <?php if (count($tags) > 3): ?>
-                                        <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
-                                            style="font-size: 10px;">
-                                            +<?= count($tags) - 3 ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-</div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
 
 <!-- File Preview Modal -->
 <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">

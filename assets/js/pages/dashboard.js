@@ -256,5 +256,58 @@ document.addEventListener('DOMContentLoaded', function () {
             history.replaceState({}, document.title, window.location.pathname);
         }
     }
+
+    // Real-time Date and Time Logic
+    function updateDateTime() {
+        const now = new Date();
+
+        // Format Date: Monday, 21 October 2024
+        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        const formattedDate = now.toLocaleDateString('en-US', dateOptions);
+
+        // Format Time: 14:32:05 PM
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        const formattedTime = now.toLocaleTimeString('en-US', timeOptions);
+
+        const dateEl = document.getElementById('currentDate');
+        const timeEl = document.getElementById('currentTime');
+
+        if (dateEl) dateEl.textContent = formattedDate;
+        if (timeEl) timeEl.textContent = formattedTime;
+    }
+
+    // Initial call
+    updateDateTime();
+
+    // Update every second
+    setInterval(updateDateTime, 1000);
+
+    // Live Search with Automatic Reset
+    const searchForm = document.getElementById('searchFilterForm');
+    const searchInput = document.querySelector('input[name="q"]');
+
+    if (searchForm && searchInput) {
+        let searchTimeout = null;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const currentUrl = new URL(window.location.href);
+                const hasSearchQuery = currentUrl.searchParams.has('q');
+
+                if (this.value.trim() === '') {
+                    // Reset search but stay on the current page (dashboard or collections)
+                    if (hasSearchQuery) {
+                        currentUrl.searchParams.delete('q');
+                        window.location.href = currentUrl.pathname + currentUrl.search;
+                    }
+                } else {
+                    // Live search query length condition (optional, e.g., > 1 char)
+                    if (this.value.trim().length >= 2 || !hasSearchQuery) {
+                        searchForm.submit();
+                    }
+                }
+            }, 600); // 600ms debounce
+        });
+    }
 });
 

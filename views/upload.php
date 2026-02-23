@@ -148,13 +148,18 @@
                 </div>
 
                 <!-- Photo Stats (Images) -->
-                <div class="bulk-stats-wrapper" id="photoStatsWrapper" style="display: none;">
-                    <div class="stat-col">
+                <div class="bulk-stats-wrapper px-4" id="photoStatsWrapper" style="display: none; justify-content: flex-start; gap: 24px;">
+                    <div id="bulkPhotoInfoMessage" class="d-none m-0 py-1 px-3" style="flex: 0 0 auto;">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>All photos in this bulk upload share a single metadata entry.</span>
+                    </div>
+
+                    <div class="stat-col" style="flex: 0 0 auto;">
                         <span class="stat-label">TOTAL PHOTOS</span>
                         <span class="stat-number" id="totalPhotosCount">0</span>
                     </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-col action-col" style="flex: 1; justify-content: flex-end; padding-right: 2rem;">
+                    
+                    <div class="stat-col action-col ms-auto" style="flex: 0 0 auto;">
                          <!-- Dropdown / Add Photos action can go here if needed later -->
                         <button type="button" class="btn btn-add-files" id="addMorePhotosBtn" onclick="document.getElementById('fileInput').click()">
                             + ADD PHOTOS
@@ -205,11 +210,6 @@
                                 <span class="header-title">GENERAL INFORMATION</span>
                             </div>
                             <span id="currentFileName" class="badge bg-light text-dark border d-none"></span>
-                        </div>
-
-                        <div id="bulkPhotoInfoMessage" class="d-none mx-4 mt-3 mb-0">
-                            <i class="bi bi-info-circle-fill"></i>
-                            All photos in this bulk upload share a single metadata entry.
                         </div>
 
                         <div class="form-row-2col">

@@ -15,41 +15,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'update_profile') {
         $fullName = sanitize($_POST['full_name']);
-        $username = sanitize($_POST['username']);
         $email = sanitize($_POST['email']);
 
-        // Check if username or email already exists (for other users)
-        $checkStmt = $pdo->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?");
-        $checkStmt->execute([$username, $email, $currentUser['id']]);
+        // Check if email already exists (for other users)
+        $checkStmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+        $checkStmt->execute([$email, $currentUser['id']]);
 
         if ($checkStmt->fetch()) {
-            showAlert('danger', 'Username or email already in use by another account.');
+            showAlert('danger', 'Email already in use by another account.');
         } else {
-            // Handle profile photo upload
-            $profilePhoto = $currentUser['profile_photo'];
-            if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-                $file = $_FILES['profile_photo'];
-                $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-                if (in_array($fileExt, ['jpg', 'jpeg', 'png'])) {
-                    $newFileName = 'profile_' . $currentUser['id'] . '_' . time() . '.' . $fileExt;
-                    $uploadPath = UPLOAD_PATH . 'profiles/' . $newFileName;
-
-                    if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-                        // Delete old photo
-                        if ($profilePhoto) {
-                            $oldPath = UPLOAD_PATH . '../' . $profilePhoto;
-                            if (file_exists($oldPath)) {
-                                unlink($oldPath);
-                            }
-                        }
-                        $profilePhoto = 'uploads/profiles/' . $newFileName;
-                    }
-                }
-            }
-
-            $stmt = $pdo->prepare("UPDATE users SET full_name = ?, username = ?, email = ?, profile_photo = ? WHERE id = ?");
-            $stmt->execute([$fullName, $username, $email, $profilePhoto, $currentUser['id']]);
+            $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ? WHERE id = ?");
+            $stmt->execute([$fullName, $email, $currentUser['id']]);
 
             logActivity($currentUser['id'], 'settings_update', 'Profile updated');
 
@@ -126,19 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect($_SERVER['PHP_SELF']);
     }
 
-    if ($action === 'remove_photo') {
-        if ($currentUser['profile_photo']) {
-            $photoPath = UPLOAD_PATH . '../' . $currentUser['profile_photo'];
-            if (file_exists($photoPath)) {
-                unlink($photoPath);
-            }
-
-            $stmt->execute([$currentUser['id']]);
-            // showAlert('success', 'Profile photo removed.');
-            redirect($_SERVER['PHP_SELF'] . '?photo_removed=true');
-        }
-        redirect($_SERVER['PHP_SELF']);
-    }
+    // Removed remove_photo action
 }
 
 // Get current settings
@@ -173,7 +137,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         <div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between;">
             <div>
                 <h1 class="page-title"
-                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Playfair Display', Georgia, serif;">
+                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Poppins', sans-serif;">
                     Settings</h1>
                 <p class="page-subtitle" style="color: #888; margin: 0;">Manage your account settings and preferences
                 </p>
@@ -198,100 +162,79 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             <!-- Profile Settings -->
             <div class="col-lg-12">
                 <div class="settings-card"
-                    style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    style="background: white; border-radius: 0; border: 1px solid #eaeaea; padding: 40px; margin-bottom: 30px;">
                     <div class="settings-card-header"
-                        style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
-                        <i class="bi bi-person" style="color: #666;"></i>
+                        style="display: flex; align-items: center; gap: 10px; margin-bottom: 35px; border-bottom: 1px solid #f1f1f1; padding-bottom: 20px;">
+                        <i class="bi bi-person" style="color: #a0a0a0; font-size: 18px;"></i>
                         <span
-                            style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px;">Profile
-                            Settings</span>
+                            style="font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1.5px;">PROFILE
+                            SETTINGS</span>
                     </div>
 
-                    <form method="POST" enctype="multipart/form-data" id="profileForm">
+                    <form method="POST" id="profileForm">
                         <input type="hidden" name="action" value="update_profile">
 
-                        <div class="row g-4">
-                            <!-- Profile Photo Section -->
-                            <div class="col-md-3 text-center">
-                                <div style="position: relative; width: 120px; height: 120px; margin: 0 auto;">
-                                    <?php if ($currentUser['profile_photo']): ?>
-                                        <img src="<?= APP_URL ?>/<?= $currentUser['profile_photo'] ?>"
-                                            style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;"
-                                            alt="Profile" class="profile-photo-preview" id="profilePhotoPreview">
-                                    <?php else: ?>
-                                        <div id="profilePhotoPreview"
-                                            style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #f5f0ed 0%, #e8e0db 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #f0f0f0;">
-                                            <i class="bi bi-person" style="font-size: 50px; color: #999;"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                    <label for="profilePhotoInput" class="edit-photo-btn d-none"
-                                        style="position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; background: #4C3939; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #fff;">
-                                        <i class="bi bi-camera" style="font-size: 14px; color: white;"></i>
-                                    </label>
-                                    <input type="file" id="profilePhotoInput" name="profile_photo" class="d-none"
-                                        accept=".jpg,.jpeg,.png" disabled>
+                        <div class="row g-5">
+                            <!-- Left Column: Name & Email -->
+                            <div class="col-md-6">
+                                <div class="mb-4 pb-2">
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">NAME</label>
+                                    <input type="text" class="form-control profile-field" name="full_name"
+                                        value="<?= htmlspecialchars($currentUser['full_name']) ?>" required readonly
+                                        style="background: #f8f9fa; border: 1px solid transparent; padding: 14px 18px; border-radius: 8px; font-size: 14px; color: #2c3e50; font-weight: 500;">
                                 </div>
-                                <p class="text-muted mt-2 mb-0" style="font-size: 12px;">Profile Photo</p>
-                                <div class="photo-actions d-none mt-2">
-                                    <label for="profilePhotoInput" class="btn btn-sm"
-                                        style="background: #f8f6f5; border: 1px solid #ddd; font-size: 11px; padding: 4px 12px;">
-                                        <i class="bi bi-upload me-1"></i>Upload
-                                    </label>
-                                    <?php if ($currentUser['profile_photo']): ?>
-                                        <button type="button" class="btn btn-sm ms-1" onclick="removePhoto()"
-                                            style="background: #fff5f5; border: 1px solid #FFCDD2; font-size: 11px; padding: 4px 12px; color: #dc3545;">
-                                            <i class="bi bi-trash me-1"></i>Remove
-                                        </button>
-                                    <?php endif; ?>
+                                <div class="mb-4">
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">EMAIL
+                                        ADDRESS</label>
+                                    <input type="email" class="form-control profile-field" name="email"
+                                        value="<?= htmlspecialchars($currentUser['email']) ?>" required readonly
+                                        style="background: #f8f9fa; border: 1px solid transparent; padding: 14px 18px; border-radius: 8px; font-size: 14px; color: #2c3e50; font-weight: 500;">
+                                </div>
+
+                                <div class="mt-5 pt-3">
+                                    <button type="button" class="btn" data-bs-toggle="modal"
+                                        data-bs-target="#changePasswordModal"
+                                        style="background: #4C3939; border: 1px solid #4C3939; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px;">
+                                        <i class="bi bi-key-fill" style="color: white; font-size: 16px;"></i> Change
+                                        Password
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Form Fields -->
-                            <div class="col-md-9">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Full
-                                            Name</label>
-                                        <input type="text" class="form-control profile-field" name="full_name"
-                                            value="<?= htmlspecialchars($currentUser['full_name']) ?>" required readonly
-                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px;">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Username</label>
-                                        <input type="text" class="form-control" name="username"
+                            <!-- Right Column: Username & Role (Read Only) -->
+                            <div class="col-md-6">
+                                <div class="mb-4 pb-2">
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">USERNAME</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control"
                                             value="<?= htmlspecialchars($currentUser['username']) ?>"
-                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px; color: #666;"
+                                            style="background: #f1f3f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 8px; font-size: 14px; color: #7f8c8d; font-weight: 500; cursor: not-allowed;"
                                             readonly disabled>
-                                        <small class="text-muted" style="font-size: 10px;">Username cannot be
-                                            changed</small>
+                                        <i class="bi bi-lock-fill position-absolute"
+                                            style="right: 18px; top: 50%; transform: translateY(-50%); color: #bdc3c7; font-size: 14px;"></i>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Email
-                                            Address</label>
-                                        <input type="email" class="form-control profile-field" name="email"
-                                            value="<?= htmlspecialchars($currentUser['email']) ?>" readonly
-                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px;">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label
-                                            style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Role</label>
+                                    <small class="text-muted"
+                                        style="font-size: 11px; font-style: italic; margin-top: 8px; display: block; color: #bdc3c7 !important;">Username
+                                        cannot be changed</small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">ROLE</label>
+                                    <div class="position-relative">
                                         <input type="text" class="form-control"
                                             value="<?= ucfirst($currentUser['role'] === 'super_admin' ? 'Administrator' : $currentUser['role']) ?>"
-                                            style="background: #f8f6f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 10px; font-size: 14px; color: #666;"
+                                            style="background: #f1f3f5; border: 1px solid transparent; padding: 14px 18px; border-radius: 8px; font-size: 14px; color: #7f8c8d; font-weight: 500; cursor: not-allowed;"
                                             readonly disabled>
-                                        <small class="text-muted" style="font-size: 10px;">Role cannot be
-                                            changed</small>
+                                        <i class="bi bi-lock-fill position-absolute"
+                                            style="right: 18px; top: 50%; transform: translateY(-50%); color: #bdc3c7; font-size: 14px;"></i>
                                     </div>
-                                    <div class="col-12 mt-4">
-                                        <button type="button" class="btn" data-bs-toggle="modal"
-                                            data-bs-target="#changePasswordModal"
-                                            style="background: #f8f6f5; border: 1px solid #ddd; color: #333; padding: 12px 24px; border-radius: 8px; font-size: 13px;">
-                                            <i class="bi bi-key me-2"></i>Change Password
-                                        </button>
-                                    </div>
+                                    <small class="text-muted"
+                                        style="font-size: 11px; font-style: italic; margin-top: 8px; display: block; color: #bdc3c7 !important;">Role
+                                        cannot be changed</small>
                                 </div>
                             </div>
                         </div>
@@ -300,25 +243,27 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
                 <!-- Danger Zone -->
                 <div class="settings-card danger-zone"
-                    style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-top: 20px; border-left: 4px solid #dc3545;">
+                    style="background: #fffcfc; border: 1px solid #ffdcdb; box-shadow: none; border-radius: 4px; padding: 30px; margin-top: 40px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                        <div style="display: flex; align-items: flex-start; gap: 20px;">
                             <div
-                                style="width: 40px; height: 40px; background: #fff5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-exclamation-triangle" style="color: #dc3545; font-size: 18px;"></i>
+                                style="width: 48px; height: 48px; min-width: 48px; background: #ffebeb; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-exclamation-triangle-fill" style="color: #ff4d4f; font-size: 20px;"></i>
                             </div>
                             <div>
                                 <span
-                                    style="font-size: 12px; font-weight: 600; color: #dc3545; text-transform: uppercase; letter-spacing: 0.5px;">Danger
-                                    Zone</span>
-                                <h5 style="font-weight: 600; color: #333; margin: 4px 0;">Delete Account</h5>
-                                <p style="color: #888; font-size: 13px; margin: 0;">Once you delete your account, there
-                                    is no going back. All associated data will be purged.</p>
+                                    style="font-size: 11px; font-weight: 800; color: #ff4d4f; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px;">DANGER
+                                    ZONE</span>
+                                <h5 style="font-weight: 700; color: #2c2c2c; margin: 0 0 6px 0; font-size: 18px;">Delete
+                                    Account</h5>
+                                <p style="color: #6c757d; font-size: 13px; margin: 0; line-height: 1.5;">Once you delete
+                                    your account, there is no going back. All associated<br>data will be purged
+                                    immediately. Please be certain.</p>
                             </div>
                         </div>
                         <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#deleteAccountModal"
-                            style="background: transparent; border: 2px solid #dc3545; color: #dc3545; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
-                            Delete<br>Account
+                            style="background: transparent; border: 1px solid #ff4d4f; color: #ff4d4f; padding: 10px 24px; border-radius: 4px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-width: 1.5px;">
+                            DELETE ACCOUNT
                         </button>
                     </div>
                 </div>
@@ -517,17 +462,6 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             document.getElementById('deleteAccountBtn').disabled = this.value !== 'DELETE';
         });
 
-        // Profile photo preview
-        document.getElementById('profilePhotoInput').addEventListener('change', function () {
-            if (this.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.querySelector('.profile-photo').src = e.target.result;
-                };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-
         // Password toggle for Change Password modal
         function setupPasswordToggle(toggleId, inputId) {
             const toggle = document.getElementById(toggleId);
@@ -571,14 +505,9 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             // Enable editable fields
             document.querySelectorAll('.profile-field').forEach(field => {
                 field.removeAttribute('readonly');
-                field.style.border = '1px solid #C08B5C';
+                field.style.border = '1px solid #4C3939';
                 field.style.background = '#fff';
             });
-
-            // Enable photo upload
-            document.getElementById('profilePhotoInput').disabled = false;
-            document.querySelector('.edit-photo-btn').classList.remove('d-none');
-            document.querySelector('.photo-actions').classList.remove('d-none');
         }
 
         function cancelEdit() {
@@ -600,13 +529,8 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             document.querySelectorAll('.profile-field').forEach(field => {
                 field.setAttribute('readonly', true);
                 field.style.border = '1px solid transparent';
-                field.style.background = '#f8f6f5';
+                field.style.background = '#f8f9fa';
             });
-
-            // Disable photo upload
-            document.getElementById('profilePhotoInput').disabled = true;
-            document.querySelector('.edit-photo-btn').classList.add('d-none');
-            document.querySelector('.photo-actions').classList.add('d-none');
         }
 
         // Handle form submission with success modal
@@ -623,21 +547,6 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                 successModal.show();
             }
         });
-
-        function removePhoto() {
-            // Add hidden input to indicate photo removal
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'remove_photo';
-            input.value = '1';
-            document.getElementById('profileForm').appendChild(input);
-
-            // Update preview
-            const preview = document.getElementById('profilePhotoPreview');
-            if (preview.tagName === 'IMG') {
-                preview.outerHTML = '<div id="profilePhotoPreview" style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #f5f0ed 0%, #e8e0db 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #f0f0f0;"><i class="bi bi-person" style="font-size: 50px; color: #999;"></i></div>';
-            }
-        }
     </script>
 </body>
 
