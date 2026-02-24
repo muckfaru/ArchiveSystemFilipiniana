@@ -111,9 +111,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     redirect('upload.php?error=' . urlencode('A file with this name already exists.'));
                 }
 
-                // Generate unique filename
+                // Generate unique filename and organized path
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
-                $uploadPath = UPLOAD_PATH . 'newspapers/' . $newFileName;
+                $pathInfo = getOrganizedUploadPath($fileExt, $newFileName, $publicationDate);
+                $uploadPath = $pathInfo['full_path'];
 
                 // Move file
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
@@ -127,10 +128,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
                             $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                            $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
+                            $thumbPathInfo = getOrganizedUploadPath('thumbnail', $thumbFileName, $publicationDate);
 
-                            if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                                $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                            if (move_uploaded_file($thumbFile['tmp_name'], $thumbPathInfo['full_path'])) {
+                                $thumbnailPath = $thumbPathInfo['relative_path'];
                             }
                         }
                     }
@@ -154,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $publisher,
                             $volumeIssue,
                             $description,
-                            'uploads/newspapers/' . $newFileName,
+                            $pathInfo['relative_path'],
                             $fileName,
                             $fileExt,
                             $fileSize,
@@ -193,8 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Delete uploaded file to cleanup
                         if (file_exists($uploadPath))
                             unlink($uploadPath);
-                        if ($thumbnailPath && file_exists(UPLOAD_PATH . 'thumbnails/' . basename($thumbnailPath)))
-                            unlink(UPLOAD_PATH . 'thumbnails/' . basename($thumbnailPath));
+                        if ($thumbnailPath && file_exists(__DIR__ . '/../../' . $thumbnailPath))
+                            unlink(__DIR__ . '/../../' . $thumbnailPath);
 
                         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                             echo json_encode(['success' => false, 'message' => 'Database error: ' . $errorInfo[2]]);
@@ -256,7 +257,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $totalSize = 0;
                 $savedPaths = [];
                 $thumbnailPath = null;
-                $bulkDir = UPLOAD_PATH . 'newspapers/bulk_' . time();
+                $bulkPathInfo = getOrganizedUploadPath('img', 'bulk_' . time(), $publicationDate);
+                $bulkDir = $bulkPathInfo['dir'] . '/bulk_' . time();
 
                 if (!is_dir($bulkDir)) {
                     mkdir($bulkDir, 0777, true);
@@ -277,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $destination = $bulkDir . '/' . $cleanName;
 
                             if (move_uploaded_file($tmpName, $destination)) {
-                                $relativePath = 'uploads/newspapers/' . basename($bulkDir) . '/' . $cleanName;
+                                $relativePath = $bulkPathInfo['relative_dir'] . '/' . basename($bulkDir) . '/' . $cleanName;
                                 $savedPaths[] = $relativePath;
                             }
                         }
@@ -296,9 +298,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
                     if (in_array($thumbExt, ['jpg', 'jpeg', 'png', 'webp'])) {
                         $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                        $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
-                        if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                            $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                        $thumbPathInfo = getOrganizedUploadPath('thumbnail', $thumbFileName, $publicationDate);
+                        if (move_uploaded_file($thumbFile['tmp_name'], $thumbPathInfo['full_path'])) {
+                            $thumbnailPath = $thumbPathInfo['relative_path'];
                         }
                     }
                 } else {
@@ -386,10 +388,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
                 $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
+                $thumbPathInfo = getOrganizedUploadPath('thumbnail', $thumbFileName, $publicationDate);
 
-                if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                    $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                if (move_uploaded_file($thumbFile['tmp_name'], $thumbPathInfo['full_path'])) {
+                    $thumbnailPath = $thumbPathInfo['relative_path'];
                 }
             }
         }
@@ -404,7 +406,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (in_array($fileExt, ALLOWED_EXTENSIONS) && $fileSize <= MAX_UPLOAD_SIZE) {
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
-                $uploadPath = UPLOAD_PATH . 'newspapers/' . $newFileName;
+                $editPathInfo = getOrganizedUploadPath($fileExt, $newFileName, $publicationDate);
+                $uploadPath = $editPathInfo['full_path'];
 
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
                     // Update with new file
@@ -426,7 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $publisher,
                         $volumeIssue,
                         $description,
-                        'uploads/newspapers/' . $newFileName,
+                        $editPathInfo['relative_path'],
                         $fileName,
                         $fileExt,
                         $fileSize,

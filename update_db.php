@@ -4,7 +4,7 @@
  * Helper script to execute schema updates
  */
 
-require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/backend/core/config.php';
 
 try {
     echo "Updating database schema...\n";
@@ -26,6 +26,14 @@ try {
         // Ignore if duplicate key error
         echo "- Constraint might already exist: " . $e->getMessage() . "\n";
     }
+
+    // Add is_bulk_image to newspapers
+    $pdo->exec("ALTER TABLE newspapers ADD COLUMN IF NOT EXISTS is_bulk_image TINYINT(1) DEFAULT 0");
+    echo "- Added is_bulk_image column to newspapers\n";
+
+    // Add image_paths to newspapers
+    $pdo->exec("ALTER TABLE newspapers ADD COLUMN IF NOT EXISTS image_paths JSON DEFAULT NULL");
+    echo "- Added image_paths column to newspapers\n";
 
     echo "Database update completed successfully.\n";
 

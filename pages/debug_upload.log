@@ -1318,3 +1318,384 @@
 (
 )
 
+2026-02-24 10:20:06 - Request received. Action: upload
+2026-02-24 10:20:06 - POST Data: Array
+(
+    [action] => upload
+    [title] => asdasd
+    [publisher] => grfcrytvasdas
+    [publication_date] => 2026-02-10
+    [edition] => Evening
+    [category_id] => 9
+    [language_id] => 3
+    [page_count] => 89
+    [volume_issue] => ASDASDASDAS
+    [keywords] => ZADASDA, ASDASDA, SADASD, ASD, S, AD, A
+    [description] => 
+)
+
+2026-02-24 10:20:06 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg77899-images-kf8.mobi
+            [full_path] => pg77899-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\phpD84.tmp
+            [error] => 0
+            [size] => 625921
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => Gemini_Generated_Image_qk5x9eqk5x9eqk5x-removebg-preview 1.png
+            [full_path] => Gemini_Generated_Image_qk5x9eqk5x9eqk5x-removebg-preview 1.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpDA4.tmp
+            [error] => 0
+            [size] => 39008
+        )
+
+)
+
+2026-02-24 10:20:06 - Processing upload: pg77899-images-kf8.mobi (625921 bytes)
+2026-02-24 10:20:06 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771899606_a7a3ae46.mobi
+2026-02-24 10:20:07 - DB Insert Success. New ID: 1
+2026-02-24 10:26:49 - Request received. Action: upload
+2026-02-24 10:26:49 - POST Data: Array
+(
+    [action] => upload
+    [title] => sdffsdfs
+    [publisher] => rtyrte
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 1
+    [page_count] => 56
+    [volume_issue] => 34
+    [keywords] => drytry
+)
+
+2026-02-24 10:26:49 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg78022.epub
+            [full_path] => pg78022.epub
+            [type] => application/epub+zip
+            [tmp_name] => C:\xampp\tmp\php3218.tmp
+            [error] => 0
+            [size] => 463979
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php3219.tmp
+            [error] => 0
+            [size] => 1388063
+        )
+
+)
+
+2026-02-24 10:26:49 - Processing upload: pg78022.epub (463979 bytes)
+2026-02-24 10:26:50 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771900009_15b72eb5.epub
+2026-02-24 10:26:50 - DB Insert Success. New ID: 2
+2026-02-24 10:26:50 - Request received. Action: upload
+2026-02-24 10:26:50 - POST Data: Array
+(
+    [action] => upload
+    [title] => trtr
+    [publisher] => erter
+    [publication_date] => 2026-02-03
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 1
+    [page_count] => 56
+    [volume_issue] => 45
+)
+
+2026-02-24 10:26:50 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg78018-images-kf8.mobi
+            [full_path] => pg78018-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\php368F.tmp
+            [error] => 0
+            [size] => 376530
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php369F.tmp
+            [error] => 0
+            [size] => 383846
+        )
+
+)
+
+2026-02-24 10:26:50 - Processing upload: pg78018-images-kf8.mobi (376530 bytes)
+2026-02-24 10:26:50 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771900010_fdaa1707.mobi
+2026-02-24 10:26:51 - DB Insert Success. New ID: 3
+2026-02-24 10:29:07 - Request received. Action: upload
+2026-02-24 10:29:07 - POST Data: Array
+(
+    [action] => upload
+    [title] => qweqwe
+    [publisher] => wfsdf
+    [publication_date] => 2003-02-25
+    [edition] => Morning
+    [category_id] => 4
+    [language_id] => 1
+    [page_count] => 45
+    [volume_issue] => 67
+    [keywords] => TRTYJ
+    [description] => 
+)
+
+2026-02-24 10:29:07 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg78015-images-kf8.mobi
+            [full_path] => pg78015-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\php4D8A.tmp
+            [error] => 0
+            [size] => 949742
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => default.png
+            [full_path] => default.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php4D9A.tmp
+            [error] => 0
+            [size] => 5323
+        )
+
+)
+
+2026-02-24 10:29:07 - Processing upload: pg78015-images-kf8.mobi (949742 bytes)
+2026-02-24 10:29:07 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771900147_6d860231.mobi
+2026-02-24 10:29:08 - DB Insert Success. New ID: 4
+2026-02-24 10:33:33 - Request received. Action: upload
+2026-02-24 10:33:33 - POST Data: Array
+(
+    [action] => upload
+    [title] => ASA
+    [publisher] => dadasda
+    [publication_date] => 2026-02-27
+    [edition] => Evening
+    [category_id] => 10
+    [language_id] => 3
+    [page_count] => 1313
+    [volume_issue] => ASDASDASDAS
+    [keywords] => a
+    [description] => 
+)
+
+2026-02-24 10:33:33 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => Mark Information & Acceptance Form 2.docx.pdf
+            [full_path] => Mark Information & Acceptance Form 2.docx.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\php5AB7.tmp
+            [error] => 0
+            [size] => 263796
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => 8cc4a975-d108-4f80-8fc0-1d8f09ee5d3a.jfif
+            [full_path] => 8cc4a975-d108-4f80-8fc0-1d8f09ee5d3a.jfif
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php5AE7.tmp
+            [error] => 0
+            [size] => 28295
+        )
+
+)
+
+2026-02-24 10:33:33 - Processing upload: Mark Information & Acceptance Form 2.docx.pdf (263796 bytes)
+2026-02-24 10:33:33 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1771900413_71fa766a.pdf
+2026-02-24 10:33:33 - DB Insert Success. New ID: 5
+2026-02-24 14:39:52 - Request received. Action: upload
+2026-02-24 14:39:52 - POST Data: Array
+(
+    [action] => upload
+    [title] => test
+    [publisher] => qweqeqsd
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 6
+    [language_id] => 2
+    [page_count] => 43
+    [volume_issue] => iyou
+)
+
+2026-02-24 14:39:52 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => 1771899606_a7a3ae46.mobi
+            [full_path] => 1771899606_a7a3ae46.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\phpDFA2.tmp
+            [error] => 0
+            [size] => 625921
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpDFC3.tmp
+            [error] => 0
+            [size] => 39008
+        )
+
+)
+
+2026-02-24 14:39:52 - Processing upload: 1771899606_a7a3ae46.mobi (625921 bytes)
+2026-02-24 14:39:52 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/mobi/1771915192_375e93df.mobi
+2026-02-24 14:39:52 - DB Insert Success. New ID: 6
+2026-02-24 14:42:18 - Request received. Action: upload
+2026-02-24 14:42:18 - POST Data: Array
+(
+    [action] => upload
+    [title] => 23wfw
+    [publisher] => ertet
+    [publication_date] => 2026-02-02
+    [edition] => Evening
+    [category_id] => 3
+    [language_id] => 1
+    [page_count] => 23
+    [volume_issue] => 23 
+    [keywords] => kwasd
+    [description] => 
+)
+
+2026-02-24 14:42:18 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => LLOREN Weekly-AR (1).pdf
+            [full_path] => LLOREN Weekly-AR (1).pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\php18FA.tmp
+            [error] => 0
+            [size] => 337645
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => code breaker 1.png
+            [full_path] => code breaker 1.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php193A.tmp
+            [error] => 0
+            [size] => 383846
+        )
+
+)
+
+2026-02-24 14:42:18 - Processing upload: LLOREN Weekly-AR (1).pdf (337645 bytes)
+2026-02-24 14:42:18 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/pdf/1771915338_88140074.pdf
+2026-02-24 14:42:18 - DB Insert Success. New ID: 7
+2026-02-24 15:01:03 - Request received. Action: upload
+2026-02-24 15:01:03 - POST Data: Array
+(
+    [action] => upload
+    [title] => awdasd
+    [publisher] => wewer
+    [publication_date] => 2002-07-10
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 1
+    [page_count] => 34
+    [volume_issue] => 
+    [keywords] => qweqwe
+    [description] => 
+)
+
+2026-02-24 15:01:03 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => LLOREN Weekly-AR.pdf
+            [full_path] => LLOREN Weekly-AR.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\php42E0.tmp
+            [error] => 0
+            [size] => 337546
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => download (4).jfif
+            [full_path] => download (4).jfif
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php4310.tmp
+            [error] => 0
+            [size] => 5342
+        )
+
+)
+
+2026-02-24 15:01:03 - Processing upload: LLOREN Weekly-AR.pdf (337546 bytes)
+2026-02-24 15:01:03 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/pdf/1771916463_178c1198.pdf
+2026-02-24 15:01:03 - DB Insert Success. New ID: 8
+2026-02-24 15:18:31 - Request received. Action: upload
+2026-02-24 15:18:31 - POST Data: Array
+(
+    [action] => upload
+    [title] => wkjekh
+    [publisher] => kjqwejkwq
+    [publication_date] => 2002-02-23
+    [edition] => Morning
+    [category_id] => 1
+    [language_id] => 1
+    [page_count] => 34
+    [volume_issue] => 23
+    [keywords] => wrwer
+)
+
+2026-02-24 15:18:31 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => AdmissionSlip.pdf
+            [full_path] => AdmissionSlip.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\php4346.tmp
+            [error] => 0
+            [size] => 31388
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php4376.tmp
+            [error] => 0
+            [size] => 10320
+        )
+
+)
+
+2026-02-24 15:18:31 - Processing upload: AdmissionSlip.pdf (31388 bytes)
+2026-02-24 15:18:31 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2002/02/pdf/1771917511_b6643259.pdf
+2026-02-24 15:18:32 - DB Insert Success. New ID: 10
