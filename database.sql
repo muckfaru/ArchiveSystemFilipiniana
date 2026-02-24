@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('super_admin', 'admin') DEFAULT 'admin',
     status ENUM('active', 'inactive') DEFAULT 'active',
     last_login DATETIME DEFAULT NULL,
+    deleted_by INT DEFAULT NULL,
+    deleted_at DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
