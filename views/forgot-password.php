@@ -48,7 +48,7 @@
                 <button type="submit" class="submit-btn">Send Reset Link</button>
             </form>
 
-            <a href="<?= APP_URL ?>/index.php" class="back-link">
+            <a href="<?= APP_URL ?>/login.php" class="back-link">
                 <i class="bi bi-arrow-left"></i> Back to Login
             </a>
         </div>
@@ -67,7 +67,7 @@
                         We've sent a password reset link to your email address.<br>
                         Please check your inbox.
                     </p>
-                    <a href="<?= APP_URL ?>/index.php" class="btn-primary-desktop">
+                    <a href="<?= APP_URL ?>/login.php" class="btn-primary-desktop">
                         Back to Login
                     </a>
                 </div>

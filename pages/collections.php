@@ -160,19 +160,6 @@ include __DIR__ . '/../views/layouts/header.php';
                         <input type="text" class="form-control border-0 bg-transparent shadow-none px-3" name="q"
                             placeholder="Search digital archives..." value="<?= htmlspecialchars($searchQuery) ?>">
                     </div>
-
-                    <div class="filter-dropdown-container">
-                        <select class="form-select border-0 shadow-none px-4 fw-medium text-dark" name="category"
-                            style="background-color: #F1F5F9; border-radius: 8px; height: 44px; width: auto; min-width: 140px; font-size: 13px; cursor: pointer;"
-                            onchange="document.getElementById('searchFilterForm').submit()">
-                            <option value="all">All Categories</option>
-                            <?php foreach ($categoriesWithCounts as $cat): ?>
-                                <option value="<?= $cat['id'] ?>" <?= $categoryFilter == $cat['id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($cat['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
                 </div>
             </form>
         </div>
@@ -181,9 +168,9 @@ include __DIR__ . '/../views/layouts/header.php';
         <div class="col-md-5 col-lg-4 text-end d-flex justify-content-end align-items-center gap-3">
             <div class="current-datetime-display d-flex flex-column text-end pe-4"
                 style="border-right: 1px solid #E0E0E0;">
-                <div id="currentDate" class="fw-bold text-dark mb-0" style="font-size: 12px; letter-spacing: 0.2px;">
+                <div id="currentDate" class="fw-bold text-dark mb-0" style="font-size: 15px; letter-spacing: 0.2px;">
                     Monday, 21 October 2024</div>
-                <div id="currentTime" class="text-muted" style="font-size: 11px;">14:32:05 PM</div>
+                <div id="currentTime" class="text-muted" style="font-size: 14px;">14:32:05 PM</div>
             </div>
         </div>
     </div>
@@ -208,11 +195,11 @@ include __DIR__ . '/../views/layouts/header.php';
                 <?php $isAllActive = empty($categoryFilter) || $categoryFilter === 'all'; ?>
                 <a href="?category=all&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
                     class="nav-link d-flex justify-content-between align-items-center rounded-pill py-2 px-3 <?= $isAllActive ? 'fw-bold' : 'fw-semibold text-secondary' ?>"
-                    style="<?= $isAllActive ? 'background-color: #E6E0DB; color: #4C3939 !important;' : 'font-size: 14px; color: #4B5563;' ?>">
+                    style="<?= $isAllActive ? 'background-color: #EBF5FF; color: #3A9AFF !important;' : 'font-size: 14px; color: #4B5563;' ?>">
                     <span>All Collections</span>
                     <?php if ($isAllActive): ?>
                         <span class="badge rounded-pill"
-                            style="background-color: #D2C8C1; color: #4C3939; font-weight: 600;">
+                            style="background-color: #D0E8FF; color: #3A9AFF; font-weight: 600;">
                             <?= formatNumberShortcut($totalCollectionsCount) ?>
                         </span>
                     <?php else: ?>
@@ -228,13 +215,13 @@ include __DIR__ . '/../views/layouts/header.php';
                 <li class="nav-item mb-1">
                     <a href="?category=<?= $cat['id'] ?>&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
                         class="nav-link d-flex justify-content-between align-items-center rounded-pill py-2 px-3 <?= $isActive ? 'fw-bold' : 'fw-semibold text-secondary' ?>"
-                        style="<?= $isActive ? 'background-color: #E6E0DB; color: #4C3939 !important;' : 'font-size: 14px; color: #4B5563;' ?>">
+                        style="<?= $isActive ? 'background-color: #EBF5FF; color: #3A9AFF !important;' : 'font-size: 14px; color: #4B5563;' ?>">
                         <span>
                             <?= htmlspecialchars($cat['name']) ?>
                         </span>
                         <?php if ($isActive): ?>
                             <span class="badge rounded-pill"
-                                style="background-color: #D2C8C1; color: #4C3939; font-weight: 600;">
+                                style="background-color: #D0E8FF; color: #3A9AFF; font-weight: 600;">
                                 <?= formatNumberShortcut($cat['count']) ?>
                             </span>
                         <?php else: ?>
@@ -312,8 +299,8 @@ include __DIR__ . '/../views/layouts/header.php';
                             <input type="hidden" name="format[]" value="<?= htmlspecialchars($fmt) ?>">
                         <?php endforeach; ?>
 
-                        <select name="sort" class="form-select border-0 text-secondary p-0 shadow-none fw-medium"
-                            style="font-size: 14px; cursor: pointer; background-color: transparent;"
+                        <select name="sort" class="form-select border-0 text-secondary shadow-none fw-medium"
+                            style="font-size: 14px; cursor: pointer; background-color: transparent; min-width: 130px; padding: 0 28px 0 4px;"
                             onchange="this.form.submit()">
                             <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest First</option>
                             <option value="oldest" <?= $sortBy === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
@@ -331,7 +318,7 @@ include __DIR__ . '/../views/layouts/header.php';
                 $exportUrl = '?' . http_build_query($exportParams);
                 ?>
                 <a href="<?= $exportUrl ?>" class="btn text-white rounded-3 px-3 py-2 fw-medium ms-2"
-                    style="background-color: #4C3939; font-size: 13px;">
+                    style="background-color: #3A9AFF; font-size: 13px;">
                     <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i> Export
                 </a>
 
@@ -363,6 +350,7 @@ include __DIR__ . '/../views/layouts/header.php';
                             data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
                             data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
+                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
                             data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
 
@@ -371,7 +359,7 @@ include __DIR__ . '/../views/layouts/header.php';
                                     <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
                                     <?php if (!empty($paper['is_bulk_image'])): ?>
                                         <div class="position-absolute top-0 end-0 m-2 badge shadow-sm"
-                                            style="font-size: 10px; background-color: #4C3939; color: white;">
+                                            style="font-size: 10px; background-color: #3A9AFF; color: white;">
                                             <i class="bi bi-images"></i>
                                         </div>
                                     <?php endif; ?>
@@ -423,7 +411,7 @@ include __DIR__ . '/../views/layouts/header.php';
                     ?>
                     <a href="<?= getColPaginationUrl($i, $_GET) ?>"
                         class="btn d-flex align-items-center justify-content-center p-0 fw-bold border"
-                        style="width: 40px; height: 40px; border-radius: 8px; <?= $page == $i ? 'background-color: #4C3939; color: white; border-color: #4C3939 !important;' : 'background-color: white; color: #4C3939; border-color: #EAEAEF !important;' ?>">
+                        style="width: 40px; height: 40px; border-radius: 8px; <?= $page == $i ? 'background-color: #3A9AFF; color: white; border-color: #3A9AFF !important;' : 'background-color: white; color: #3A9AFF; border-color: #EAEAEF !important;' ?>">
                         <?= $i ?>
                     </a>
                 <?php endfor; ?>
@@ -432,7 +420,7 @@ include __DIR__ . '/../views/layouts/header.php';
                     <span class="text-secondary px-2 fw-medium">...</span>
                     <a href="<?= getColPaginationUrl($totalPages, $_GET) ?>"
                         class="btn bg-white border d-flex align-items-center justify-content-center p-0 fw-bold"
-                        style="width: 40px; height: 40px; border-radius: 8px; color: #4C3939; border-color: #EAEAEF !important;">
+                        style="width: 40px; height: 40px; border-radius: 8px; color: #3A9AFF; border-color: #EAEAEF !important;">
                         <?= $totalPages ?>
                     </a>
                 <?php endif; ?>
@@ -457,7 +445,179 @@ function formatNumberShortcut($n)
     $number = floor($n / 100) / 10;
     return $number . 'k';
 }
+?>
 
+<!-- File Preview Modal (same structure as dashboard, handled by dashboard.js) -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content"
+            style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <!-- Left: Preview Image & Actions -->
+                    <div class="col-md-6 d-flex flex-column" style="background: #2C2C2C;">
+                        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4 position-relative"
+                            style="min-height: 300px;">
+                            <div class="photo-viewer-container position-relative">
+                                <img id="photoViewerImg" src="" class="w-100 rounded"
+                                    style="max-height:480px; object-fit:contain; display: block;">
+                                <div id="noPreviewIcon" style="display: none; padding: 60px; text-align: center;">
+                                    <i class="bi bi-file-earmark-text" style="font-size: 60px; color: #666;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Action Buttons -->
+                        <div class="p-3 d-flex gap-2" style="background: #2C2C2C;">
+                            <a href="#" id="readNowBtn"
+                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                                style="background: #3A9AFF; color: white; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500;">
+                                <i class="bi bi-book-half"></i> Read Now
+                            </a>
+                            <a href="#" id="editBtn"
+                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                                style="background: #fff; color: #333; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500;">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <button type="button" id="deleteBtn"
+                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                                style="background: #FFEBEE; color: #C62828; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500; border: none;">
+                                <i class="bi bi-trash3"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Details -->
+                    <div class="col-md-6 bg-white p-4 position-relative">
+                        <button type="button" class="btn-close position-absolute" data-bs-dismiss="modal"
+                            style="right: 15px; top: 15px; opacity: 0.5;"></button>
+
+                        <div class="d-flex flex-column h-100">
+                            <!-- Header -->
+                            <div class="mb-4">
+                                <h5 id="previewTitle" class="fw-bold mb-1" style="color: #1a1a1a; font-size: 18px;">File
+                                    Preview</h5>
+                                <div id="previewCategory" class="newspaper-category mb-0" style="font-size: 12px;">
+                                    ARCHIVE MANAGEMENT SYSTEM</div>
+                            </div>
+
+                            <!-- Metadata -->
+                            <div class="flex-grow-1">
+                                <p class="text-uppercase text-muted fw-bold mb-3"
+                                    style="font-size: 10px; letter-spacing: 1.5px;">Metadata Details</p>
+
+                                <div class="d-flex flex-column gap-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size: 13px;"><i
+                                                class="bi bi-calendar3 me-2"></i>Publication Date</span>
+                                        <span id="metaDate" class="fw-bold"
+                                            style="color: #333; font-size: 13px;">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size: 13px;"><i
+                                                class="bi bi-globe me-2"></i>Edition</span>
+                                        <span id="metaEdition" class="fw-bold"
+                                            style="color: #333; font-size: 13px;">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size: 13px;"><i
+                                                class="bi bi-building me-2"></i>Publisher</span>
+                                        <span id="metaPublisher" class="fw-bold"
+                                            style="color: #333; font-size: 13px;">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size: 13px;"><i
+                                                class="bi bi-file-text me-2"></i>Page Count</span>
+                                        <span id="metaPages" class="fw-bold"
+                                            style="color: #333; font-size: 13px;">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size: 13px;"><i
+                                                class="bi bi-file-earmark me-2"></i>Format</span>
+                                        <span id="metaFormat" class="badge"
+                                            style="background: #FFEBEE; color: #D32F2F; font-size: 11px; padding: 4px 10px; font-weight: 600;">PDF</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size: 13px;"><i
+                                                class="bi bi-person me-2"></i>Uploaded by</span>
+                                        <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1">
+                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-1"
+                                                style="width: 18px; height: 18px; font-size: 9px;">A</div>
+                                            <span id="metaUploader" class="fw-medium"
+                                                style="color: #333; font-size: 12px;">Admin</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div id="metaDescriptionWrap" class="mt-3" style="display:none;">
+                                    <p class="text-uppercase text-muted fw-bold mb-2"
+                                        style="font-size: 10px; letter-spacing: 1.5px;">Description</p>
+                                    <p id="metaDescription"
+                                        style="font-size: 13px; color: #4B5563; line-height: 1.7; background: #F9FAFB; border-radius: 8px; padding: 12px 14px; margin: 0;">
+                                    </p>
+                                </div>
+
+                                <!-- Tags -->
+                                <div class="mt-4">
+                                    <p class="text-uppercase text-muted fw-bold mb-2"
+                                        style="font-size: 10px; letter-spacing: 1.5px;">Tags</p>
+                                    <div id="metaTags" class="d-flex gap-2 flex-wrap">
+                                        <!-- Tags populated via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-0 text-muted">Are you sure you want to move this item to trash? This action can be undone
+                    from the Trash page.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius: 8px; font-weight: 500;">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn"
+                    style="border-radius: 8px; font-weight: 500; background: #D32F2F; border: none;">
+                    <i class="bi bi-trash3 me-2"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Success Modal -->
+<div class="modal fade" id="deleteSuccessModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
+                        style="width: 64px; height: 64px;">
+                        <i class="bi bi-trash3 text-danger" style="font-size: 32px;"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-2">Item Deleted</h5>
+                <p class="text-muted small mb-4">The item has been moved to trash successfully.</p>
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
 // Ensure the dashboard JS handles modals on this page as well
 echo '<script src="' . APP_URL . '/assets/js/pages/dashboard.js"></script>';
 

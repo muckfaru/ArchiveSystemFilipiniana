@@ -118,9 +118,9 @@ body {
 }
 
 .form-control:focus {
-    border-color: #4C3939;
+    border-color: #3A9AFF;
     background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(76, 57, 57, 0.1);
+    box-shadow: 0 0 0 3px rgba(58, 154, 255, 0.12);
     outline: none;
 }
 
@@ -140,13 +140,13 @@ body {
 }
 
 .password-toggle:hover {
-    color: #4C3939;
+    color: #3A9AFF;
 }
 
 .forgot-password {
     display: block;
     text-align: left;
-    color: #4C3939;
+    color: #3A9AFF;
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
@@ -161,7 +161,7 @@ body {
 .login-btn {
     width: 100%;
     padding: 15px;
-    background-color: #4C3939;
+    background-color: #3A9AFF;
     border: none;
     color: #fff;
     font-size: 15px;
@@ -175,7 +175,7 @@ body {
 }
 
 .login-btn:hover {
-    background-color: #3A2C2C;
+    background-color: #2d87ef;
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }

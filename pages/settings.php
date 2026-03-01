@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Destroy session and redirect
             session_destroy();
-            header("Location: " . APP_URL . "/index.php");
+            header("Location: " . APP_URL . "/login.php");
             exit;
         }
         redirect($_SERVER['PHP_SELF']);
@@ -146,11 +146,11 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                 <button type="button" class="btn btn-cancel-edit d-none" onclick="cancelEdit()"
                     style="background: white; border: 1px solid #ddd; color: #333; padding: 10px 24px; border-radius: 8px; font-weight: 500;">Cancel</button>
                 <button type="button" class="btn btn-edit-profile" onclick="toggleEditMode()"
-                    style="background: #4C3939; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                    style="background: #3A9AFF; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-pencil me-2"></i>Edit Profile
                 </button>
                 <button type="submit" form="profileForm" class="btn btn-save-changes d-none"
-                    style="background: #4C3939; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                    style="background: #3A9AFF; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-check2 me-2"></i>Save Changes
                 </button>
             </div>
@@ -165,9 +165,9 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                     style="background: white; border-radius: 0; border: 1px solid #eaeaea; padding: 40px; margin-bottom: 30px;">
                     <div class="settings-card-header"
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 35px; border-bottom: 1px solid #f1f1f1; padding-bottom: 20px;">
-                        <i class="bi bi-person" style="color: #a0a0a0; font-size: 18px;"></i>
+                        <i class="bi bi-person" style="color: #6B7280; font-size: 18px;"></i>
                         <span
-                            style="font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1.5px;">PROFILE
+                            style="font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Poppins', sans-serif;">PROFILE
                             SETTINGS</span>
                     </div>
 
@@ -196,7 +196,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                                 <div class="mt-5 pt-3">
                                     <button type="button" class="btn" data-bs-toggle="modal"
                                         data-bs-target="#changePasswordModal"
-                                        style="background: #4C3939; border: 1px solid #4C3939; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px;">
+                                        style="background: #3A9AFF; border: 1px solid #3A9AFF; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-family: 'Poppins', sans-serif;">
                                         <i class="bi bi-key-fill" style="color: white; font-size: 16px;"></i> Change
                                         Password
                                     </button>
@@ -262,7 +262,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                             </div>
                         </div>
                         <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#deleteAccountModal"
-                            style="background: transparent; border: 1px solid #ff4d4f; color: #ff4d4f; padding: 10px 24px; border-radius: 4px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-width: 1.5px;">
+                            style="background: #DC2626; border: none; color: #fff; padding: 10px 24px; border-radius: 4px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
                             DELETE ACCOUNT
                         </button>
                     </div>
@@ -273,7 +273,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <!-- Profile Update Success Modal -->
     <div class="modal fade" id="profileSuccessModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
             <div class="modal-content" style="border-radius: 16px; border: none; text-align: center; padding: 30px;">
                 <div
                     style="width: 70px; height: 70px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -283,7 +283,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                 <p style="color: #888; font-size: 14px; margin-bottom: 20px;">Your profile changes have been saved
                     successfully.</p>
                 <button type="button" class="btn" data-bs-dismiss="modal"
-                    style="background: #4C3939; color: white; padding: 10px 30px; border-radius: 8px; font-weight: 500;">
+                    style="background: #3A9AFF; color: white; padding: 10px 30px; border-radius: 8px; font-weight: 500;">
                     Done
                 </button>
             </div>
@@ -292,18 +292,12 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <!-- Change Password Modal -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
             <div class="modal-content"
-                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                style="border-radius: 16px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12);">
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div
-                            style="width: 40px; height: 40px; background: #f5f5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-arrow-repeat" style="font-size: 20px; color: #666;"></i>
-                        </div>
-                        <h5 class="modal-title" style="font-weight: 700; color: #2C1810; margin: 0;">CHANGE PASSWORD
-                        </h5>
-                    </div>
+                    <h5 class="modal-title" style="font-weight: 700; color: #111827; font-size: 16px; margin: 0;">Change
+                        Password</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
                 </div>
                 <form method="POST" id="changePasswordForm">
@@ -312,49 +306,54 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
                         <div class="mb-3">
                             <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Current
+                                style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">Current
                                 Password</label>
-                            <div class="position-relative">
-                                <input type="password" class="form-control" name="current_password" id="currentPassword"
-                                    placeholder="Enter current password" required
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
-                                <i class="bi bi-eye-slash position-absolute" id="toggleCurrentPassword"
-                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
+                            <input type="password" class="form-control" name="current_password" id="cpCurrent"
+                                placeholder="Current password" required
+                                style="border: 1.5px solid #E5E7EB; border-radius: 8px; font-size: 14px; padding: 10px 14px;">
+                            <div id="cpCurrentWarning"
+                                style="font-size: 12px; color: #DC2626; margin-top: 4px; display:none;">
+                                <i class="bi bi-exclamation-circle-fill"></i> Current password is incorrect.
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">New
+                                style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">New
                                 Password</label>
-                            <div class="position-relative">
-                                <input type="password" class="form-control" name="new_password" id="newPassword"
-                                    placeholder="Enter new password" required minlength="6"
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
-                                <i class="bi bi-eye-slash position-absolute" id="toggleNewPassword"
-                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
-                            </div>
+                            <input type="password" class="form-control" name="new_password" id="cpNew"
+                                placeholder="New password (min 6 chars)" required minlength="6"
+                                style="border: 1.5px solid #E5E7EB; border-radius: 8px; font-size: 14px; padding: 10px 14px;">
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-2">
                             <label class="form-label"
-                                style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Confirm
+                                style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">Confirm
                                 Password</label>
-                            <div class="position-relative">
-                                <input type="password" class="form-control" name="confirm_password"
-                                    id="confirmNewPassword" placeholder="Re-type new password" required minlength="6"
-                                    style="background: linear-gradient(135deg, #f8f6f5 0%, #f0eeec 100%); border: none; padding: 14px 45px 14px 16px; border-radius: 8px; font-size: 14px;">
-                                <i class="bi bi-eye-slash position-absolute" id="toggleConfirmNewPassword"
-                                    style="right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px;"></i>
-                            </div>
+                            <input type="password" class="form-control" name="confirm_password" id="cpConfirm"
+                                placeholder="Re-type new password" required minlength="6"
+                                style="border: 1.5px solid #E5E7EB; border-radius: 8px; font-size: 14px; padding: 10px 14px;">
+                            <div id="cpMatchMsg" style="font-size: 12px; margin-top: 4px;"></div>
+                        </div>
+
+                        <!-- Show all passwords checkbox -->
+                        <div style="display:flex; align-items:center; gap:7px; margin-top:10px; margin-bottom:2px;">
+                            <input type="checkbox" id="cpShowAll"
+                                style="width:15px;height:15px;accent-color:#3A9AFF;cursor:pointer;flex-shrink:0;">
+                            <label for="cpShowAll"
+                                style="font-size:12px;font-weight:500;color:#6B7280;margin:0;cursor:pointer;">Show
+                                passwords</label>
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-link text-decoration-none" data-bs-dismiss="modal"
-                            style="color: #888; font-weight: 600; font-size: 14px;">CANCEL</button>
-                        <button type="submit" class="btn px-4 py-2"
-                            style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">UPDATE
-                            PASSWORD</button>
+                        <div style="display:flex; gap:10px; width:100%;">
+                            <button type="button" class="btn" data-bs-dismiss="modal"
+                                style="flex:1; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-weight:600; font-size:13px; padding:11px 0;">Cancel</button>
+                            <button type="submit" id="cpSubmit" class="btn"
+                                style="flex:1; background-color:#3A9AFF; color:white; border:none; border-radius:8px; font-weight:600; font-size:13px; padding:11px 0;">Update
+                                Password</button>
+                        </div>
+
                     </div>
                 </form>
             </div>
@@ -395,7 +394,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <!-- Generic Success Modal -->
     <div class="modal fade" id="genericSuccessModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
             <div class="modal-content border-0 shadow" style="border-radius: 16px;">
                 <div class="modal-body text-center p-4">
                     <div class="mb-3">
@@ -414,7 +413,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
 
     <!-- Error Modal -->
     <div class="modal fade" id="settingsErrorModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
             <div class="modal-content border-0 shadow" style="border-radius: 16px;">
                 <div class="modal-body text-center p-4">
                     <div class="mb-3">
@@ -481,9 +480,70 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             }
         }
 
-        setupPasswordToggle('toggleCurrentPassword', 'currentPassword');
-        setupPasswordToggle('toggleNewPassword', 'newPassword');
-        setupPasswordToggle('toggleConfirmNewPassword', 'confirmNewPassword');
+        // Change Password Modal - new UI wiring
+        (function () {
+            const cpCurrent = document.getElementById('cpCurrent');
+            const cpNew = document.getElementById('cpNew');
+            const cpConfirm = document.getElementById('cpConfirm');
+            const cpShowAll = document.getElementById('cpShowAll');
+            const cpMatchMsg = document.getElementById('cpMatchMsg');
+            const cpCurrentWarning = document.getElementById('cpCurrentWarning');
+
+            // Show all passwords checkbox
+            cpShowAll.addEventListener('change', function () {
+                const t = this.checked ? 'text' : 'password';
+                cpCurrent.type = t;
+                cpNew.type = t;
+                cpConfirm.type = t;
+            });
+
+            // Live match indicator
+            function checkMatch() {
+                const nv = cpNew.value;
+                const cv = cpConfirm.value;
+                if (!cv) { cpMatchMsg.textContent = ''; return; }
+                if (nv === cv) {
+                    cpMatchMsg.innerHTML = '<span style="color:#22C55E;"><i class="bi bi-check-circle-fill"></i> Passwords match</span>';
+                } else {
+                    cpMatchMsg.innerHTML = '<span style="color:#DC2626;"><i class="bi bi-x-circle-fill"></i> Passwords do not match</span>';
+                }
+            }
+            cpNew.addEventListener('input', checkMatch);
+            cpConfirm.addEventListener('input', checkMatch);
+
+            // Current password AJAX check (debounced)
+            let cpTimer;
+            cpCurrent.addEventListener('input', function () {
+                clearTimeout(cpTimer);
+                cpCurrentWarning.style.display = 'none';
+                const val = this.value;
+                if (!val) return;
+                cpTimer = setTimeout(function () {
+                    fetch('<?= APP_URL ?>/backend/api/auth/check_password.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'password=' + encodeURIComponent(val)
+                    }).then(r => r.json()).then(function (d) {
+                        if (d.match === false) {
+                            cpCurrentWarning.style.display = 'block';
+                        } else {
+                            cpCurrentWarning.style.display = 'none';
+                        }
+                    }).catch(function () {  });
+                }, 700);
+            });
+
+            // Reset on modal close
+            document.getElementById('changePasswordModal').addEventListener('hidden.bs.modal', function () {
+                document.getElementById('changePasswordForm').reset();
+                cpMatchMsg.textContent = '';
+                cpCurrentWarning.style.display = 'none';
+                cpCurrent.type = 'password';
+                cpNew.type = 'password';
+                cpConfirm.type = 'password';
+                cpShowAll.checked = false;
+            });
+        })();
 
         // Edit Mode Toggle
         let isEditMode = false;
@@ -505,7 +565,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
             // Enable editable fields
             document.querySelectorAll('.profile-field').forEach(field => {
                 field.removeAttribute('readonly');
-                field.style.border = '1px solid #4C3939';
+                field.style.border = '1px solid #3A9AFF';
                 field.style.background = '#fff';
             });
         }

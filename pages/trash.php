@@ -170,6 +170,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect($_SERVER['PHP_SELF'] . '?success=restored_all');
     }
 
+    // --- RESTORE SELECTED ---
+    if ($action === 'restore_selected') {
+        $items = json_decode($_POST['items'] ?? '[]', true);
+        $restoredCount = 0;
+        
+        foreach ($items as $item) {
+            $itemId = intval($item['id']);
+            $itemType = $item['type'];
+            
+            if ($itemType === 'file') {
+                $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
+                $stmt->execute([$itemId]);
+                $restoredCount++;
+            } elseif ($itemType === 'user') {
+                $stmt = $pdo->prepare("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
+                $stmt->execute([$itemId]);
+                $restoredCount++;
+            }
+        }
+        
+        logActivity($currentUser['id'], 'restore_selected', "Restored $restoredCount items");
+        redirect($_SERVER['PHP_SELF'] . '?success=restored_selected&count=' . $restoredCount);
+    }
+
     // --- EMPTY TRASH ---
     if ($action === 'empty_trash') {
         // Delete all files physically
@@ -258,7 +282,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         }
 
         .search-btn-custom {
-            background: #4C3939;
+            background: #3A9AFF;
             color: white;
             border: none;
             width: 40px;
@@ -271,7 +295,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         }
 
         .search-btn-custom:hover {
-            background: #3A2B2B;
+            background: #2d87ef;
         }
 
         .filter-pill {
@@ -389,7 +413,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         }
 
         .pagination-circle.active {
-            background: #4C3939;
+            background: #3A9AFF;
             color: #fff;
         }
 
@@ -407,6 +431,13 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             font-weight: 600;
             color: #374151;
             cursor: pointer;
+        }
+
+        mark.pub-hl {
+            background: #FEF08A;
+            color: inherit;
+            padding: 0 2px;
+            border-radius: 2px;
         }
 
         .btn-restore-all {
@@ -540,20 +571,23 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-body p-0">
                 <table class="table trash-table mb-0">
-                    <thead class="bg-light">
+                    <thead>
                         <tr>
-                            <th class="ps-4" style="width: 5%;">ID</th>
-                            <th style="width: 35%;">TITLE</th>
-                            <th style="width: 20%;">DELETED BY</th>
-                            <th style="width: 20%;">DATE</th>
-                            <th style="width: 10%;">SIZE</th>
-                            <th class="text-end pe-4" style="width: 10%;">ACTIONS</th>
+                            <th class="ps-4 py-3" style="width: 3%;">
+                                <input type="checkbox" id="selectAll" class="form-check-input" style="cursor: pointer;">
+                            </th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 5%;">ID</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 32%;">Title</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 18%;">Deleted By</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 18%;">Date</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 10%;">Size</th>
+                            <th class="text-end pe-4 py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 10%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($trashedItems)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="7" class="text-center py-5">
                                     <div class="d-flex flex-column align-items-center">
                                         <div class="bg-light rounded-circle p-3 mb-3">
                                             <i class="bi bi-trash text-muted" style="font-size: 24px;"></i>
@@ -566,36 +600,54 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <?php else: ?>
                             <?php foreach ($trashedItems as $item): ?>
                                 <tr>
-                                    <td class="ps-4 text-muted" style="font-family: monospace;">
+                                    <td class="ps-4 py-3">
+                                        <input type="checkbox" class="form-check-input item-checkbox" 
+                                               data-id="<?= $item['id'] ?>" 
+                                               data-type="<?= $item['type'] ?>" 
+                                               style="cursor: pointer;">
+                                    </td>
+                                    <td class="py-3 text-muted" style="font-family: monospace; font-size: 14px; font-weight: 500;">
                                         #<?= $item['id'] ?>
                                     </td>
-                                    <td>
+                                    <td class="py-3">
                                         <div class="d-flex align-items-center gap-3">
                                             <?php if ($item['type'] === 'file'): ?>
                                                 <i class="bi bi-file-earmark-text text-secondary opacity-75 fs-5"></i>
-                                                <div class="fw-bold text-dark">
-                                                    <?= htmlspecialchars($item['title']) ?>
+                                                <div class="fw-medium text-dark" style="font-size: 14px;">
+                                                    <?php
+                                                    $ht = htmlspecialchars($item['title']);
+                                                    if ($search) {
+                                                        $ht = preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', $ht);
+                                                    }
+                                                    echo $ht;
+                                                    ?>
                                                 </div>
                                             <?php else: ?>
                                                 <i class="bi bi-person text-secondary opacity-75 fs-5"></i>
-                                                <div class="fw-bold text-dark">
-                                                    <?= htmlspecialchars($item['title']) ?>
+                                                <div class="fw-medium text-dark" style="font-size: 14px;">
+                                                    <?php
+                                                    $ht = htmlspecialchars($item['title']);
+                                                    if ($search) {
+                                                        $ht = preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', $ht);
+                                                    }
+                                                    echo $ht;
+                                                    ?>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="fw-bold text-dark">
+                                    <td class="py-3">
+                                        <div class="text-dark" style="font-size: 14px;">
                                             <?= htmlspecialchars($item['deleted_by_name'] ?? 'Unknown') ?>
                                         </div>
                                     </td>
-                                    <td class="text-secondary">
+                                    <td class="py-3 text-muted" style="font-size: 13px;">
                                         <?= date('M d, Y, H:i', strtotime($item['deleted_at'])) ?>
                                     </td>
-                                    <td class="text-secondary">
+                                    <td class="py-3 text-muted" style="font-size: 14px;">
                                         <?= $item['type'] === 'file' ? formatFileSize($item['file_size'] ?? 0) : '-' ?>
                                     </td>
-                                    <td class="text-end pe-4">
+                                    <td class="text-end pe-4 py-3">
                                         <div class="d-flex justify-content-end gap-2">
                                             <button type="button" class="trash-action-btn restore"
                                                 onclick="showRestoreModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'])) ?>', '<?= $item['type'] ?>')"
@@ -672,15 +724,24 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
 
         <!-- Footer Buttons -->
         <?php if (!empty($trashedItems)): ?>
-            <div class="d-flex justify-content-end gap-3 mt-4">
-                <button type="button" class="btn btn-restore-all rounded-3 px-4 py-2 fw-medium shadow-sm"
-                    onclick="showRestoreAllModal()">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i>Restore All
+            <div class="d-flex justify-content-between align-items-center gap-3 mt-4">
+                <!-- Restore Selected Button (Hidden by default) -->
+                <button type="button" id="restoreSelectedBtn" class="btn btn-primary rounded-3 px-4 py-2 fw-medium shadow-sm" 
+                        style="display: none; background-color: #3A9AFF; border-color: #3A9AFF;"
+                        onclick="showRestoreSelectedModal()">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Restore Selected (<span id="selectedCount">0</span>)
                 </button>
-                <button type="button" class="btn btn-empty-trash rounded-3 px-4 py-2 fw-medium shadow-sm"
-                    onclick="showEmptyTrashModal()">
-                    <i class="bi bi-trash-fill me-2"></i>Empty Trash
-                </button>
+                
+                <div class="d-flex gap-3 ms-auto">
+                    <button type="button" class="btn btn-restore-all rounded-3 px-4 py-2 fw-medium shadow-sm"
+                        onclick="showRestoreAllModal()">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Restore All
+                    </button>
+                    <button type="button" class="btn btn-empty-trash rounded-3 px-4 py-2 fw-medium shadow-sm"
+                        onclick="showEmptyTrashModal()">
+                        <i class="bi bi-trash-fill me-2"></i>Empty Trash
+                    </button>
+                </div>
             </div>
         <?php endif; ?>
     </main>
@@ -781,6 +842,31 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         </div>
     </div>
 
+    <!-- Restore Selected Modal -->
+    <div class="modal fade" id="restoreSelectedModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3 text-primary">
+                        <i class="bi bi-check2-square display-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Restore Selected Items?</h5>
+                    <p class="text-muted small mb-4">This will restore <span id="modalSelectedCount">0</span> selected item(s).</p>
+                    <form method="POST" id="restoreSelectedForm">
+                        <input type="hidden" name="action" value="restore_selected">
+                        <input type="hidden" name="items" id="selectedItemsInput">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-light rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4"
+                                style="background-color: #3A9AFF; border-color: #3A9AFF;">Restore Selected</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Empty Trash Modal -->
     <div class="modal fade" id="emptyTrashModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -831,8 +917,69 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             new bootstrap.Modal(document.getElementById('emptyTrashModal')).show();
         }
 
+        function showRestoreSelectedModal() {
+            const selectedItems = getSelectedItems();
+            document.getElementById('modalSelectedCount').textContent = selectedItems.length;
+            document.getElementById('selectedItemsInput').value = JSON.stringify(selectedItems);
+            new bootstrap.Modal(document.getElementById('restoreSelectedModal')).show();
+        }
+
+        function getSelectedItems() {
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            const items = [];
+            checkboxes.forEach(cb => {
+                items.push({
+                    id: cb.dataset.id,
+                    type: cb.dataset.type
+                });
+            });
+            return items;
+        }
+
+        function updateRestoreSelectedButton() {
+            const selectedItems = getSelectedItems();
+            const btn = document.getElementById('restoreSelectedBtn');
+            const countSpan = document.getElementById('selectedCount');
+            
+            if (selectedItems.length > 0) {
+                btn.style.display = 'block';
+                countSpan.textContent = selectedItems.length;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
         // Live Search & Filters
         document.addEventListener('DOMContentLoaded', function () {
+            // Select All checkbox
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                    updateRestoreSelectedButton();
+                });
+            }
+            
+            // Individual checkboxes
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    // Update select all checkbox state
+                    const allChecked = Array.from(itemCheckboxes).every(checkbox => checkbox.checked);
+                    const someChecked = Array.from(itemCheckboxes).some(checkbox => checkbox.checked);
+                    
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = allChecked;
+                        selectAllCheckbox.indeterminate = someChecked && !allChecked;
+                    }
+                    
+                    updateRestoreSelectedButton();
+                });
+            });
+
             // Helper to update filter
             function updateFilter(name, value) {
                 const form = document.getElementById('searchForm');
@@ -927,12 +1074,16 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                     case 'deleted': msgEl.textContent = 'Item permanently deleted.'; break;
                     case 'restored_all': msgEl.textContent = 'All items restored successfully.'; break;
                     case 'emptied': msgEl.textContent = 'Trash emptied successfully.'; break;
+                    case 'restored_selected': 
+                        const count = urlParams.get('count') || '0';
+                        msgEl.textContent = `${count} item(s) restored successfully.`; 
+                        break;
                 }
 
                 modal.show();
 
                 // Clean URL
-                const newUrl = window.location.pathname + window.location.search.replace(/[\?&]success=[^&]+/, '').replace(/^&/, '?');
+                const newUrl = window.location.pathname + window.location.search.replace(/[\?&]success=[^&]+/, '').replace(/[\?&]count=[^&]+/, '').replace(/^&/, '?');
                 window.history.replaceState({}, document.title, newUrl);
             }
         });

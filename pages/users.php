@@ -169,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal"
                 data-bs-target="#createUserModal"
-                style="background-color: #4C3939; border-color: #4C3939; font-weight: 500;">
+                style="background-color: #3A9AFF; border-color: #3A9AFF; font-weight: 500;">
                 <i class="bi bi-person-plus-fill me-2"></i>Create Account
             </button>
         </div>
@@ -234,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <button type="submit"
                             class="btn position-absolute end-0 top-0 bottom-0 m-1 rounded-circle d-flex align-items-center justify-content-center"
-                            style="width: 38px; height: 38px; background-color: #4C3939; color: white; border: none;">
+                            style="width: 38px; height: 38px; background-color: #3A9AFF; color: white; border: none;">
                             <i class="bi bi-search" style="font-size: 14px;"></i>
                         </button>
                     </div>
@@ -464,6 +464,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <i class="bi bi-eye-slash position-absolute text-muted" id="toggleCreatePassword"
                                         style="right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"></i>
                                 </div>
+                                <div id="passwordLengthMessage" class="small mt-1" style="font-size: 11px; font-weight: 600; min-height: 17px;"></div>
                             </div>
                             <div class="col-6">
                                 <label class="form-label small fw-bold text-secondary text-uppercase"
@@ -491,7 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             class="btn btn-link text-decoration-none text-secondary fw-bold text-uppercase"
                             data-bs-dismiss="modal" style="font-size: 12px; letter-spacing: 1px;">Cancel</button>
                         <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 text-uppercase fw-bold"
-                            style="background-color: #4C3939; border-color: #4C3939; font-size: 12px; letter-spacing: 1px;">
+                            style="background-color: #3A9AFF; border-color: #3A9AFF; font-size: 12px; letter-spacing: 1px;">
                             Create Account
                         </button>
                     </div>
@@ -565,7 +566,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="button" class="btn px-4 py-2" data-bs-dismiss="modal"
                             style="background: white; border: 1px solid #ddd; color: #333; border-radius: 8px; font-weight: 500; font-size: 14px;">Cancel</button>
                         <button type="button" class="btn px-4 py-2" id="editSaveBtn" onclick="showSaveConfirmation()"
-                            style="background-color: #4C3939; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Save
+                            style="background-color: #3A9AFF; color: white; border-radius: 8px; font-weight: 600; font-size: 14px;">Save
                             Changes</button>
                     </div>
                 </form>
@@ -624,7 +625,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="modal-body text-center p-4">
                     <div class="mb-3">
                         <i class="bi bi-question-circle-fill text-primary"
-                            style="font-size: 48px; color: #4C3939 !important;"></i>
+                            style="font-size: 48px; color: #3A9AFF !important;"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Save Changes?</h5>
                     <p class="text-muted small mb-4">Are you sure you want to update this user's information?</p>
@@ -632,7 +633,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="button" class="btn btn-light rounded-pill px-4"
                             data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary rounded-pill px-4" id="confirmSaveBtn"
-                            style="background-color: #4C3939; border-color: #4C3939;">Save</button>
+                            style="background-color: #3A9AFF; border-color: #3A9AFF;">Save</button>
                     </div>
                 </div>
             </div>
@@ -672,7 +673,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h5 class="fw-bold mb-2">Account Updated!</h5>
                     <p class="text-muted small mb-4">The user account details have been successfully updated.</p>
                     <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal"
-                        style="background-color: #4C3939; border-color: #4C3939;">Done</button>
+                        style="background-color: #3A9AFF; border-color: #3A9AFF;">Done</button>
                 </div>
             </div>
         </div>
@@ -1056,8 +1057,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check if errors are displayed
             const hasUsernameError = !usernameErrorEl.classList.contains('d-none');
             const hasEmailError = !emailErrorEl.classList.contains('d-none');
+            const isPasswordLengthValid = password.length >= 6;
 
-            if (hasUsernameError || hasEmailError || !isPasswordMatch) {
+            if (hasUsernameError || hasEmailError || !isPasswordMatch || !isPasswordLengthValid) {
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.6';
                 submitBtn.style.cursor = 'not-allowed';
@@ -1122,7 +1124,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function checkPasswordMatch() {
             const password = createPassword.value;
             const confirm = confirmPassword.value;
+            const lengthMessage = document.getElementById('passwordLengthMessage');
 
+            // Check password length first
+            if (password.length > 0 && password.length < 6) {
+                lengthMessage.textContent = `${password.length}/6 characters (minimum 6 required)`;
+                lengthMessage.className = 'small mt-1 text-danger';
+            } else if (password.length >= 6) {
+                lengthMessage.textContent = `${password.length} characters ✓`;
+                lengthMessage.className = 'small mt-1 text-success';
+            } else {
+                lengthMessage.textContent = '';
+                lengthMessage.className = 'small mt-1';
+            }
+
+            // Only check password match if password meets minimum length
             if (confirm === '') {
                 matchMessage.textContent = '';
                 matchMessage.className = 'mt-1';
@@ -1130,13 +1146,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return;
             }
 
-            if (password === confirm) {
-                matchMessage.textContent = 'Passwords match';
-                matchMessage.className = 'mt-1 text-success';
+            // Only show match/mismatch if password is at least 6 characters
+            if (password.length >= 6) {
+                if (password === confirm) {
+                    matchMessage.textContent = '✓ Passwords match';
+                    matchMessage.className = 'mt-1 text-success';
+                } else {
+                    matchMessage.textContent = '✗ Passwords do not match';
+                    matchMessage.className = 'mt-1 text-danger';
+                }
             } else {
-                matchMessage.textContent = 'Passwords do not match';
-                matchMessage.className = 'mt-1 text-danger';
+                // Don't show match message if password is too short
+                matchMessage.textContent = '';
+                matchMessage.className = 'mt-1';
             }
+            
             checkFormValidity();
         }
 
@@ -1145,10 +1169,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             confirmPassword.addEventListener('input', checkPasswordMatch);
         }
 
-        // Prevent submission if mismatch (optional extra safety)
+        // Prevent submission if mismatch or password too short (optional extra safety)
         if (createAccountForm) {
             createAccountForm.addEventListener('submit', function (e) {
-                if (createPassword.value !== confirmPassword.value) {
+                const password = createPassword.value;
+                const confirm = confirmPassword.value;
+                
+                if (password.length < 6) {
+                    e.preventDefault();
+                    const lengthMessage = document.getElementById('passwordLengthMessage');
+                    lengthMessage.textContent = 'Password must be at least 6 characters';
+                    lengthMessage.className = 'small mt-1 text-danger';
+                    createPassword.focus();
+                    return;
+                }
+                
+                if (password !== confirm) {
                     e.preventDefault();
                     matchMessage.textContent = 'Passwords do not match';
                     matchMessage.className = 'mt-1 text-danger';

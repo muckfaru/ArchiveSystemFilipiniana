@@ -180,7 +180,7 @@ function getActionLabel($action)
         }
 
         .search-btn-custom {
-            background: #4C3939;
+            background: #3A9AFF;
             color: white;
             border: none;
             width: 40px;
@@ -193,7 +193,7 @@ function getActionLabel($action)
         }
 
         .search-btn-custom:hover {
-            background: #3A2B2B;
+            background: #2d87ef;
         }
 
         .filter-pill {
@@ -316,7 +316,7 @@ function getActionLabel($action)
         }
 
         .pagination-circle.active {
-            background: #4C3939;
+            background: #3A9AFF;
             color: #fff;
         }
 
@@ -335,6 +335,13 @@ function getActionLabel($action)
             color: #374151;
             cursor: pointer;
         }
+
+        mark.pub-hl {
+            background: #FEF08A;
+            color: inherit;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
     </style>
 </head>
 
@@ -343,20 +350,10 @@ function getActionLabel($action)
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529;">History Logs</h1>
-                <div class="text-muted small">Monitor and review all system activities and administrative actions</div>
-            </div>
-            <!-- Export Button -->
-            <a href="?export=csv&search=<?= urlencode($search) ?>&category=<?= urlencode($categoryFilter) ?>&role=<?= urlencode($roleFilter) ?>&sort=<?= urlencode($sortBy) ?>"
-                class="btn btn-primary px-4 py-2"
-                style="background-color: #4C3939; border-color: #4C3939; font-weight: 500;">
-                <i class="bi bi-download me-2"></i>Export CSV
-            </a>
+        <div class="mb-4">
+            <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529;">History Logs</h1>
+            <div class="text-muted small">Monitor and review all system activities and administrative actions</div>
         </div>
-
-
 
         <!-- Search & Filter Bar -->
         <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
@@ -451,11 +448,11 @@ function getActionLabel($action)
                 <table class="table history-table mb-0 w-100">
                     <thead>
                         <tr>
-                            <th style="width: 5%;">ID</th>
-                            <th style="width: 20%;">USER</th>
-                            <th class="text-center" style="width: 15%;">ACTION</th>
-                            <th style="width: 40%;">TITLE</th>
-                            <th class="text-end" style="width: 20%;">TIMESTAMP</th>
+                            <th class="ps-4 py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">ID</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">User</th>
+                            <th class="text-center py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Action</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Title</th>
+                            <th class="text-end pe-4 py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Timestamp</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -468,15 +465,21 @@ function getActionLabel($action)
                         <?php else: ?>
                             <?php foreach ($logs as $log): ?>
                                 <tr>
-                                    <td class="text-muted fw-bold">#<?= $log['id'] ?></td>
-                                    <td>
+                                    <td class="ps-4 py-3 text-muted" style="font-family: monospace; font-size: 14px; font-weight: 500;">#<?= $log['id'] ?></td>
+                                    <td class="py-3">
                                         <div class="d-flex align-items-center">
-                                            <div class="fw-bold text-dark">
-                                                <?= htmlspecialchars($log['username'] ?? 'Unknown User') ?>
+                                            <div class="text-dark" style="font-size: 14px;">
+                                                <?php
+                                                $u = htmlspecialchars($log['username'] ?? 'Unknown User');
+                                                if ($search) {
+                                                    $u = preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', $u);
+                                                }
+                                                echo $u;
+                                                ?>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center py-3">
                                         <?php
                                         $actionRaw = strtolower($log['action']);
                                         $actionLabel = 'UPDATE';
@@ -500,10 +503,16 @@ function getActionLabel($action)
                                             <?= $actionLabel ?>
                                         </span>
                                     </td>
-                                    <td class="fw-medium text-dark">
-                                        <?= htmlspecialchars($log['target_title'] ?? '-') ?>
+                                    <td class="py-3 text-dark" style="font-size: 14px;">
+                                        <?php
+                                        $t = htmlspecialchars($log['target_title'] ?? '-');
+                                        if ($search) {
+                                            $t = preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', $t);
+                                        }
+                                        echo $t;
+                                        ?>
                                     </td>
-                                    <td class="text-end text-muted">
+                                    <td class="text-end pe-4 py-3 text-muted" style="font-size: 13px;">
                                         <?= date('d M Y, H:i:s', strtotime($log['created_at'])) ?>
                                     </td>
                                 </tr>

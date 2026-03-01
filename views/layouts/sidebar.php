@@ -4,16 +4,12 @@
         <div class="logo-container">
             <img src="<?= APP_URL ?>/assets/images/sidebarlogo.png" alt="QCPL Logo" class="sidebar-logo">
         </div>
-        <h2 class="sidebar-title">QUEZON CITY PUBLIC LIBRARY</h2>
-        <div class="sidebar-subtitle-container">
-            <span class="sidebar-subtitle">ADMIN</span>
-        </div>
     </div>
 
     <nav class="sidebar-nav">
         <!-- General Section -->
         <div class="nav-section">
-            <span class="nav-section-title">General</span>
+            <span class="nav-section-title">GENERAL</span>
             <ul class="nav-list">
                 <li class="nav-item">
                     <a href="<?= APP_URL ?>/dashboard.php"
@@ -41,12 +37,12 @@
 
         <!-- Archive Management Section -->
         <div class="nav-section">
-            <span class="nav-section-title">Archive Management</span>
+            <span class="nav-section-title">ARCHIVE MANAGEMENT</span>
             <ul class="nav-list">
                 <li class="nav-item">
                     <a href="<?= APP_URL ?>/pages/upload.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'upload.php' ? 'active' : '' ?>">
-                        <i class="bi bi-plus-circle"></i>
+                        <i class="bi bi-cloud-upload"></i>
                         <span>Upload</span>
                     </a>
                 </li>
@@ -57,7 +53,7 @@
                         <span>Trash</span>
                     </a>
                 </li>
-                <li class="nav-item mt-2">
+                <li class="nav-item">
                     <a href="<?= APP_URL ?>/pages/settings.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : '' ?>">
                         <i class="bi bi-gear-fill"></i>
@@ -85,25 +81,22 @@
 
 <!-- Logout Confirmation Modal -->
 <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 24px; border: none; padding: 20px;">
-            <div class="modal-body text-center p-3">
-                <div
-                    style="width: 64px; height: 64px; background-color: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                    <i class="bi bi-box-arrow-right" style="font-size: 28px; color: #DC2626;"></i>
+    <div class="modal-dialog modal-dialog-centered modal-standard">
+        <div class="modal-content modal-minimalist">
+            <div class="modal-header">
+                <div class="modal-icon icon-warning">
+                    <i class="bi bi-box-arrow-right"></i>
                 </div>
-                <h5 style="font-weight: 800; color: #111827; margin-bottom: 8px; font-size: 20px;">Confirm Logout</h5>
-                <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px;">Are you sure you want to log out?</p>
-                <div class="d-flex gap-3">
-                    <button type="button" class="btn" data-bs-dismiss="modal"
-                        style="flex: 1; background-color: #F3F4F6; color: #374151; font-weight: 600; padding: 10px; border-radius: 12px; border: none;">
-                        Cancel
-                    </button>
-                    <a href="<?= APP_URL ?>/logout.php" class="btn"
-                        style="flex: 1; background-color: #DC2626; color: white; font-weight: 600; padding: 10px; border-radius: 12px; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none;">
-                        <i class="bi bi-box-arrow-right" style="font-size: 16px;"></i> Logout
-                    </a>
-                </div>
+                <h5 class="modal-title">Confirm Logout</h5>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to log out of your account?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="<?= APP_URL ?>/logout.php" class="btn btn-danger">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
             </div>
         </div>
     </div>

@@ -170,6 +170,10 @@ function getYearsCovered()
     $stmt = $pdo->query("SELECT MIN(YEAR(publication_date)) as min_year, MAX(YEAR(publication_date)) as max_year FROM newspapers WHERE deleted_at IS NULL AND publication_date IS NOT NULL");
     $result = $stmt->fetch();
     if ($result['min_year'] && $result['max_year']) {
+        // If min and max year are the same, show only one year
+        if ($result['min_year'] === $result['max_year']) {
+            return $result['min_year'];
+        }
         return $result['min_year'] . '-' . $result['max_year'];
     }
     return 'N/A';

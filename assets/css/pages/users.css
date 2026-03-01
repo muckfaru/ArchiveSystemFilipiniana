@@ -5,6 +5,31 @@
 
 /* ==================== Users Page Specifics ==================== */
 
+/* Fix sidebar title typography bleed/scaling issue that happens only on Users */
+body .sidebar-title {
+    font-size: 13px !important;
+}
+
+/* Fix sidebar navigation text from zooming/changing on Users page */
+body .nav-link {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+body .nav-link span {
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+body .nav-link i {
+    font-size: 18px !important;
+}
+
+body .nav-section-title {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+}
+
 /* User Avatar */
 .user-avatar {
     width: 32px;

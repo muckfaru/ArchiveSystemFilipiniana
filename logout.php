@@ -18,6 +18,6 @@ if (isLoggedIn()) {
 // Destroy session
 session_destroy();
 
-// Redirect to login
-header("Location: " . APP_URL . "/index.php");
+// Redirect to public landing page
+header("Location: " . APP_URL . "/public.php");
 exit;

@@ -138,14 +138,14 @@ function sendPasswordResetEmail($email, $name, $resetLink)
 
     $body = "
     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-        <div style='background-color: #4C3939; padding: 20px; text-align: center;'>
+        <div style='background-color: #3A9AFF; padding: 20px; text-align: center;'>
             <h1 style='color: white; margin: 0;'>Password Reset</h1>
         </div>
         <div style='padding: 30px; background-color: #f9f9f9;'>
             <p>Hello <strong>$name</strong>,</p>
             <p>We received a request to reset your password. Click the button below to set a new password:</p>
             <div style='text-align: center; margin: 30px 0;'>
-                <a href='$resetLink' style='background-color: #4C3939; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block;'>Reset Password</a>
+                <a href='$resetLink' style='background-color: #3A9AFF; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block;'>Reset Password</a>
             </div>
             <p style='color: #666; font-size: 14px;'>This link will expire in 24 hours.</p>
             <p style='color: #666; font-size: 14px;'>If you didn't request this, you can safely ignore this email.</p>

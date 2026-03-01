@@ -1,5 +1,29 @@
 /* Collections Page Specific Styles */
 
+/* ==================== Sidebar Consistency Fix ==================== */
+body .sidebar-title {
+    font-size: 13px !important;
+}
+
+body .nav-link {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+body .nav-link span {
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+body .nav-link i {
+    font-size: 18px !important;
+}
+
+body .nav-section-title {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+}
+
 body {
     background-color: #F8F9FA;
 }
@@ -33,13 +57,13 @@ body {
 /* Hover effect */
 .category-list .nav-link:hover {
     background-color: rgba(234, 234, 239, 0.5);
-    color: #4C3939 !important;
+    color: #3A9AFF !important;
 }
 
 /* Format checkboxes styling */
 .form-check-input:checked {
-    background-color: #4C3939;
-    border-color: #4C3939;
+    background-color: #3A9AFF;
+    border-color: #3A9AFF;
 }
 
 /* Format checkboxes text */

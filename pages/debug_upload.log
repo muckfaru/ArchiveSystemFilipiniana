@@ -1318,3 +1318,606 @@
 (
 )
 
+2026-02-25 20:56:06 - Request received. Action: edit
+2026-02-25 20:56:06 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 69
+    [existing_thumbnail] => uploads/thumbnails/1772021954_thumb_72472ed8.jpg
+    [title] => ghjy
+    [publisher] => ftyutyu
+    [publication_date] => 2026-02-03
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 6
+    [page_count] => 56
+    [volume_issue] => 21
+    [keywords] => ertert
+    [description] => welrknwelkrhwlerlwerkwerlkwerklwerlkmwelrklwkerlkwnerlknwelknwernkl
+ wer;klwerlkwnerklnwernmwwe 
+werw
+erwer
+wer
+)
+
+2026-02-25 20:56:06 - FILES Data: Array
+(
+)
+
+2026-02-25 23:45:23 - Request received. Action: upload
+2026-02-25 23:45:23 - POST Data: Array
+(
+    [action] => upload
+    [title] => iop
+    [publisher] => opo
+    [publication_date] => 2026-02-04
+    [edition] => Evening
+    [category_id] => 7
+    [language_id] => 6
+    [page_count] => 89
+    [volume_issue] => 5
+    [keywords] => ereret
+)
+
+2026-02-25 23:45:23 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg77927-images.epub
+            [full_path] => pg77927-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\phpDD1C.tmp
+            [error] => 0
+            [size] => 155465
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpDD1D.tmp
+            [error] => 0
+            [size] => 197227
+        )
+
+)
+
+2026-02-25 23:45:23 - Processing upload: pg77927-images.epub (155465 bytes)
+2026-02-25 23:45:23 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1772034323_db0e7734.epub
+2026-02-25 23:45:23 - DB Insert Success. New ID: 70
+2026-02-25 23:45:23 - Request received. Action: upload
+2026-02-25 23:45:23 - POST Data: Array
+(
+    [action] => upload
+    [title] => An_historical_account_of_all_th
+    [publisher] => test
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 2
+    [page_count] => 78
+    [volume_issue] => 56
+    [keywords] => rtytrtr
+)
+
+2026-02-25 23:45:23 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg77886-images-kf8.mobi
+            [full_path] => pg77886-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\phpDD3E.tmp
+            [error] => 0
+            [size] => 724968
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpDD3F.tmp
+            [error] => 0
+            [size] => 160845
+        )
+
+)
+
+2026-02-25 23:45:23 - Processing upload: pg77886-images-kf8.mobi (724968 bytes)
+2026-02-25 23:45:23 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1772034323_536de173.mobi
+2026-02-25 23:45:23 - DB Insert Success. New ID: 71
+2026-02-25 23:48:04 - Request received. Action: edit
+2026-02-25 23:48:04 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 71
+    [existing_thumbnail] => uploads/thumbnails/1772034323_thumb_7cbe2347.jpg
+    [title] => An_historical_account_of_all_th
+    [publisher] => test
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 8
+    [language_id] => 2
+    [page_count] => 78
+    [volume_issue] => 56
+    [keywords] => rtytrtr
+    [description] => 
+)
+
+2026-02-25 23:48:04 - FILES Data: Array
+(
+)
+
+2026-02-25 23:48:17 - Request received. Action: edit
+2026-02-25 23:48:17 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 71
+    [existing_thumbnail] => uploads/thumbnails/1772034323_thumb_7cbe2347.jpg
+    [title] => An_historical_account_of_all_th
+    [publisher] => test
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 2
+    [page_count] => 78
+    [volume_issue] => 56
+    [keywords] => rtytrtr
+    [description] => 
+)
+
+2026-02-25 23:48:17 - FILES Data: Array
+(
+)
+
+2026-02-25 23:48:33 - Request received. Action: edit
+2026-02-25 23:48:33 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 71
+    [existing_thumbnail] => uploads/thumbnails/1772034323_thumb_7cbe2347.jpg
+    [title] => An_historical_account_of_all_th
+    [publisher] => test
+    [publication_date] => 2026-02-05
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 2
+    [page_count] => 78
+    [volume_issue] => 56
+    [keywords] => rtytrtr
+    [description] => fgrtyrtyrtyrtyyrtrtfhxfhxfh
+)
+
+2026-02-25 23:48:33 - FILES Data: Array
+(
+)
+
+2026-02-27 10:51:11 - Request received. Action: upload
+2026-02-27 10:51:11 - POST Data: Array
+(
+    [action] => upload
+    [title] => er
+    [publisher] => ert
+    [publication_date] => 2026-02-07
+    [category_id] => 4
+    [language_id] => 11
+    [page_count] => 67
+    [volume_issue] => 6
+    [description] => tyutyuty ytuyu ty ty uyuy y uy ty ty tu
+    [keywords] => rty
+)
+
+2026-02-27 10:51:11 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => Samson_Joshua Nicus_SAM101_Essay_Midterm.pdf
+            [full_path] => Samson_Joshua Nicus_SAM101_Essay_Midterm.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\phpC779.tmp
+            [error] => 0
+            [size] => 201133
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpC78A.tmp
+            [error] => 0
+            [size] => 182578
+        )
+
+)
+
+2026-02-27 10:51:11 - Processing upload: Samson_Joshua Nicus_SAM101_Essay_Midterm.pdf (201133 bytes)
+2026-02-27 10:51:11 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1772160671_34f4036a.pdf
+2026-02-27 10:51:11 - DB Insert Success. New ID: 72
+2026-02-27 10:51:11 - Request received. Action: upload
+2026-02-27 10:51:11 - POST Data: Array
+(
+    [action] => upload
+    [title] => ert
+    [publisher] => er
+    [publication_date] => 2026-02-19
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 9
+    [page_count] => 55
+    [volume_issue] => 46
+    [description] => rtyrtrtrtrtrtrt wewer  wewer we wer wer wer wer wer werw wer
+    [keywords] => ertet
+)
+
+2026-02-27 10:51:11 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => Week 2_ System Administration (S.A) Operating Systems.pdf
+            [full_path] => Week 2_ System Administration (S.A) Operating Systems.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\phpC7AA.tmp
+            [error] => 0
+            [size] => 6796410
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpC7F9.tmp
+            [error] => 0
+            [size] => 246931
+        )
+
+)
+
+2026-02-27 10:51:11 - Processing upload: Week 2_ System Administration (S.A) Operating Systems.pdf (6796410 bytes)
+2026-02-27 10:51:11 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/1772160671_262f561a.pdf
+2026-02-27 10:51:11 - DB Insert Success. New ID: 73
+2026-02-28 20:27:00 - Request received. Action: upload
+2026-02-28 20:27:00 - POST Data: Array
+(
+    [action] => upload
+    [title] => Romeo_and_Juliet
+    [publisher] => qw
+    [publication_date] => 2026-02-10
+    [edition] => Morning
+    [category_id] => 1
+    [language_id] => 10
+    [page_count] => 34
+    [volume_issue] => 4
+    [keywords] => ert
+)
+
+2026-02-28 20:27:00 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images.epub
+            [full_path] => pg2701-images.epub
+            [type] => application/epub
+            [tmp_name] => C:\xampp\tmp\php65EB.tmp
+            [error] => 0
+            [size] => 840468
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php65EC.tmp
+            [error] => 0
+            [size] => 171718
+        )
+
+)
+
+2026-02-28 20:27:00 - Processing upload: pg2701-images.epub (840468 bytes)
+2026-02-28 20:27:00 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/ebooks/1772281620_fafbfb8c.epub
+2026-02-28 20:27:00 - DB Insert Success. New ID: 75
+2026-02-28 20:27:00 - Request received. Action: upload
+2026-02-28 20:27:00 - POST Data: Array
+(
+    [action] => upload
+    [title] => Pride_and_Prejudice
+    [publisher] => uio
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 7
+    [language_id] => 4
+    [page_count] => 34
+    [volume_issue] => 45
+    [description] => werwewerrwe
+    [keywords] => tyutyu
+)
+
+2026-02-28 20:27:00 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1342-images-kf8.mobi
+            [full_path] => pg1342-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php661C.tmp
+            [error] => 0
+            [size] => 25333240
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php669A.tmp
+            [error] => 0
+            [size] => 182571
+        )
+
+)
+
+2026-02-28 20:27:00 - Processing upload: pg1342-images-kf8.mobi (25333240 bytes)
+2026-02-28 20:27:00 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/ebooks/1772281620_c39e0f66.mobi
+2026-02-28 20:27:00 - DB Insert Success. New ID: 76
+2026-02-28 20:27:08 - Request received. Action: upload
+2026-02-28 20:27:08 - POST Data: Array
+(
+    [action] => upload
+    [title] => Romeo_and_Juliet
+    [publisher] => rty
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 1
+    [language_id] => 8
+    [page_count] => 4
+    [volume_issue] => 45
+    [description] => erterterer
+    [keywords] => ertert
+)
+
+2026-02-28 20:27:08 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg1513-images-kf8.mobi
+            [full_path] => pg1513-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php8752.tmp
+            [error] => 0
+            [size] => 648209
+        )
+
+)
+
+2026-02-28 20:27:08 - Processing upload: pg1513-images-kf8.mobi (648209 bytes)
+2026-02-28 20:27:08 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/ebooks/1772281628_fe74c3d6.mobi
+2026-02-28 20:27:08 - DB Insert Success. New ID: 77
+2026-02-28 20:32:20 - Request received. Action: edit
+2026-02-28 20:32:20 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 77
+    [existing_thumbnail] => 
+    [title] => Romeo_and_Juliet
+    [publisher] => rty
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 1
+    [language_id] => 8
+    [page_count] => 4
+    [volume_issue] => 45
+    [keywords] => ertert, rty
+    [description] => erterterer
+)
+
+2026-02-28 20:32:20 - FILES Data: Array
+(
+)
+
+2026-02-28 20:34:05 - Request received. Action: edit
+2026-02-28 20:34:05 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 77
+    [existing_thumbnail] => 
+    [title] => Romeo_and_Juliet
+    [publisher] => rty
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 1
+    [language_id] => 8
+    [page_count] => 4
+    [volume_issue] => 45
+    [keywords] => ertert, rty
+    [description] => erterterer
+)
+
+2026-02-28 20:34:05 - FILES Data: Array
+(
+    [thumbnail] => Array
+        (
+            [name] => 642118146_2126185384814799_3294636907050189495_n.jpg
+            [full_path] => 642118146_2126185384814799_3294636907050189495_n.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpE209.tmp
+            [error] => 0
+            [size] => 144967
+        )
+
+)
+
+2026-02-28 20:34:31 - Request received. Action: edit
+2026-02-28 20:34:31 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 77
+    [existing_thumbnail] => uploads/thumbnails/2026/02/1772282045_thumb_9db04832.jpg
+    [title] => Romeo_and_Juliet
+    [publisher] => rty
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 7
+    [language_id] => 8
+    [page_count] => 4
+    [volume_issue] => 45
+    [keywords] => ertert, rty
+    [description] => erterterer
+)
+
+2026-02-28 20:34:31 - FILES Data: Array
+(
+)
+
+2026-02-28 20:34:39 - Request received. Action: edit
+2026-02-28 20:34:39 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 77
+    [existing_thumbnail] => uploads/thumbnails/2026/02/1772282045_thumb_9db04832.jpg
+    [title] => Romeo_and_Juliet
+    [publisher] => rty
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 4
+    [language_id] => 8
+    [page_count] => 4
+    [volume_issue] => 45
+    [keywords] => ertert, rty
+    [description] => erterterer
+)
+
+2026-02-28 20:34:39 - FILES Data: Array
+(
+)
+
+2026-03-01 22:23:59 - Request received. Action: upload
+2026-03-01 22:23:59 - POST Data: Array
+(
+    [action] => upload
+    [title] => Frankenstein;_or,_the_modern_pr
+    [publisher] => we
+    [publication_date] => 2026-03-02
+    [edition] => Morning
+    [category_id] => 2
+    [language_id] => 10
+    [page_count] => 4
+    [volume_issue] => 3
+    [keywords] => wer
+)
+
+2026-03-01 22:23:59 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg84-images-kf8 (1).mobi
+            [full_path] => pg84-images-kf8 (1).mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\phpDACF.tmp
+            [error] => 0
+            [size] => 682977
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpDAD0.tmp
+            [error] => 0
+            [size] => 197227
+        )
+
+)
+
+2026-03-01 22:23:59 - Processing upload: pg84-images-kf8 (1).mobi (682977 bytes)
+2026-03-01 22:23:59 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772375039_f3bbd6d3.mobi
+2026-03-01 22:23:59 - DB Insert Success. New ID: 78
+2026-03-02 00:09:51 - Request received. Action: upload
+2026-03-02 00:09:51 - POST Data: Array
+(
+    [action] => upload
+    [title] => Wuthering_Heights
+    [publisher] => wer
+    [publication_date] => 2026-03-05
+    [edition] => Morning
+    [category_id] => 10
+    [language_id] => 7
+    [page_count] => 34
+    [volume_issue] => 3
+    [keywords] => werwerwre
+)
+
+2026-03-02 00:09:51 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg768-images-kf8.mobi
+            [full_path] => pg768-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\phpCB00.tmp
+            [error] => 0
+            [size] => 735237
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpCB11.tmp
+            [error] => 0
+            [size] => 246931
+        )
+
+)
+
+2026-03-02 00:09:51 - Processing upload: pg768-images-kf8.mobi (735237 bytes)
+2026-03-02 00:09:51 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772381391_0cdb9ef2.mobi
+2026-03-02 00:09:51 - DB Insert Success. New ID: 79
+2026-03-02 00:23:15 - Request received. Action: upload
+2026-03-02 00:23:15 - POST Data: Array
+(
+    [action] => upload
+    [title] => Moby_Dick;_Or,_The_Whale
+    [publisher] => ert
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 9
+    [language_id] => 11
+    [page_count] => 34
+    [volume_issue] => 2
+    [keywords] => qweqw
+)
+
+2026-03-02 00:23:15 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg2701-images-kf8.mobi
+            [full_path] => pg2701-images-kf8.mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\phpC69.tmp
+            [error] => 0
+            [size] => 1232079
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpC7A.tmp
+            [error] => 0
+            [size] => 256157
+        )
+
+)
+
+2026-03-02 00:23:15 - Processing upload: pg2701-images-kf8.mobi (1232079 bytes)
+2026-03-02 00:23:15 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/mobi/1772382195_15dbb070.mobi
+2026-03-02 00:23:15 - DB Insert Success. New ID: 80

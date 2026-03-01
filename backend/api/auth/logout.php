@@ -22,5 +22,5 @@ session_destroy();
 // If called via AJAX, return JSON. If called directly or via script expecting redirect, 
 // the caller should handle the location change. 
 // But since this is an API, strictly JSON is better.
-echo json_encode(['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => APP_URL . '/index.php']);
+echo json_encode(['status' => 'success', 'message' => 'Logged out successfully', 'redirect' => APP_URL . '/public.php']);
 exit;

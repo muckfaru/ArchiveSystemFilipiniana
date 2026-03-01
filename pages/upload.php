@@ -111,26 +111,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     redirect('upload.php?error=' . urlencode('A file with this name already exists.'));
                 }
 
+                // Generate organized path based on publication date and file type
+                // Format: uploads/newspapers/YYYY/MM/filetype/filename.ext
+                $pubDate = $publicationDate ?: date('Y-m-d');
+                list($year, $month) = explode('-', $pubDate);
+                
+                // Determine file type folder - each format gets its own folder
+                $typeFolder = '';
+                if ($fileExt === 'epub') {
+                    $typeFolder = 'epub';
+                } elseif ($fileExt === 'mobi') {
+                    $typeFolder = 'mobi';
+                } elseif ($fileExt === 'pdf') {
+                    $typeFolder = 'pdf';
+                } elseif (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif'])) {
+                    $typeFolder = 'images';
+                } else {
+                    $typeFolder = 'documents';
+                }
+                
+                // Create directory structure: uploads/newspapers/YYYY/MM/filetype/
+                $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$typeFolder}/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
                 // Generate unique filename
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
-                $uploadPath = UPLOAD_PATH . 'newspapers/' . $newFileName;
+                $uploadPath = $uploadDir . $newFileName;
+                $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$typeFolder}/" . $newFileName;
 
                 // Move file
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
                     file_put_contents($logFile, date('Y-m-d H:i:s') . " - File moved successfully to $uploadPath\n", FILE_APPEND);
 
-                    // Handle thumbnail upload
+                    // Handle thumbnail upload - organized by year/month
                     $thumbnailPath = null;
                     if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
                         $thumbFile = $_FILES['thumbnail'];
                         $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
 
                         if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
+                            // Create thumbnail directory: uploads/thumbnails/YYYY/MM/
+                            $thumbDir = UPLOAD_PATH . "thumbnails/{$year}/{$month}/";
+                            if (!is_dir($thumbDir)) {
+                                mkdir($thumbDir, 0777, true);
+                            }
+                            
                             $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                            $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
+                            $thumbPath = $thumbDir . $thumbFileName;
 
                             if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                                $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                                $thumbnailPath = "uploads/thumbnails/{$year}/{$month}/" . $thumbFileName;
                             }
                         }
                     }
@@ -154,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $publisher,
                             $volumeIssue,
                             $description,
-                            'uploads/newspapers/' . $newFileName,
+                            $relativeFilePath,
                             $fileName,
                             $fileExt,
                             $fileSize,
@@ -256,7 +288,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $totalSize = 0;
                 $savedPaths = [];
                 $thumbnailPath = null;
-                $bulkDir = UPLOAD_PATH . 'newspapers/bulk_' . time();
+                
+                // Get publication date for folder organization
+                $pubDate = $publicationDate ?: date('Y-m-d');
+                list($year, $month) = explode('-', $pubDate);
+                
+                // Create directory structure: uploads/newspapers/YYYY/MM/images/
+                $bulkDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/images";
 
                 if (!is_dir($bulkDir)) {
                     mkdir($bulkDir, 0777, true);
@@ -277,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $destination = $bulkDir . '/' . $cleanName;
 
                             if (move_uploaded_file($tmpName, $destination)) {
-                                $relativePath = 'uploads/newspapers/' . basename($bulkDir) . '/' . $cleanName;
+                                $relativePath = "uploads/newspapers/{$year}/{$month}/images/" . $cleanName;
                                 $savedPaths[] = $relativePath;
                             }
                         }
@@ -295,10 +333,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $thumbFile = $_FILES['thumbnail'];
                     $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
                     if (in_array($thumbExt, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        // Create thumbnail directory: uploads/thumbnails/YYYY/MM/
+                        $thumbDir = UPLOAD_PATH . "thumbnails/{$year}/{$month}/";
+                        if (!is_dir($thumbDir)) {
+                            mkdir($thumbDir, 0777, true);
+                        }
+                        
                         $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                        $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
+                        $thumbPath = $thumbDir . $thumbFileName;
                         if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                            $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                            $thumbnailPath = "uploads/thumbnails/{$year}/{$month}/" . $thumbFileName;
                         }
                     }
                 } else {
@@ -378,23 +422,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $volumeIssue = sanitize($_POST['volume_issue'] ?? '');
         $description = sanitize($_POST['description'] ?? '');
 
-        // Handle new thumbnail upload
+        // Handle new thumbnail upload - organized by year/month
         $thumbnailPath = $_POST['existing_thumbnail'] ?? null;
         if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
             $thumbFile = $_FILES['thumbnail'];
             $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
 
             if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
+                // Get publication date for folder organization
+                $pubDate = $publicationDate ?: date('Y-m-d');
+                list($year, $month) = explode('-', $pubDate);
+                
+                // Create thumbnail directory: uploads/thumbnails/YYYY/MM/
+                $thumbDir = UPLOAD_PATH . "thumbnails/{$year}/{$month}/";
+                if (!is_dir($thumbDir)) {
+                    mkdir($thumbDir, 0777, true);
+                }
+                
                 $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                $thumbPath = UPLOAD_PATH . 'thumbnails/' . $thumbFileName;
+                $thumbPath = $thumbDir . $thumbFileName;
 
                 if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                    $thumbnailPath = 'uploads/thumbnails/' . $thumbFileName;
+                    $thumbnailPath = "uploads/thumbnails/{$year}/{$month}/" . $thumbFileName;
                 }
             }
         }
 
-        // Handle file replacement
+        // Handle file replacement - organized by year/month/type
         if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['file'];
             $fileName = $file['name'];
@@ -403,8 +457,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
             if (in_array($fileExt, ALLOWED_EXTENSIONS) && $fileSize <= MAX_UPLOAD_SIZE) {
+                // Get publication date for folder organization
+                $pubDate = $publicationDate ?: date('Y-m-d');
+                list($year, $month) = explode('-', $pubDate);
+                
+                // Determine file type folder - each format gets its own folder
+                $typeFolder = '';
+                if ($fileExt === 'epub') {
+                    $typeFolder = 'epub';
+                } elseif ($fileExt === 'mobi') {
+                    $typeFolder = 'mobi';
+                } elseif ($fileExt === 'pdf') {
+                    $typeFolder = 'pdf';
+                } elseif (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif'])) {
+                    $typeFolder = 'images';
+                } else {
+                    $typeFolder = 'documents';
+                }
+                
+                // Create directory structure
+                $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$typeFolder}/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
-                $uploadPath = UPLOAD_PATH . 'newspapers/' . $newFileName;
+                $uploadPath = $uploadDir . $newFileName;
+                $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$typeFolder}/" . $newFileName;
 
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
                     // Update with new file
@@ -426,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $publisher,
                         $volumeIssue,
                         $description,
-                        'uploads/newspapers/' . $newFileName,
+                        $relativeFilePath,
                         $fileName,
                         $fileExt,
                         $fileSize,

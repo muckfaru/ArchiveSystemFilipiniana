@@ -1,22 +1,16 @@
 <?php
 /**
- * Login Page Controller
+ * Entry Point
  * Archive System - Quezon City Public Library
- * 
- * This file acts as the controller for the login page.
- * It handles the initial page load and authentication checks.
- * The actual login logic is handled by backend/api/auth/login.php
- * and the view is in views/login.php
+ *
+ * The default entry point always shows the public reader page.
+ * Admin login is at login.php
+ * Admin dashboard is at dashboard.php
  */
 
 require_once __DIR__ . '/backend/core/config.php';
 require_once __DIR__ . '/backend/core/functions.php';
 
-// Redirect if already logged in
-if (isLoggedIn()) {
-    redirect(APP_URL . '/dashboard.php');
-}
-
-// Include the view
-require_once __DIR__ . '/views/login.php';
+// Always redirect to the public reader landing page
+redirect(APP_URL . '/public.php');
 ?>

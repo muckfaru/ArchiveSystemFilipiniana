@@ -10,146 +10,279 @@ body .sidebar-title {
 
 /* ==================== Dashboard Specifics ==================== */
 
+/* Dashboard Section Containers */
+.row.g-4 {
+    position: relative;
+}
+
+.row.g-4.mb-4 {
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    backdrop-filter: none;
+    box-shadow: none;
+}
+
 /* Recent Activities Section */
 .recent-activities {
     margin-top: 30px;
+    padding: 28px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .recent-activities-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #F3F4F6;
 }
 
 .recent-activities-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 22px;
+    font-weight: 700;
+    color: #1F2937;
+    letter-spacing: -0.3px;
+}
+
+/* Selected files count badge */
+#selectedFilesCount {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+}
+
+#selectedFilesCount[style*="display: none"] {
+    display: none !important;
 }
 
 .view-all-link {
     color: var(--primary-color);
     font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.view-all-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Empty State Styling */
+.empty-state-container {
+    text-align: center;
+    padding: 80px 40px;
+    background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+    border-radius: 16px;
+    border: 2px dashed #E5E7EB;
+    position: relative;
+    overflow: hidden;
+}
+
+.empty-state-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(58, 154, 255, 0.03) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #3A9AFF 0%, #5DB2FF 100%);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(58, 154, 255, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.empty-state-icon i {
+    font-size: 36px;
+    color: #FFFFFF;
+}
+
+.empty-state-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.empty-state-text {
+    font-size: 15px;
+    color: #6B7280;
+    margin-bottom: 32px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
+
+.empty-state-btn {
+    background: linear-gradient(135deg, #3A9AFF 0%, #2D87EF 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(58, 154, 255, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.empty-state-btn:hover {
+    background: linear-gradient(135deg, #2D87EF 0%, #1E6FD9 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(58, 154, 255, 0.4);
 }
 
 /* Newspaper Card */
 .newspaper-card {
-    background-color: var(--bg-white);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
+    background-color: #FFFFFF;
+    border: 1px solid #E8EBF0;
+    border-radius: 14px;
     overflow: hidden;
-    transition: var(--transition);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     height: 100%;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .newspaper-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
+    transform: translateY(-6px);
+    border-color: #D1D5DB;
 }
 
 .newspaper-thumbnail {
-    height: 200px;
+    height: 220px;
     object-fit: cover;
     width: 100%;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
 }
 
 .newspaper-info {
-    padding: 15px;
+    padding: 18px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    background: #FFFFFF;
 }
 
 .newspaper-category {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
-    font-weight: 600;
-    margin-bottom: 5px;
-    padding: 3px 8px;
-    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 6px;
     display: inline-flex;
     align-self: flex-start;
     width: max-content;
-    background-color: #ECEFF1;
-    /* Default Fallback */
-    color: #546E7A;
+    background-color: #F3F4F6;
+    color: #6B7280;
 }
 
 .newspaper-category.culture {
-    color: #E65100;
-    background-color: #FFF3E0;
+    color: #EA580C;
+    background-color: #FFF7ED;
 }
 
 .newspaper-category.politics {
-    color: #1565C0;
-    background-color: #E3F2FD;
+    color: #2563EB;
+    background-color: #EFF6FF;
 }
 
 .newspaper-category.sports {
-    color: #2E7D32;
-    background-color: #E8F5E9;
+    color: #16A34A;
+    background-color: #F0FDF4;
 }
 
 .newspaper-category.business {
-    color: #BF360C;
-    background-color: #FBE9E7;
+    color: #DC2626;
+    background-color: #FEF2F2;
 }
 
 .newspaper-category.news {
-    color: #7B1FA2;
-    background-color: #F3E5F5;
+    color: #9333EA;
+    background-color: #FAF5FF;
 }
 
 .newspaper-category.entertainment {
-    color: #C2185B;
-    background-color: #FCE4EC;
+    color: #DB2777;
+    background-color: #FDF2F8;
 }
 
 .newspaper-category.technology {
-    color: #00838F;
-    /* Cyan */
-    background-color: #E0F7FA;
+    color: #0891B2;
+    background-color: #ECFEFF;
 }
 
 .newspaper-category.health {
-    color: #C62828;
-    /* Red */
-    background-color: #FFEBEE;
+    color: #DC2626;
+    background-color: #FEF2F2;
 }
 
 .newspaper-category.education {
-    color: #283593;
-    /* Indigo */
-    background-color: #E8EAF6;
+    color: #4F46E5;
+    background-color: #EEF2FF;
 }
 
 .newspaper-category.science {
-    color: #00695C;
-    /* Teal */
-    background-color: #E0F2F1;
+    color: #059669;
+    background-color: #ECFDF5;
 }
 
 .newspaper-title {
     font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 5px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .newspaper-date {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 13px;
+    color: #9CA3AF;
+    font-weight: 500;
 }
 
 /* Dashboard Photo Viewer */
 .photo-viewer-container {
     position: relative;
-    background: #F5F6F8;
-    border-radius: 8px;
+    background: #1F2937;
+    border-radius: 12px;
     overflow: hidden;
 }
 
@@ -157,23 +290,25 @@ body .sidebar-title {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(76, 57, 57, 0.7);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1F2937;
     border: none;
     border-radius: 50%;
     width: 40px;
     height: 40px;
-    font-size: 22px;
+    font-size: 20px;
     cursor: pointer;
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .photo-viewer-arrow:hover {
-    background: rgba(76, 57, 57, 0.95);
+    background: #FFFFFF;
+    transform: translateY(-50%) scale(1.1);
 }
 
 .photo-viewer-arrow.left {
@@ -187,46 +322,67 @@ body .sidebar-title {
 .photo-viewer-counter {
     text-align: center;
     font-size: 12px;
-    color: #6B7280;
-    padding: 8px 0;
-    font-weight: 500;
+    color: #9CA3AF;
+    padding: 10px 0;
+    font-weight: 600;
 }
 
 /* Dashboard Top Section (Search & Date) */
 .dashboard-top-section {
-    margin: -30px -30px 30px -30px;
-    padding: 20px 30px;
-    background-color: var(--bg-white);
-    border-bottom: 1px solid var(--border-light);
+    margin: -32px -32px 32px -32px;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+    border-bottom: 1px solid #E8EBF0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(10px);
 }
 
 .top-search-pill {
-    background-color: #F8F9FA;
-    border-radius: 50px;
-    height: 44px;
-    transition: box-shadow 0.2s ease-in-out;
+    background-color: #FFFFFF;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    height: 48px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .top-search-pill:hover,
 .top-search-pill:focus-within {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    background-color: #ffffff;
-    border: 1px solid #E0E0E0;
+    border-color: #3A9AFF;
+    box-shadow: 0 0 0 3px rgba(58, 154, 255, 0.1);
 }
 
 .top-search-pill .form-control {
     font-size: 14px;
-    color: #333;
+    color: #1F2937;
     font-weight: 500;
 }
 
 .top-search-pill .form-control::placeholder {
-    color: #6C757D;
-    font-weight: 500;
+    color: #9CA3AF;
+    font-weight: 400;
+}
+
+.filter-dropdown-container select {
+    background-color: #F9FAFB;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    height: 48px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .filter-dropdown-container select:hover {
-    background-color: #f1f3f5 !important;
+    background-color: #F3F4F6;
+    border-color: #D1D5DB;
+}
+
+.filter-dropdown-container select:focus {
+    border-color: #3A9AFF;
+    box-shadow: 0 0 0 3px rgba(58, 154, 255, 0.1);
 }
 
 .top-search-pill .form-control:focus,
@@ -236,10 +392,106 @@ body .sidebar-title {
 
 .top-search-pill i.bi-search {
     font-size: 1.1rem;
-    color: #6C757D !important;
+    color: #9CA3AF;
 }
 
-/* Stat card original layout restored implicitly by removing previous overrides */
+/* Current Date/Time Display */
+.current-datetime-display {
+    padding-right: 20px;
+    border-right: 2px solid #E5E7EB;
+}
+
+#currentDate {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1F2937;
+    letter-spacing: 0.3px;
+}
+
+#currentTime {
+    font-size: 12px;
+    color: #9CA3AF;
+    font-weight: 500;
+}
+
+/* Clear search button */
+.btn-clear-search:hover {
+    background-color: #F3F4F6 !important;
+    color: #374151 !important;
+}
+
+/* Stat Cards Enhancement */
+.stat-card {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+    border: 1px solid #E8EBF0;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3A9AFF 0%, #5DB2FF 100%);
+    border-radius: 14px 14px 0 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+    border-color: #D1D5DB;
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.stat-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
+}
+
+.stat-card-icon {
+    color: #3A9AFF;
+    font-size: 20px;
+    opacity: 1;
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(58, 154, 255, 0.15);
+}
+
+.stat-card-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 0;
+    letter-spacing: -0.5px;
+}
 
 /* Responsive adjustments for Top Search Bar */
 @media (max-width: 991.98px) {
@@ -267,7 +519,314 @@ body .sidebar-title {
         width: 100% !important;
         max-width: 100% !important;
         margin-top: 10px;
-        border-top: 1px solid #E0E0E0 !important;
+        border-top: 1px solid #E5E7EB;
         border-radius: 0;
     }
+    
+    .stat-card-value {
+        font-size: 28px;
+    }
+}
+
+/* ==================== Bulk Delete Selection ==================== */
+.dashboard-item-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px !important;
+    height: 20px !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid #D1D5DB !important;
+    border-radius: 6px !important;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-item-checkbox:hover {
+    border-color: var(--primary-color) !important;
+    background-color: #FFFFFF !important;
+    transform: scale(1.1);
+}
+
+.dashboard-item-checkbox:checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.dashboard-item-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+}
+
+/* Card selection state */
+.newspaper-card:has(.dashboard-item-checkbox:checked) .newspaper-thumbnail {
+    opacity: 0.85;
+    filter: brightness(0.95);
+    transition: all 0.2s ease;
+}
+
+.newspaper-card:has(.dashboard-item-checkbox:checked) {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(58, 154, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+
+/* ==================== Dashboard File Card Redesign (from Public) ==================== */
+
+/* Main card container - reusing public design */
+.dashboard-file-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid #F3F4F6;
+    position: relative;
+}
+
+.dashboard-file-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Thumbnail */
+.dashboard-file-thumbnail {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+    background: #F3F4F6;
+}
+
+.dashboard-file-thumbnail-placeholder {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 48px;
+}
+
+/* Thumbnail wrapper for badge overlay */
+.dashboard-thumb-wrap {
+    position: relative;
+    display: block;
+    overflow: hidden;
+}
+
+/* Category badge: top-LEFT of thumbnail, white pill style */
+.dashboard-thumb-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: auto;
+    z-index: 2;
+    background: #FFFFFF !important;
+    color: #374151 !important;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.14);
+    margin-bottom: 0 !important;
+    font-size: 11px !important;
+    padding: 4px 11px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+}
+
+/* Card info section */
+.dashboard-card-info {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Date line above title */
+.dashboard-card-date {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #9CA3AF;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 6px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-card-publisher {
+    font-size: 12.5px;
+    color: #6B7280;
+    line-height: 1.6;
+    margin-bottom: 8px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Admin-specific: Action buttons overlay (REMOVED - actions now only in preview modal) */
+.dashboard-card-actions {
+    display: none !important;
+}
+
+.dashboard-card-actions .btn {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.dashboard-card-actions .btn-edit {
+    background: #FFFFFF;
+    color: #374151;
+}
+
+.dashboard-card-actions .btn-edit:hover {
+    background: #F3F4F6;
+    transform: scale(1.05);
+}
+
+.dashboard-card-actions .btn-delete {
+    background: #EF4444;
+    color: #FFFFFF;
+}
+
+.dashboard-card-actions .btn-delete:hover {
+    background: #DC2626;
+    transform: scale(1.05);
+}
+
+/* Checkbox positioning for multi-select */
+.dashboard-file-card .dashboard-item-checkbox {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    left: auto;
+    z-index: 10;
+    margin: 0 !important;
+}
+
+/* Selected state for cards */
+.dashboard-file-card:has(.dashboard-item-checkbox:checked) {
+    border-color: #3A9AFF;
+    box-shadow: 0 0 0 2px rgba(58, 154, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.dashboard-file-card:has(.dashboard-item-checkbox:checked) .dashboard-file-thumbnail,
+.dashboard-file-card:has(.dashboard-item-checkbox:checked) .dashboard-file-thumbnail-placeholder {
+    opacity: 0.85;
+    filter: brightness(0.95);
+}
+
+/* Tags display */
+.dashboard-card-tags {
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.dashboard-card-tags .badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #F3F4F6;
+    color: #6B7280;
+    border: 1px solid #E5E7EB;
+    font-weight: 500;
+}
+
+
+/* ==================== Admin Preview Modal Styling ==================== */
+.public-modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+.admin-action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.admin-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-edit-btn {
+    background: #FFFFFF;
+    color: #374151;
+    border: 1px solid #E5E7EB;
+}
+
+.admin-edit-btn:hover {
+    background: #F9FAFB;
+    color: #111827;
+}
+
+.admin-delete-btn {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.admin-delete-btn:hover {
+    background: #FFCDD2;
+    color: #B71C1C;
+}
+
+/* Ensure modal uses public modal styles */
+#filePreviewModal .public-modal {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+}
+
+#filePreviewModal .modal-dialog {
+    max-width: 840px;
+}
+
+#filePreviewModal .modal-body {
+    padding: 0;
 }

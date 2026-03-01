@@ -5,20 +5,45 @@
 
 /* ==================== Settings Page Specifics ==================== */
 
-/* Global settings font override and scroll lock */
-body {
-    overflow: hidden !important;
+/* Fix sidebar title typography bleed/scaling issue that happens only on Settings */
+body .sidebar-title {
+    font-size: 13px !important;
 }
 
+/* Fix sidebar navigation text from zooming/changing on Settings page */
+body .nav-link {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+body .nav-link span {
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+body .nav-link i {
+    font-size: 18px !important;
+}
+
+body .nav-section-title {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+}
+
+/* Global settings font override */
 .main-content {
     font-family: 'Poppins', sans-serif !important;
-    height: 100vh;
-    overflow: hidden;
 }
 
+/* Ensure all elements on settings page use Poppins */
 .settings-card,
+.settings-card *,
+.settings-section,
+.settings-section *,
 .btn,
 input,
+textarea,
+select,
 label,
 span,
 p,
@@ -27,8 +52,13 @@ h2,
 h3,
 h4,
 h5,
-h6 {
-    font-family: inherit;
+h6,
+.form-control,
+.form-label,
+.modal-body,
+.modal-header,
+.modal-title {
+    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-section {
@@ -50,18 +80,19 @@ h6 {
 }
 
 /* Updated Typography for Settings Page */
-.settings-card-header span,
+.settings-card-header span {
+    color: #3A9AFF !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 700 !important;
+}
+
 .settings-card-header i {
-    color: #C08B5C !important;
+    color: #3A9AFF !important;
 }
 
 .profile-field {
     opacity: 1 !important;
     color: #2c3e50 !important;
-}
-
-.nav-link {
-    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-section.danger {

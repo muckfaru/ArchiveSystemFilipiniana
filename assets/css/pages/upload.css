@@ -1,6 +1,30 @@
 /* Upload Archive - New Layout Design */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+/* ==================== Sidebar Consistency Fix ==================== */
+body .sidebar-title {
+    font-size: 13px !important;
+}
+
+body .nav-link {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+body .nav-link span {
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+body .nav-link i {
+    font-size: 18px !important;
+}
+
+body .nav-section-title {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+}
+
 /* ==================== Global ==================== */
 * {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
@@ -65,7 +89,7 @@ body .main-content {
     font-size: 14px;
     font-weight: 500;
     color: #FFFFFF;
-    background: #4C3939;
+    background: #3A9AFF;
     border: none;
     padding: 10px 24px;
     border-radius: 6px;
@@ -74,7 +98,7 @@ body .main-content {
 }
 
 .btn-complete:not(:disabled):hover {
-    background: #3D2D28;
+    background: #2d87ef;
 }
 
 .btn-complete:disabled {
@@ -132,14 +156,14 @@ body .main-content {
 }
 
 .click-browse {
-    color: #F97316;
+    color: #3A9AFF;
     font-weight: 500;
     cursor: pointer;
     text-decoration: underline;
 }
 
 .click-browse:hover {
-    color: #EA580C;
+    color: #2d87ef;
 }
 
 /* ==================== Single File Badge ==================== */
@@ -158,7 +182,7 @@ body .main-content {
 
 .file-badge .file-icon {
     font-size: 32px;
-    color: #4C3939;
+    color: #3A9AFF;
 }
 
 .file-info {
@@ -207,14 +231,14 @@ body .main-content {
     border-radius: 6px;
     font-size: 13px;
     font-weight: 500;
-    color: #4C3939;
+    color: #3A9AFF;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .btn-change-file:hover {
     background: #F9FAFB;
-    border-color: #4C3939;
+    border-color: #3A9AFF;
 }
 
 .btn-change-file .material-symbols-outlined {
@@ -283,7 +307,7 @@ body .main-content {
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
-    color: #4C3939;
+    color: #3A9AFF;
     cursor: pointer;
     margin-left: auto;
     transition: all 0.2s;
@@ -291,7 +315,7 @@ body .main-content {
 
 .btn-add-files:hover {
     background: #F9FAFB;
-    border-color: #4C3939;
+    border-color: #3A9AFF;
 }
 
 .btn-add-files .material-symbols-outlined {
@@ -335,7 +359,7 @@ body .main-content {
 }
 
 .file-tab:hover {
-    border-color: #4C3939;
+    border-color: #3A9AFF;
 }
 
 .file-tab.active {
@@ -476,8 +500,8 @@ body .main-content {
 }
 
 .btn-add-files:hover {
-    border-color: #4C3939;
-    color: #4C3939;
+    border-color: #3A9AFF;
+    color: #3A9AFF;
     background: #FAFAFA;
 }
 
@@ -487,8 +511,10 @@ body .main-content {
     color: #22C55E;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     text-transform: uppercase;
+    text-align: center;
 }
 
 /* ==================== Bulk File Cards (Tabs) ==================== */
@@ -561,15 +587,15 @@ body .main-content {
 }
 
 .file-card-btn:hover {
-    border-color: #C08B5C;
-    box-shadow: 0 4px 6px -1px rgba(192, 139, 92, 0.2);
+    border-color: #3A9AFF;
+    box-shadow: 0 4px 6px -1px rgba(58, 154, 255, 0.2);
 }
 
 .file-card-btn.active {
-    border: 2px solid #C08B5C;
-    background: #FFFBF7;
-    /* Very light tint of C08B5C */
-    box-shadow: 0 4px 12px rgba(192, 139, 92, 0.15);
+    border: 2px solid #3A9AFF;
+    background: #EFF6FF;
+    /* Very light tint of primary blue */
+    box-shadow: 0 4px 12px rgba(58, 154, 255, 0.15);
 }
 
 .file-card-btn.is-duplicate {
@@ -590,7 +616,7 @@ body .main-content {
 }
 
 .file-card-btn.active .card-icon {
-    color: #C08B5C;
+    color: #3A9AFF;
 }
 
 .card-close {
@@ -630,7 +656,7 @@ body .main-content {
 }
 
 .file-card-btn.active .card-status-text {
-    color: #C08B5C;
+    color: #3A9AFF;
 }
 
 .status-dot {
@@ -642,7 +668,7 @@ body .main-content {
 }
 
 .file-card-btn.active .status-dot {
-    background: #C08B5C;
+    background: #3A9AFF;
 }
 
 .file-card-btn.error .status-dot {
@@ -701,7 +727,7 @@ body .main-content {
 
 .bulk-file-icon {
     font-size: 28px;
-    color: #4C3939;
+    color: #3A9AFF;
 }
 
 .bulk-file-icon::before {
@@ -785,14 +811,14 @@ body .main-content {
     width: 24px;
     height: 24px;
     object-fit: contain;
-    /* Filter to change icon color to #C08B5C */
-    filter: brightness(0) saturate(100%) invert(59%) sepia(23%) saturate(714%) hue-rotate(352deg) brightness(91%) contrast(87%);
+    /* Filter to match #3A9AFF */
+    filter: brightness(0) saturate(100%) invert(52%) sepia(80%) saturate(400%) hue-rotate(185deg) brightness(105%) contrast(103%);
 }
 
 .card-header .header-title {
     font-size: 11px;
     font-weight: 600;
-    color: #C08B5C;
+    color: #3A9AFF;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
@@ -867,8 +893,8 @@ body .main-content {
 
 .tab-slider-btn:hover {
     background: #F9FAFB;
-    color: #4C3939;
-    border-color: #4C3939;
+    color: #3A9AFF;
+    border-color: #3A9AFF;
 }
 
 .tab-slider-btn.prev {
@@ -927,8 +953,8 @@ body .main-content {
 .form-group-full input:focus,
 .form-group-full textarea:focus {
     outline: none;
-    border-color: #F97316;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    border-color: #3A9AFF;
+    box-shadow: 0 0 0 3px rgba(58, 154, 255, 0.12);
 }
 
 .form-group input::placeholder,
@@ -964,7 +990,7 @@ body .main-content {
 .btn-add-tag {
     width: 40px;
     height: 40px;
-    background: #4C3939;
+    background: #3A9AFF;
     border: none;
     border-radius: 6px;
     color: white;
@@ -979,7 +1005,7 @@ body .main-content {
 }
 
 .btn-add-tag:hover {
-    background: #3D2D28;
+    background: #2d87ef;
 }
 
 .tags-display {
@@ -992,8 +1018,8 @@ body .main-content {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #4C3939 !important;
-    background-color: #4C3939 !important;
+    background: #3A9AFF !important;
+    background-color: #3A9AFF !important;
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 13px;
@@ -1021,8 +1047,8 @@ body .main-content {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #4C3939 !important;
-    background-color: #4C3939 !important;
+    background: #3A9AFF !important;
+    background-color: #3A9AFF !important;
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 13px;
@@ -1074,7 +1100,7 @@ body .main-content {
 .thumb-label {
     font-size: 13px;
     font-weight: 600;
-    color: #1F2937;
+    color: #3A9AFF;
     margin: 12px 0 4px 0;
 }
 
@@ -1086,7 +1112,7 @@ body .main-content {
 }
 
 .btn-browse-thumb {
-    background: #4C3939;
+    background: #3A9AFF;
     color: white;
     border: none;
     padding: 10px 24px;
@@ -1098,7 +1124,7 @@ body .main-content {
 }
 
 .btn-browse-thumb:hover {
-    background: #3D2D28;
+    background: #2d87ef;
 }
 
 #thumbnailPreview {
@@ -1176,7 +1202,7 @@ body .main-content {
 }
 
 .single-file-badge .file-status.pending {
-    color: #4C3939 !important;
+    color: #3A9AFF !important;
 }
 
 .single-file-badge .file-status .status-icon.hourglass {
@@ -1344,7 +1370,7 @@ body .main-content {
 }
 
 .btn-add-file {
-    background: #4C3939;
+    background: #3A9AFF;
     color: white;
     border: none;
     border-radius: 6px;
@@ -1358,7 +1384,7 @@ body .main-content {
 }
 
 .btn-add-file:hover {
-    background: #3D2D28;
+    background: #2d87ef;
     transform: translateY(-1px);
 }
 
@@ -1374,7 +1400,7 @@ body .main-content {
 .drag-active-card {
     opacity: 0.5;
     transform: scale(0.95);
-    border: 2px dashed #D28F5A !important;
+    border: 2px dashed #3A9AFF !important;
 }
 
 .photo-gallery-item-hover {
@@ -1384,6 +1410,30 @@ body .main-content {
 .photo-gallery-item-hover:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Photo Card Wrapper - Hover Effects */
+.photo-card-wrapper {
+    position: relative;
+}
+
+.photo-card-wrapper:hover {
+    transform: translateY(-4px);
+}
+
+.photo-card-wrapper:hover .photo-gallery-item {
+    border-color: #3A9AFF !important;
+    box-shadow: 0 8px 16px rgba(58, 154, 255, 0.15);
+}
+
+/* Show remove button only on hover */
+.photo-card-wrapper:hover .photo-remove-btn {
+    opacity: 1 !important;
+}
+
+.photo-remove-btn:hover {
+    background-color: #DC2626 !important;
+    transform: scale(1.1);
 }
 
 
@@ -1398,11 +1448,163 @@ body .main-content {
     padding: 6px 14px;
     font-size: 12px;
     font-weight: 500;
-    color: #4C3939;
+    color: #3A9AFF;
 }
 
 #bulkPhotoInfoMessage i {
     color: #C08B5C;
     font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* ==================== Photo Stats Wrapper (Redesigned) ==================== */
+.photo-stats-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.photo-stats-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.info-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1E40AF;
+}
+
+.info-badge i {
+    font-size: 16px;
+    color: #3B82F6;
+    flex-shrink: 0;
+}
+
+.stat-divider-vertical {
+    width: 1px;
+    height: 40px;
+    background-color: #E5E7EB;
+}
+
+.photo-count-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    background: #F3F4F6;
+    border-radius: 8px;
+}
+
+.count-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #3A9AFF;
+    line-height: 1;
+}
+
+.count-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.photo-stats-right {
+    display: flex;
+    align-items: center;
+}
+
+.btn-add-photos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #3A9AFF;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(58, 154, 255, 0.2);
+}
+
+.btn-add-photos:hover {
+    background: #2d87ef;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(58, 154, 255, 0.3);
+}
+
+.btn-add-photos:active {
+    transform: translateY(0);
+}
+
+.btn-add-photos i {
+    font-size: 18px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .photo-stats-wrapper {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px 20px;
+    }
+
+    .photo-stats-left {
+        flex-direction: column;
+        width: 100%;
+        gap: 16px;
+    }
+
+    .stat-divider-vertical {
+        display: none;
+    }
+
+    .info-badge {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .photo-count-display {
+        justify-content: center;
+    }
+
+    .photo-stats-right {
+        width: 100%;
+    }
+
+    .btn-add-photos {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+/* ==================== Upload Confirmation Modal Button Fix ==================== */
+#confirmUploadBtn {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#confirmUploadBtn i {
     flex-shrink: 0;
 }

@@ -97,18 +97,18 @@
 
         <!-- Edit Mode Indicator (Refactored) -->
         <?php if ($editMode && !empty($editItem['file_name'])): ?>
-            <div class="card border-0 shadow-sm mb-4" id="editModeIndicator" style="border-left: 5px solid #C08B5C !important; background-color: #fff;">
+            <div class="card border-0 shadow-sm mb-4" id="editModeIndicator" style="border-left: 5px solid #3A9AFF !important; background-color: #fff;">
                 <div class="card-body d-flex align-items-center justify-content-between p-4">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: rgba(192, 139, 92, 0.1); color: #C08B5C;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: rgba(58, 154, 255, 0.1); color: #3A9AFF;">
                             <i class="bi bi-pencil-square fs-4"></i>
                         </div>
                         <div>
-                            <small class="text-uppercase fw-bold" style="font-size: 0.75rem; color: #C08B5C; letter-spacing: 0.5px;">You are editing</small>
+                            <small class="text-uppercase fw-bold" style="font-size: 0.75rem; color: #3A9AFF; letter-spacing: 0.5px;">You are editing</small>
                             <div class="fw-bold text-dark fs-5"><?= htmlspecialchars($editItem['file_name']) ?></div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
+                    <button type="button" class="btn btn-outline-primary btn-sm" style="border-color: #3A9AFF; color: #3A9AFF;" onclick="document.getElementById('fileInput').click()">
                         <i class="bi bi-arrow-repeat me-1"></i> Change File
                     </button>
                 </div>
@@ -148,21 +148,22 @@
                 </div>
 
                 <!-- Photo Stats (Images) -->
-                <div class="bulk-stats-wrapper px-4" id="photoStatsWrapper" style="display: none; justify-content: flex-start; gap: 24px;">
-                    <div id="bulkPhotoInfoMessage" class="d-none m-0 py-1 px-3" style="flex: 0 0 auto;">
-                        <i class="bi bi-info-circle-fill"></i>
-                        <span>All photos in this bulk upload share a single metadata entry.</span>
+                <div class="photo-stats-wrapper" id="photoStatsWrapper" style="display: none;">
+                    <div class="photo-stats-left">
+                        <div class="info-badge">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span>All photos share a single metadata entry</span>
+                        </div>
+                        <div class="stat-divider-vertical"></div>
+                        <div class="photo-count-display">
+                            <span class="count-number" id="totalPhotosCount">0</span>
+                            <span class="count-label">Photos</span>
+                        </div>
                     </div>
-
-                    <div class="stat-col" style="flex: 0 0 auto;">
-                        <span class="stat-label">TOTAL PHOTOS</span>
-                        <span class="stat-number" id="totalPhotosCount">0</span>
-                    </div>
-                    
-                    <div class="stat-col action-col ms-auto" style="flex: 0 0 auto;">
-                         <!-- Dropdown / Add Photos action can go here if needed later -->
-                        <button type="button" class="btn btn-add-files" id="addMorePhotosBtn" onclick="document.getElementById('fileInput').click()">
-                            + ADD PHOTOS
+                    <div class="photo-stats-right">
+                        <button type="button" class="btn-add-photos" id="addMorePhotosBtn" onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Add Photos</span>
                         </button>
                     </div>
                 </div>
@@ -176,8 +177,8 @@
             </div>
 
             <!-- Photo Gallery Grid Container -->
-            <div id="pageOrderGridWrapper" class="border-bottom p-3 bg-light" style="display: none; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
-                <div id="pageOrderGrid" class="d-inline-flex gap-3 align-items-center">
+            <div id="pageOrderGridWrapper" class="border-bottom p-4 bg-light" style="display: none; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
+                <div id="pageOrderGrid" class="d-inline-flex gap-3 align-items-start" style="padding: 8px 0;">
                     <!-- Photo thumbnails injected via JS -->
                 </div>
             </div>
@@ -322,7 +323,7 @@
                         <div class="thumbnail-placeholder" id="thumbnailPlaceholder"
                             <?= ($editMode && !empty($editItem['thumbnail_path'])) ? 'style="display:none;"' : '' ?>>
                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-                                <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#94A3B8"/>
+                                <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#3A9AFF"/>
                             </svg>
                             <p class="thumb-label">UPLOAD THUMBNAIL</p>
                             <p class="thumb-hint">Recommended aspect ratio 16:9 for optimal stitched cover image.</p>
@@ -349,18 +350,28 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Upload Confirmation Modal -->
     <div class="modal fade" id="confirmUploadModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
-                <div class="modal-body text-center p-4">
-                    <h5 class="fw-bold mb-3 text-dark" style="font-size: 24px;">Upload Files?</h5>
-                    <p class="text-muted mb-4" style="font-size: 16px;">Are you sure you want to upload the selected files?</p>
-                    <div id="uploadFileList" class="text-start mb-4" style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 8px; display: none;"></div>
-                    <div class="d-flex justify-content-center gap-3">
-                        <button type="button" class="btn px-5 py-2 rounded-3 fw-bold" style="border: 1px solid #E5E7EB; color: #374151; background: white;" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn px-5 py-2 rounded-3 text-white fw-bold" id="confirmUploadBtn" style="background-color: #4C3939 !important;">Confirm Upload</button>
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist">
+                <div class="modal-header">
+                    <div class="modal-icon icon-info">
+                        <i class="bi bi-cloud-upload"></i>
                     </div>
+                    <h5 class="modal-title">Upload Files?</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Review your files before uploading</p>
+                    <!-- File List -->
+                    <div id="uploadFileList" style="max-height: 200px; overflow-y: auto; background: #F8FAFC; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB; display: none; margin-top: 16px;">
+                        <!-- Files will be injected here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmUploadBtn">
+                        <i class="bi bi-check-circle me-1"></i> Confirm Upload
+                    </button>
                 </div>
             </div>
         </div>
@@ -368,16 +379,22 @@
 
     <!-- Discard Confirmation Modal -->
     <div class="modal fade" id="discardModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
-                <div class="modal-body text-center">
-                    <div class="mb-4"></div>
-                    <h5 class="fw-bold mb-2 text-dark">Discard Changes?</h5>
-                    <p class="text-muted small mb-4">Are you sure you want to discard all changes? This action cannot be undone.</p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <button type="button" class="btn px-4 py-2 rounded-3 border fw-bold text-muted" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn px-4 py-2 rounded-3 text-white fw-bold" style="background-color: #dc3545 !important;" onclick="confirmDiscardAction()" data-bs-dismiss="modal">Discard</button>
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist">
+                <div class="modal-header">
+                    <div class="modal-icon icon-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
                     </div>
+                    <h5 class="modal-title">Discard Changes?</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to discard all changes? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDiscardAction()" data-bs-dismiss="modal">
+                        <i class="bi bi-trash me-1"></i> Discard
+                    </button>
                 </div>
             </div>
         </div>
@@ -385,16 +402,22 @@
 
      <!-- Unsaved Changes Modal -->
     <div class="modal fade" id="unsavedChangesModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
-                <div class="modal-body text-center">
-                    <div class="mb-4"></div>
-                    <h5 class="fw-bold mb-2 text-dark">Unsaved Changes</h5>
-                    <p class="text-muted small mb-4">You have unsaved inputs. If you leave this page, your data will be lost.</p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <button type="button" class="btn px-4 py-2 rounded-3 border fw-bold text-muted" data-bs-dismiss="modal">Stay on Page</button>
-                        <button type="button" class="btn px-4 py-2 rounded-3 text-white fw-bold" style="background-color: #dc3545 !important;" id="confirmLeaveBtn">Leave Page</button>
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist">
+                <div class="modal-header">
+                    <div class="modal-icon icon-warning">
+                        <i class="bi bi-exclamation-circle"></i>
                     </div>
+                    <h5 class="modal-title">Unsaved Changes</h5>
+                </div>
+                <div class="modal-body">
+                    <p>You have unsaved inputs. If you leave this page, your data will be lost.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stay on Page</button>
+                    <button type="button" class="btn btn-danger" id="confirmLeaveBtn">
+                        <i class="bi bi-box-arrow-right me-1"></i> Leave Page
+                    </button>
                 </div>
             </div>
         </div>

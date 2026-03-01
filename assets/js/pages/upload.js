@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // If Valid, Show Confirmation Modal
             const modalEl = document.getElementById('confirmUploadModal');
 
-            // Populate file list
+            // Populate file list with improved styling
             const fileListContainer = document.getElementById('uploadFileList');
             if (fileListContainer) {
                 fileListContainer.innerHTML = '';
@@ -183,19 +183,56 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (activeFileIndex !== -1) {
                     const readyFiles = bulkFiles.filter(f => f.status === 'ready');
                     const ul = document.createElement('ul');
-                    ul.className = 'list-unstyled mb-0 text-start';
-                    readyFiles.forEach(f => {
+                    ul.className = 'list-unstyled mb-0';
+                    ul.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+                    readyFiles.forEach((f, index) => {
                         const li = document.createElement('li');
-                        li.innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + f.name;
+                        li.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E5E7EB;';
+                        li.innerHTML = `
+                            <div style="width: 32px; height: 32px; background: #EFF6FF; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i class="bi bi-file-earmark-text" style="font-size: 16px; color: #3A9AFF;"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 600; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">Ready for upload</div>
+                            </div>
+                            <div style="width: 24px; height: 24px; background: #DCFCE7; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i class="bi bi-check" style="font-size: 14px; color: #16A34A; font-weight: bold;"></i>
+                            </div>
+                        `;
                         ul.appendChild(li);
                     });
                     fileListContainer.appendChild(ul);
                 } else {
                     const fileToUpload = (fileInput.files.length > 0) ? fileInput.files[0] : selectedFile;
                     if (fileToUpload) {
-                        fileListContainer.innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + fileToUpload.name;
+                        fileListContainer.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E5E7EB;">
+                                <div style="width: 32px; height: 32px; background: #EFF6FF; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="bi bi-file-earmark-text" style="font-size: 16px; color: #3A9AFF;"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fileToUpload.name}</div>
+                                    <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">Ready for upload</div>
+                                </div>
+                                <div style="width: 24px; height: 24px; background: #DCFCE7; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="bi bi-check" style="font-size: 14px; color: #16A34A; font-weight: bold;"></i>
+                                </div>
+                            </div>
+                        `;
                     } else if (isEdit) {
-                        fileListContainer.innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + (document.getElementById('previewFilename')?.textContent || 'Current File');
+                        const fileName = document.getElementById('previewFilename')?.textContent || 'Current File';
+                        fileListContainer.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E5E7EB;">
+                                <div style="width: 32px; height: 32px; background: #EFF6FF; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="bi bi-file-earmark-text" style="font-size: 16px; color: #3A9AFF;"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fileName}</div>
+                                    <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">Current file</div>
+                                </div>
+                            </div>
+                        `;
                     }
                 }
             }
@@ -204,14 +241,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Edit Mode Modal Text Update
             if (isEdit) {
-                const modalTitle = modalEl.querySelector('h5');
-                const modalBodyParams = modalEl.querySelector('p');
+                const modalTitle = modalEl.querySelector('.modal-header h5');
+                const modalSubtitle = modalEl.querySelector('.modal-header p');
                 const confirmButton = document.getElementById('confirmUploadBtn');
+                const modalIcon = modalEl.querySelector('.modal-header i');
+                
                 if (modalTitle) modalTitle.textContent = 'Save Changes?';
-                if (modalBodyParams) modalBodyParams.textContent = 'Are you sure you want to save these changes?';
+                if (modalSubtitle) modalSubtitle.textContent = 'Confirm to update this archive';
+                if (modalIcon) {
+                    modalIcon.className = 'bi bi-pencil-square';
+                }
                 if (confirmButton) {
-                    // Temporarily remove spinner span if present so we can just set text
-                    confirmButton.innerHTML = 'Save Changes';
+                    confirmButton.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Save Changes';
                 }
             }
 
@@ -268,6 +309,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Check files
         const hasFiles = (fileInput && fileInput.files.length > 0) || (bulkFiles && bulkFiles.length > 0);
         if (hasFiles) return true;
+        
+        // Check thumbnail changes
+        const hasThumbnailChange = thumbnailInput && thumbnailInput.files && thumbnailInput.files.length > 0;
+        if (hasThumbnailChange) return true;
 
         const isEdit = document.querySelector('input[name="action"]').value === 'edit';
 
@@ -724,6 +769,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (removeThumbnailBtn) {
                     removeThumbnailBtn.style.display = 'flex';
                 }
+                
+                // Update buttons to enable save in edit mode
+                updateButtons();
             };
             reader.onerror = function (err) {
                 console.error('❌ Error reading file:', err);
@@ -842,6 +890,142 @@ document.addEventListener('DOMContentLoaded', function () {
         handleFiles(files);
     }
 
+    // ── EPUB / MOBI metadata prefill ──────────────────────────────────────────
+    /**
+     * Sends the file to the PHP extract_meta API and auto-fills any empty
+     * metadata fields.  Fields the user has already filled are never overwritten.
+     *
+     * @param {File}   file       - The EPUB or MOBI File object
+     * @param {number|null} bulkIdx - bulkFiles index if bulk mode, null for single
+     */
+    async function extractAndPrefillMeta(file, bulkIdx = null) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['epub', 'mobi', 'pdf', 'jpg', 'jpeg', 'png'].includes(ext)) return;
+
+        // Removed loading placeholder - metadata extraction happens silently in background
+        const fd = new FormData();
+        fd.append('file', file);
+
+        try {
+            const res = await fetch(APP_URL + '/backend/api/extract_meta.php', {
+                method: 'POST', body: fd,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await res.json();
+            if (!data.success || !data.meta) return;
+
+            const m = data.meta;
+
+            /**
+             * Safely fill a form field only if it is currently empty.
+             * Also updates the corresponding bulkFiles metadata entry.
+             */
+            const fillField = (id, value, metaKey) => {
+                if (!value) return;
+                const el = document.getElementById(id);
+                if (el && !el.value.trim()) {
+                    el.value = value;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                // Update bulk state too
+                if (bulkIdx !== null && bulkFiles[bulkIdx] && metaKey) {
+                    if (!bulkFiles[bulkIdx].metadata[metaKey]) {
+                        bulkFiles[bulkIdx].metadata[metaKey] = value;
+                    }
+                }
+            };
+
+            // Use publisher; fall back to creator (author) only if publisher blank
+            const publisher = m.publisher || m.creator || '';
+
+            fillField('title', m.title, 'title');
+            fillField('publisher', publisher, 'publisher');
+            fillField('publication_date', m.publication_date, 'publication_date');
+            fillField('description', m.description, 'description');
+
+            // Keywords → tags
+            if (m.keywords) {
+                const hiddenKw = document.getElementById('keywordsHidden');
+                if (hiddenKw && !hiddenKw.value.trim()) {
+                    hiddenKw.value = m.keywords;
+                    if (typeof setTags === 'function') {
+                        setTags(m.keywords.split(',').map(t => t.trim()).filter(Boolean));
+                    }
+                    if (bulkIdx !== null && bulkFiles[bulkIdx]) {
+                        bulkFiles[bulkIdx].metadata.tags = m.keywords;
+                    }
+                }
+            }
+
+            // Language: auto-select the matched DB language_id
+            if (data.languageId) {
+                const langEl = document.getElementById('language_id');
+                if (langEl && !langEl.value) {
+                    langEl.value = data.languageId;
+                    langEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (bulkIdx !== null && bulkFiles[bulkIdx]) {
+                        bulkFiles[bulkIdx].metadata.language_id = String(data.languageId);
+                    }
+                }
+            }
+
+            // Re-validate: refresh tab statuses and counters
+            if (bulkIdx !== null) {
+                // Trigger status recalculation via field input event (saveCurrentFormData path)
+                const titleInp = document.getElementById('title');
+                if (titleInp) titleInp.dispatchEvent(new Event('input', { bubbles: true }));
+                // Refresh tab cards and counters
+                if (typeof renderTabs === 'function') renderTabs();
+                if (typeof updateBulkControls === 'function') updateBulkControls();
+            } else {
+                updateButtons();
+            }
+
+            // Thumbnail Auto-fill
+            if (data.thumbnail_url) {
+                const thumbPreview = document.getElementById('thumbnailPreview');
+                const thumbPlaceholder = document.getElementById('thumbnailPlaceholder');
+                const removeBtn = document.getElementById('removeThumbnailBtn');
+
+                // Check if user has explicitly uploaded a thumbnail already (bulk or single)
+                const hasCustomThumb = (bulkIdx !== null && bulkFiles[bulkIdx] && bulkFiles[bulkIdx].customThumbnail);
+
+                if (thumbPreview && thumbPreview.src.endsWith('#') === false && !hasCustomThumb) {
+                    thumbPreview.src = data.thumbnail_url;
+                    thumbPreview.style.display = 'block';
+                    if (thumbPlaceholder) thumbPlaceholder.style.display = 'none';
+
+                    // In bulk mode, store the path so it's sent to the server on final upload
+                    if (bulkIdx !== null && bulkFiles[bulkIdx]) {
+                        bulkFiles[bulkIdx].metadata.thumbnail_path = data.thumbnail_path;
+                    } else {
+                        // Single file fallback, add hidden input
+                        let hiddenThumb = document.getElementById('auto_thumbnail_path');
+                        if (!hiddenThumb) {
+                            hiddenThumb = document.createElement('input');
+                            hiddenThumb.type = 'hidden';
+                            hiddenThumb.id = 'auto_thumbnail_path';
+                            hiddenThumb.name = 'auto_thumbnail_path';
+                            document.getElementById('uploadForm').appendChild(hiddenThumb);
+                        }
+                        hiddenThumb.value = data.thumbnail_path;
+                    }
+                }
+            }
+
+            // Subtle success flash on title field (optional visual feedback)
+            const titleEl = document.getElementById('title');
+            if (titleEl && m.title) {
+                titleEl.style.transition = 'background 0.4s';
+                titleEl.style.background = '#f0fff4';
+                setTimeout(() => { titleEl.style.background = ''; }, 1200);
+            }
+
+        } catch (err) {
+            console.warn('Metadata extraction failed:', err);
+        }
+    }
+
     function handleBulkDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
@@ -860,8 +1044,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function handleFiles(files) {
         if (files.length === 0) return;
 
-        // If multiple files selected or already in bulk mode -> Go Bulk
-        if (files.length > 1 || bulkFiles.length > 0) {
+        const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
+
+        // Treat everything as bulk, except Edit mode where we strictly replace one existing record
+        if (!isEdit) {
             // Check types for Mode Detection IF starting fresh
             if (bulkFiles.length === 0) {
                 const firstFile = files[0];
@@ -906,6 +1092,9 @@ document.addEventListener('DOMContentLoaded', function () {
             checkDuplicateSingle(file.name);
             activeFileIndex = -1; // Single mode has no index
             updateButtons();
+
+            // Auto-fill metadata from EPUB/MOBI
+            extractAndPrefillMeta(file, null);
 
             // Auto-Preview if Image
             if (file.type.startsWith('image/')) {
@@ -957,6 +1146,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
                 bulkFiles.push(fileObj);
                 addedCount++;
+
+                // Auto-fill metadata from EPUB/MOBI for each bulk doc file
+                const bulkIdx = bulkFiles.length - 1;
+                const bExt = file.name.split('.').pop().toLowerCase();
+                if (['epub', 'mobi'].includes(bExt)) {
+                    // Run after UI updates (async, non-blocking)
+                    setTimeout(() => extractAndPrefillMeta(file, bulkIdx), 50);
+                }
             }
         });
 
@@ -1118,12 +1315,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     <i class="bi ${iconClass} card-icon"></i>
                     <i class="bi bi-x card-close" onclick="removeFile(event, ${index})"></i>
                 </div>
-                <div class="card-filename" title="${file.name}">
+                <div class="card-filename" title="${file.name}" ${isReady ? 'style="color: #10B981 !important;"' : ''}>
                     ${file.name}
                 </div>
                 <div class="card-footer-row">
-                    <span class="card-status-text ${isReady ? 'text-success' : ''}" ${isReady ? 'style="color: #22c55e !important;"' : ''}>${statusText}</span>
-                    <div class="status-dot" ${isReady ? 'style="background-color: #22c55e !important;"' : ''}></div>
+                    <span class="card-status-text ${isReady ? 'text-success' : ''}" ${isReady ? 'style="color: #10B981 !important;"' : ''}>${statusText}</span>
+                    <div class="status-dot" ${isReady ? 'style="background-color: #10B981 !important;"' : ''}></div>
                 </div>
             </div>
             `;
@@ -1332,9 +1529,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const isFormValid = title && date && category && language;
 
             if (isEdit) {
-                // Edit Mode: Enable only if Dirty AND Valid
+                // Edit Mode: Enable if (Dirty OR New File Selected) AND Form Valid AND No Error
                 const newFileSelected = (fileInput && fileInput.files) ? fileInput.files.length > 0 : false;
-                shouldEnable = (isDirty || newFileSelected) && isFormValid;
+                shouldEnable = (isDirty || newFileSelected) && isFormValid && !hasError;
             } else {
                 // Upload Mode: Enable ONLY if File Selected AND Form Valid AND No Error
                 shouldEnable = hasFile && isFormValid && !hasError;
@@ -1501,14 +1698,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updateBulkControls();
         const tabsWrapper = document.getElementById('tabsWrapper');
         const gridWrapper = document.getElementById('pageOrderGridWrapper');
-        const photoMsg = document.getElementById('bulkPhotoInfoMessage');
         const docStats = document.getElementById('docStatsWrapper');
         const photoStats = document.getElementById('photoStatsWrapper');
 
         if (isBindMode) {
             if (tabsWrapper) tabsWrapper.style.display = 'none';
             if (gridWrapper) gridWrapper.style.display = 'block';
-            if (photoMsg) photoMsg.classList.remove('d-none');
             if (docStats) docStats.style.display = 'none';
             if (photoStats) photoStats.style.display = 'flex';
 
@@ -1520,7 +1715,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             if (tabsWrapper) tabsWrapper.style.display = 'block';
             if (gridWrapper) gridWrapper.style.display = 'none';
-            if (photoMsg) photoMsg.classList.add('d-none');
             if (docStats) docStats.style.display = 'flex';
             if (photoStats) photoStats.style.display = 'none';
             renderTabs();
@@ -1547,12 +1741,10 @@ document.addEventListener('DOMContentLoaded', function () {
         bulkFiles.forEach((file, index) => {
             const col = document.createElement('div');
             // Adding a container specifically for hover and scaling
-            col.className = 'd-inline-flex flex-column align-items-center m-2';
-            col.style.width = '160px';
+            col.className = 'd-inline-flex flex-column align-items-center m-2 photo-card-wrapper';
+            col.style.width = '180px';
             col.style.cursor = 'pointer';
             col.style.transition = 'all 0.3s ease';
-            col.onmouseover = () => col.style.transform = 'translateY(-5px)';
-            col.onmouseout = () => col.style.transform = 'translateY(0)';
             col.draggable = true;
             col.dataset.index = index;
 
@@ -1562,12 +1754,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Container for the image itself
             const imgContainer = document.createElement('div');
-            imgContainer.className = 'position-relative rounded shadow-sm w-100 mb-2 bg-white photo-gallery-item-hover';
-            imgContainer.style.height = '220px';
+            imgContainer.className = 'position-relative rounded shadow-sm w-100 mb-2 bg-white photo-gallery-item';
+            imgContainer.style.height = '240px';
             imgContainer.style.padding = '8px';
-            imgContainer.style.border = isCover ? '3px solid #3d8a7d' : '1px solid #e2e8f0';
-            imgContainer.style.backgroundColor = isCover ? '#28756a' : '#fff'; // Dark green background for primary like mockup
+            imgContainer.style.border = isCover ? '3px solid #3A9AFF' : '2px solid #E5E7EB';
+            imgContainer.style.backgroundColor = '#fff';
             imgContainer.style.transition = 'all 0.3s ease';
+            imgContainer.style.overflow = 'hidden';
 
             // Allow clicking anywhere on the thumbnail to set it as primary
             imgContainer.onclick = (e) => {
@@ -1579,41 +1772,41 @@ document.addEventListener('DOMContentLoaded', function () {
             if (file.type.startsWith('image/')) {
                 const url = URL.createObjectURL(file.file);
                 // The image gets centered within the container like a paper
-                preview = `<img src="${url}" class="w-100 h-100 rounded shadow-sm" style="object-fit: contain; background-color: white;">`;
+                preview = `<img src="${url}" class="w-100 h-100 rounded" style="object-fit: cover; background-color: white;">`;
             } else {
                 preview = `<div class="w-100 h-100 rounded bg-light d-flex align-items-center justify-content-center text-muted"><i class="bi bi-file-earmark-text fs-2"></i></div>`;
             }
 
             // Star Icon Configuration
             const starIcon = isCover
-                ? `<i class="bi bi-star-fill text-warning fs-5 drop-shadow"></i>`
+                ? `<i class="bi bi-star-fill text-warning fs-5"></i>`
                 : `<i class="bi bi-star text-secondary fs-5"></i>`;
 
             // Adding elements inside the Image Container
             imgContainer.innerHTML = `
                 ${preview}
                 
-                ${isCover ? '<span class="badge position-absolute shadow-sm" style="top: 12px; left: 12px; background-color: #5d4037; color: white; border-radius: 12px; font-size: 0.70rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; opacity: 0.9;">PRIMARY</span>' : ''}
+                ${isCover ? '<span class="badge position-absolute shadow-sm" style="top: 8px; left: 8px; background-color: #3A9AFF; color: white; border-radius: 6px; font-size: 0.65rem; padding: 0.35em 0.7em; letter-spacing: 0.5px; font-weight: 600;">PRIMARY</span>' : ''}
 
-                <!-- Remove Button -->
-                <div class="position-absolute d-flex justify-content-center align-items-center rounded-circle shadow-sm bg-danger text-light" 
-                     style="top: -10px; left: -10px; width: 24px; height: 24px; cursor: pointer; z-index: 10;" 
+                <!-- Remove Button - Hidden by default, shown on hover -->
+                <div class="photo-remove-btn position-absolute d-flex justify-content-center align-items-center rounded-circle shadow bg-danger text-white" 
+                     style="top: 8px; right: 8px; width: 28px; height: 28px; cursor: pointer; z-index: 10; opacity: 0; transition: opacity 0.2s ease;" 
                      onclick="removeBulkFile('${file.id}'); event.stopPropagation();" title="Remove Photo">
-                     <i class="bi bi-x pb-0 mb-0" style="font-size: 16px; line-height: 1;"></i>
+                     <i class="bi bi-x" style="font-size: 18px; line-height: 1;"></i>
                 </div>
             `;
 
             // Filename layout and separate Star outside the image bounding box below it
             const titleRow = document.createElement('div');
-            titleRow.className = 'd-flex justify-content-between align-items-center w-100 px-1 mt-1';
+            titleRow.className = 'd-flex justify-content-between align-items-center w-100 px-1 mt-2';
 
-            const fileTitle = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
+            const fileTitle = file.name.length > 18 ? file.name.substring(0, 15) + '...' : file.name;
             titleRow.innerHTML = `
-                <div class="d-flex align-items-center flex-grow-1 overflow-hidden mr-2">
-                    <span class="badge bg-secondary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 20px; height: 20px; font-size: 0.65rem;">${index + 1}</span>
-                    <span class="text-secondary fw-semibold text-truncate" style="font-size: 0.8rem;">${fileTitle}</span>
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden me-2">
+                    <span class="badge rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.7rem; background-color: #3A9AFF; color: white; font-weight: 600;">${index + 1}</span>
+                    <span class="text-dark fw-medium text-truncate" style="font-size: 0.85rem;">${fileTitle}</span>
                 </div>
-                <div class="cursor-pointer ms-1" onclick="setAsCover('${file.id}'); event.stopPropagation();" title="Select as Primary">
+                <div class="cursor-pointer ms-1" onclick="setAsCover('${file.id}'); event.stopPropagation();" title="Set as Primary">
                     ${starIcon}
                 </div>
             `;

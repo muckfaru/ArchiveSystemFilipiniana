@@ -3,6 +3,22 @@
  * Archive System
  */
 
+// ── Live Stats Refresh ─────────────────────────────────────────────────────
+function refreshStats() {
+    fetch(APP_URL + '/backend/api/stats.php', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const vals = document.querySelectorAll('.stat-card-value');
+            // Index order: Total Archives [0], Issues Count [1], Years Covered [2], Total Categories [3]
+            if (vals[0]) vals[0].textContent = data.archives.toLocaleString();
+            if (vals[1]) vals[1].textContent = data.issues.toLocaleString();
+            if (vals[2]) vals[2].textContent = data.years;
+            if (vals[3]) vals[3].textContent = data.categories.toLocaleString();
+        })
+        .catch(() => { }); // silently ignore network errors
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     let currentFileId = null;
     let currentCardElement = null; // Store reference to the card element
@@ -17,6 +33,31 @@ document.addEventListener('DOMContentLoaded', function () {
         'entertainment': { bg: '#FCE4EC', color: '#C2185B' },
         'default': { bg: '#ECEFF1', color: '#546E7A' }
     };
+
+    // Handle card clicks to open modal (but not when clicking checkbox or action buttons)
+    document.addEventListener('click', function(e) {
+        const card = e.target.closest('.dashboard-file-card');
+        if (!card) return;
+        
+        // Don't open modal if clicking checkbox or action buttons
+        if (e.target.closest('.dashboard-item-checkbox') || 
+            e.target.closest('.dashboard-card-actions') ||
+            e.target.closest('.btn-edit') ||
+            e.target.closest('.btn-delete')) {
+            return;
+        }
+        
+        // Open the modal
+        const modal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+        
+        // Trigger the modal show event with the card as relatedTarget
+        const modalEl = document.getElementById('filePreviewModal');
+        const event = new Event('show.bs.modal');
+        event.relatedTarget = card;
+        modalEl.dispatchEvent(event);
+        
+        modal.show();
+    });
 
     // File Preview Modal Handler
     const filePreviewModal = document.getElementById('filePreviewModal');
@@ -45,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const file = card.dataset.file;
             const id = card.dataset.id;
             const publisher = card.dataset.publisher; // Add publisher
+            const description = card.dataset.description || '';
             const isBulk = card.dataset.isBulk === '1';
             const imagePaths = card.dataset.imagePaths ? JSON.parse(card.dataset.imagePaths) : [];
 
@@ -147,6 +189,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 categoryEl.className = 'newspaper-category mb-0 ' + (category ? category.toLowerCase() : '');
             }
 
+            // Update Description
+            const descWrap = document.getElementById('metaDescriptionWrap');
+            const descEl = document.getElementById('metaDescription');
+            if (descWrap && descEl) {
+                if (description && description.trim()) {
+                    descEl.textContent = description;
+                    descWrap.style.display = 'block';
+                } else {
+                    descWrap.style.display = 'none';
+                }
+            }
+
             // Update Tags
             const tagsContainer = document.getElementById('metaTags');
             if (tagsContainer) {
@@ -198,6 +252,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 300);
     }
 
+    // Global delete function for inline onclick handlers
+    window.deleteFile = function(fileId) {
+        currentFileId = fileId;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        deleteModal.show();
+    }
+
     // Delete confirmation handler (AJAX)
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', function () {
         if (currentFileId) {
@@ -221,16 +282,30 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.success) {
                         // 1. Hide Confirm Modal
                         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
-                        confirmModal.hide();
+                        if (confirmModal) confirmModal.hide();
 
-                        // 2. Show Success Modal
-                        const successModal = new bootstrap.Modal(document.getElementById('deleteSuccessModal'));
+                        // 2. Show Success Modal, then auto-close after 2s
+                        const successModalEl = document.getElementById('deleteSuccessModal');
+                        const successModal = new bootstrap.Modal(successModalEl);
                         successModal.show();
+                        setTimeout(() => {
+                            successModal.hide();
+                        }, 2000);
 
                         // 3. Remove item from grid
                         if (currentCardElement) {
                             currentCardElement.remove();
+                        } else {
+                            // Fallback: find and remove by file ID
+                            const cardToRemove = document.querySelector(`.dashboard-file-card[data-id="${currentFileId}"]`);
+                            if (cardToRemove) {
+                                const colWrapper = cardToRemove.closest('.col-md-6, .col-lg-3');
+                                if (colWrapper) colWrapper.remove();
+                            }
                         }
+
+                        // 4. Refresh stat cards live
+                        refreshStats();
                     } else {
                         alert('Error deleting item: ' + (data.message || 'Unknown error'));
                     }
@@ -249,11 +324,25 @@ document.addEventListener('DOMContentLoaded', function () {
     // Show upload success modal if redirected from upload
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('success') === 'upload') {
-        const modal = new bootstrap.Modal(document.getElementById('uploadSuccessModal'));
-        if (modal) {
+        const uploadModalEl = document.getElementById('uploadSuccessModal');
+        if (uploadModalEl) {
+            const modal = new bootstrap.Modal(uploadModalEl);
             modal.show();
+            // Auto-close after 2.5s
+            setTimeout(() => modal.hide(), 2500);
+            // Refresh stat cards
+            refreshStats();
             // Clean up URL
             history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // Clear search function
+    window.clearSearch = function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+            window.location.href = APP_URL + '/dashboard.php';
         }
     }
 
@@ -307,6 +396,131 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             }, 600); // 600ms debounce
+        });
+    }
+
+    // --- Bulk Delete Logic ---
+    const selectAllCheck = document.getElementById('dashboardSelectAll');
+    const bulkDeleteBtn = document.getElementById('dashboardBulkDeleteBtn');
+
+    function updateBulkDeleteBtn() {
+        if (!bulkDeleteBtn) return;
+        const checkedCount = document.querySelectorAll('.dashboard-item-checkbox:checked').length;
+        const anyChecked = checkedCount > 0;
+        
+        // Update bulk delete button visibility
+        if (anyChecked) {
+            bulkDeleteBtn.classList.remove('d-none');
+        } else {
+            bulkDeleteBtn.classList.add('d-none');
+        }
+        
+        // Update selected files count badge
+        const selectedBadge = document.getElementById('selectedFilesCount');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        if (selectedBadge && selectedCountSpan) {
+            if (anyChecked) {
+                selectedCountSpan.textContent = checkedCount;
+                selectedBadge.style.display = 'inline-flex';
+            } else {
+                selectedBadge.style.display = 'none';
+            }
+        }
+    }
+
+    if (selectAllCheck) {
+        selectAllCheck.addEventListener('change', function () {
+            const isChecked = this.checked;
+            const currentItemCheckboxes = document.querySelectorAll('.dashboard-item-checkbox');
+            currentItemCheckboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+            updateBulkDeleteBtn();
+        });
+    }
+
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('dashboard-item-checkbox')) {
+            if (selectAllCheck) {
+                const currentItemCheckboxes = document.querySelectorAll('.dashboard-item-checkbox');
+                const total = currentItemCheckboxes.length;
+                const checked = document.querySelectorAll('.dashboard-item-checkbox:checked').length;
+                selectAllCheck.checked = (total > 0 && checked === total);
+            }
+            updateBulkDeleteBtn();
+        }
+    });
+
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', function () {
+            const checkedBoxes = document.querySelectorAll('.dashboard-item-checkbox:checked');
+            if (checkedBoxes.length === 0) return;
+
+            const msgEl = document.getElementById('bulkDeleteMessage');
+            if (msgEl) msgEl.textContent = `Are you sure you want to move ${checkedBoxes.length} items to trash? This action can be undone from the Trash page.`;
+
+            const bulkModal = new bootstrap.Modal(document.getElementById('bulkDeleteConfirmModal'));
+            bulkModal.show();
+        });
+    }
+
+    const confirmBulkDeleteBtn = document.getElementById('confirmBulkDeleteBtn');
+    if (confirmBulkDeleteBtn) {
+        confirmBulkDeleteBtn.addEventListener('click', function () {
+            const checkedBoxes = document.querySelectorAll('.dashboard-item-checkbox:checked');
+            if (checkedBoxes.length === 0) return;
+
+            const originalText = confirmBulkDeleteBtn.innerHTML;
+            confirmBulkDeleteBtn.disabled = true;
+            confirmBulkDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+            const formData = new FormData();
+            formData.append('action', 'move_to_trash');
+            checkedBoxes.forEach(cb => {
+                formData.append('item_ids[]', cb.value);
+            });
+
+            fetch(APP_URL + '/backend/api/dashboard.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide Confirm Modal
+                        const bulkModalInstance = bootstrap.Modal.getInstance(document.getElementById('bulkDeleteConfirmModal'));
+                        if (bulkModalInstance) bulkModalInstance.hide();
+
+                        // Show Success Modal
+                        const successModalEl = document.getElementById('deleteSuccessModal');
+                        if (successModalEl) {
+                            const successModal = new bootstrap.Modal(successModalEl);
+                            successModal.show();
+                            setTimeout(() => successModal.hide(), 2000);
+                        }
+
+                        // Remove checked cards
+                        checkedBoxes.forEach(cb => {
+                            const card = cb.closest('.col-md-6, .col-lg-3');
+                            if (card) card.remove();
+                        });
+
+                        // Reset select all button
+                        if (selectAllCheck) selectAllCheck.checked = false;
+                        updateBulkDeleteBtn();
+                        refreshStats();
+                    } else {
+                        alert('Error deleting items: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting.');
+                })
+                .finally(() => {
+                    confirmBulkDeleteBtn.disabled = false;
+                    confirmBulkDeleteBtn.innerHTML = originalText;
+                });
         });
     }
 });
