@@ -352,7 +352,9 @@ include __DIR__ . '/../views/layouts/header.php';
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
                             data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
+                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
 
                             <?php if ($paper['thumbnail_path']): ?>
                                 <div class="position-relative">
@@ -447,125 +449,94 @@ function formatNumberShortcut($n)
 }
 ?>
 
-<!-- File Preview Modal (same structure as dashboard, handled by dashboard.js) -->
+<!-- File Preview Modal (Admin - Collections Page) -->
 <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content"
-            style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content public-modal-content">
             <div class="modal-body p-0">
-                <div class="row g-0">
-                    <!-- Left: Preview Image & Actions -->
-                    <div class="col-md-6 d-flex flex-column" style="background: #2C2C2C;">
-                        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4 position-relative"
-                            style="min-height: 300px;">
-                            <div class="photo-viewer-container position-relative">
-                                <img id="photoViewerImg" src="" class="w-100 rounded"
-                                    style="max-height:480px; object-fit:contain; display: block;">
-                                <div id="noPreviewIcon" style="display: none; padding: 60px; text-align: center;">
-                                    <i class="bi bi-file-earmark-text" style="font-size: 60px; color: #666;"></i>
-                                </div>
+                <div class="public-modal">
+                    <!-- Left: Image + Action Buttons -->
+                    <div class="public-modal-left">
+                        <div class="public-modal-img-container">
+                            <img id="photoViewerImg" src="" class="public-modal-img" alt="File Preview" style="display: none;">
+                            <div id="noPreviewIcon" class="public-modal-no-img" style="display: none;">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>No preview available</span>
                             </div>
                         </div>
-                        <!-- Action Buttons -->
-                        <div class="p-3 d-flex gap-2" style="background: #2C2C2C;">
-                            <a href="#" id="readNowBtn"
-                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                style="background: #3A9AFF; color: white; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500;">
-                                <i class="bi bi-book-half"></i> Read Now
+                        <div class="public-modal-actions">
+                            <a id="readNowBtn" href="#" target="_blank" class="public-read-btn">
+                                <i class="bi bi-book-half"></i> Read Full Document
                             </a>
-                            <a href="#" id="editBtn"
-                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                style="background: #fff; color: #333; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500;">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <button type="button" id="deleteBtn"
-                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                style="background: #FFEBEE; color: #C62828; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500; border: none;">
-                                <i class="bi bi-trash3"></i> Delete
-                            </button>
+                            <div class="admin-action-buttons">
+                                <a href="#" id="editBtn" class="admin-action-btn admin-edit-btn">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <button type="button" id="deleteBtn" class="admin-action-btn admin-delete-btn">
+                                    <i class="bi bi-trash3"></i> Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right: Details -->
-                    <div class="col-md-6 bg-white p-4 position-relative">
-                        <button type="button" class="btn-close position-absolute" data-bs-dismiss="modal"
-                            style="right: 15px; top: 15px; opacity: 0.5;"></button>
+                    <!-- Right: Metadata -->
+                    <div class="public-modal-right">
+                        <button type="button" class="public-modal-close" data-bs-dismiss="modal" title="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
 
-                        <div class="d-flex flex-column h-100">
-                            <!-- Header -->
-                            <div class="mb-4">
-                                <h5 id="previewTitle" class="fw-bold mb-1" style="color: #1a1a1a; font-size: 18px;">File
-                                    Preview</h5>
-                                <div id="previewCategory" class="newspaper-category mb-0" style="font-size: 12px;">
-                                    ARCHIVE MANAGEMENT SYSTEM</div>
-                            </div>
+                        <span id="previewCategory" class="public-modal-category-badge">CATEGORY</span>
+                        <h2 id="previewTitle" class="public-modal-title">File Title</h2>
 
-                            <!-- Metadata -->
-                            <div class="flex-grow-1">
-                                <p class="text-uppercase text-muted fw-bold mb-3"
-                                    style="font-size: 10px; letter-spacing: 1.5px;">Metadata Details</p>
+                        <div id="metaDescriptionWrap" class="public-modal-description-wrap" style="display: none;">
+                            <p id="metaDescription" class="public-modal-description"></p>
+                        </div>
 
-                                <div class="d-flex flex-column gap-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;"><i
-                                                class="bi bi-calendar3 me-2"></i>Publication Date</span>
-                                        <span id="metaDate" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;"><i
-                                                class="bi bi-globe me-2"></i>Edition</span>
-                                        <span id="metaEdition" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;"><i
-                                                class="bi bi-building me-2"></i>Publisher</span>
-                                        <span id="metaPublisher" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;"><i
-                                                class="bi bi-file-text me-2"></i>Page Count</span>
-                                        <span id="metaPages" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;"><i
-                                                class="bi bi-file-earmark me-2"></i>Format</span>
-                                        <span id="metaFormat" class="badge"
-                                            style="background: #FFEBEE; color: #D32F2F; font-size: 11px; padding: 4px 10px; font-weight: 600;">PDF</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;"><i
-                                                class="bi bi-person me-2"></i>Uploaded by</span>
-                                        <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1">
-                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-1"
-                                                style="width: 18px; height: 18px; font-size: 9px;">A</div>
-                                            <span id="metaUploader" class="fw-medium"
-                                                style="color: #333; font-size: 12px;">Admin</span>
-                                        </div>
-                                    </div>
-                                </div>
+                        <p class="public-modal-meta-section-title">Document Details</p>
 
-                                <!-- Description -->
-                                <div id="metaDescriptionWrap" class="mt-3" style="display:none;">
-                                    <p class="text-uppercase text-muted fw-bold mb-2"
-                                        style="font-size: 10px; letter-spacing: 1.5px;">Description</p>
-                                    <p id="metaDescription"
-                                        style="font-size: 13px; color: #4B5563; line-height: 1.7; background: #F9FAFB; border-radius: 8px; padding: 12px 14px; margin: 0;">
-                                    </p>
-                                </div>
+                        <div class="public-modal-meta-row">
+                            <span class="public-modal-meta-label"><i class="bi bi-calendar3"></i> Publication Date</span>
+                            <span id="metaDate" class="public-modal-meta-value">—</span>
+                        </div>
 
-                                <!-- Tags -->
-                                <div class="mt-4">
-                                    <p class="text-uppercase text-muted fw-bold mb-2"
-                                        style="font-size: 10px; letter-spacing: 1.5px;">Tags</p>
-                                    <div id="metaTags" class="d-flex gap-2 flex-wrap">
-                                        <!-- Tags populated via JS -->
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="public-modal-meta-row">
+                            <span class="public-modal-meta-label"><i class="bi bi-building"></i> Publisher</span>
+                            <span id="metaPublisher" class="public-modal-meta-value">—</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowLanguage">
+                            <span class="public-modal-meta-label"><i class="bi bi-translate"></i> Language</span>
+                            <span id="metaLanguage" class="public-modal-meta-value">—</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowPages">
+                            <span class="public-modal-meta-label"><i class="bi bi-book"></i> Pages</span>
+                            <span id="metaPages" class="public-modal-meta-value">—</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowVolume">
+                            <span class="public-modal-meta-label"><i class="bi bi-layers"></i> Volume / Issue</span>
+                            <span id="metaVolume" class="public-modal-meta-value">—</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowEdition">
+                            <span class="public-modal-meta-label"><i class="bi bi-sun"></i> Edition</span>
+                            <span id="metaEdition" class="public-modal-meta-value">—</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowFormat">
+                            <span class="public-modal-meta-label"><i class="bi bi-file-earmark"></i> Format</span>
+                            <span id="metaFormat" class="public-format-badge">PDF</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowUploader">
+                            <span class="public-modal-meta-label"><i class="bi bi-person"></i> Uploaded by</span>
+                            <span id="metaUploader" class="public-modal-meta-value">Admin</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowKeywords">
+                            <span class="public-modal-meta-label"><i class="bi bi-tags"></i> Keywords</span>
+                            <div id="metaTags" class="public-modal-keywords-wrap"></div>
                         </div>
                     </div>
                 </div>

@@ -220,9 +220,10 @@ function getRecentNewspapers($limit = 10)
 {
     global $pdo;
     $stmt = $pdo->prepare("
-        SELECT n.*, c.name as category_name 
+        SELECT n.*, c.name as category_name, l.name as language_name 
         FROM newspapers n 
         LEFT JOIN categories c ON n.category_id = c.id 
+        LEFT JOIN languages l ON n.language_id = l.id 
         WHERE n.deleted_at IS NULL 
         ORDER BY n.created_at DESC 
         LIMIT ?

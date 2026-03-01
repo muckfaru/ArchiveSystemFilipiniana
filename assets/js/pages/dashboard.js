@@ -176,6 +176,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const publisherEl = document.getElementById('metaPublisher');
             if (publisherEl) publisherEl.textContent = publisher || 'N/A';
 
+            // Update Volume/Issue
+            const volumeEl = document.getElementById('metaVolume');
+            const volume = card.dataset.volume;
+            if (volumeEl) volumeEl.textContent = volume || 'N/A';
+
+            // Update Language
+            const languageEl = document.getElementById('metaLanguage');
+            const language = card.dataset.language;
+            if (languageEl) languageEl.textContent = language || 'N/A';
+
             // Update Title
             const titleEl = document.getElementById('previewTitle');
             if (titleEl) titleEl.textContent = title || 'File Preview';

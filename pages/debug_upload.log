@@ -1921,3 +1921,155 @@ wer
 2026-03-02 00:23:15 - Processing upload: pg2701-images-kf8.mobi (1232079 bytes)
 2026-03-02 00:23:15 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/mobi/1772382195_15dbb070.mobi
 2026-03-02 00:23:15 - DB Insert Success. New ID: 80
+2026-03-02 00:31:39 - Request received. Action: edit
+2026-03-02 00:31:39 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 80
+    [existing_thumbnail] => uploads/thumbnails/2026/02/1772382195_thumb_3f6b20cd.jpg
+    [title] => Moby_Dick;_Or,_The_Whale
+    [publisher] => ert
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 9
+    [language_id] => 9
+    [page_count] => 34
+    [volume_issue] => 2
+    [keywords] => qweqw
+    [description] => 
+)
+
+2026-03-02 00:31:39 - FILES Data: Array
+(
+)
+
+2026-03-02 00:32:14 - Request received. Action: edit
+2026-03-02 00:32:14 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 80
+    [existing_thumbnail] => uploads/thumbnails/2026/02/1772382195_thumb_3f6b20cd.jpg
+    [title] => Moby_Dick;_Or,_The_Whale
+    [publisher] => ert
+    [publication_date] => 2026-02-11
+    [edition] => Evening
+    [category_id] => 9
+    [language_id] => 9
+    [page_count] => 34
+    [volume_issue] => 2
+    [keywords] => qweqw
+    [description] => erterterertefgFG
+)
+
+2026-03-02 00:32:14 - FILES Data: Array
+(
+)
+
+2026-03-02 00:34:56 - Request received. Action: edit
+2026-03-02 00:34:56 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 79
+    [existing_thumbnail] => uploads/thumbnails/2026/03/1772381391_thumb_94cdc7f1.jpg
+    [title] => Wuthering_Heights
+    [publisher] => wer
+    [publication_date] => 2026-03-05
+    [edition] => Morning
+    [category_id] => 10
+    [language_id] => 3
+    [page_count] => 34
+    [volume_issue] => 3
+    [keywords] => werwerwre
+    [description] => 
+)
+
+2026-03-02 00:34:56 - FILES Data: Array
+(
+)
+
+2026-03-02 00:35:34 - Request received. Action: upload
+2026-03-02 00:35:34 - POST Data: Array
+(
+    [action] => upload
+    [title] => Frankenstein;_or,_the_modern_pr
+    [publisher] => rty
+    [publication_date] => 2026-03-06
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 12
+    [page_count] => 56
+    [volume_issue] => 4
+    [keywords] => wert
+)
+
+2026-03-02 00:35:34 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg84-images-kf8 (1).mobi
+            [full_path] => pg84-images-kf8 (1).mobi
+            [type] => application/mobi
+            [tmp_name] => C:\xampp\tmp\php543F.tmp
+            [error] => 0
+            [size] => 682977
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [full_path] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php5440.tmp
+            [error] => 0
+            [size] => 246931
+        )
+
+)
+
+2026-03-02 00:35:34 - Processing upload: pg84-images-kf8 (1).mobi (682977 bytes)
+2026-03-02 00:35:34 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772382934_b50c6569.mobi
+2026-03-02 00:35:34 - DB Insert Success. New ID: 81
+2026-03-02 00:36:56 - Request received. Action: edit
+2026-03-02 00:36:56 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 81
+    [existing_thumbnail] => uploads/thumbnails/2026/03/1772382934_thumb_61feaf84.jpg
+    [title] => Frankenstein;_or,_the_modern_pr
+    [publisher] => rty
+    [publication_date] => 2026-03-06
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 7
+    [page_count] => 56
+    [volume_issue] => 4
+    [keywords] => wert
+    [description] => 
+)
+
+2026-03-02 00:36:56 - FILES Data: Array
+(
+)
+
+2026-03-02 00:38:36 - Request received. Action: edit
+2026-03-02 00:38:36 - POST Data: Array
+(
+    [action] => edit
+    [edit_id] => 81
+    [existing_thumbnail] => uploads/thumbnails/2026/03/1772382934_thumb_61feaf84.jpg
+    [title] => Frankenstein;_or,_the_modern_pr
+    [publisher] => rty
+    [publication_date] => 2026-03-06
+    [edition] => Morning
+    [category_id] => 9
+    [language_id] => 9
+    [page_count] => 56
+    [volume_issue] => 4
+    [keywords] => wert
+    [description] => 
+)
+
+2026-03-02 00:38:36 - FILES Data: Array
+(
+)
+

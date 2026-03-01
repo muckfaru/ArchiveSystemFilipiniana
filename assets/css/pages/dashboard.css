@@ -830,3 +830,276 @@ body .sidebar-title {
 #filePreviewModal .modal-body {
     padding: 0;
 }
+
+
+/* ==================== Public Modal Styles for Admin Pages ==================== */
+.public-modal {
+    background: #FFFFFF;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    width: 100%;
+    max-width: 840px;
+    max-height: 90vh;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+/* Left: image preview */
+.public-modal-left {
+    width: 38%;
+    flex-shrink: 0;
+    background: #F5F1E8;
+    display: flex;
+    flex-direction: column;
+}
+
+.public-modal-img-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 24px 16px;
+    overflow: hidden;
+    min-height: 200px;
+}
+
+.public-modal-img {
+    max-width: 100%;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.public-modal-no-img {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    gap: 12px;
+    height: 100%;
+}
+
+.public-modal-no-img i {
+    font-size: 56px;
+    color: #bbb;
+}
+
+.public-modal-no-img span {
+    font-size: 13px;
+    color: #aaa;
+    font-family: 'Poppins', sans-serif;
+}
+
+.public-modal-actions {
+    padding: 16px 20px 20px;
+    background: #F5F1E8;
+}
+
+.public-read-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    background: #3A9AFF;
+    color: #FFFFFF;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.18s;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.1px;
+}
+
+.public-read-btn:hover {
+    background: #2d87ef;
+    color: #FFFFFF;
+}
+
+/* Right: file details */
+.public-modal-right {
+    flex: 1;
+    padding: 28px 28px 24px;
+    overflow-y: auto;
+    position: relative;
+    font-family: 'Poppins', sans-serif;
+}
+
+.public-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #9CA3AF;
+    font-size: 15px;
+    transition: color 0.15s;
+    z-index: 10;
+}
+
+.public-modal-close:hover {
+    color: #374151;
+}
+
+/* Category badge */
+.public-modal-category-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    background: #E0F2FE;
+    color: #0C4A6E;
+    font-family: 'Poppins', sans-serif;
+}
+
+.public-modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 14px;
+    line-height: 1.25;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Description */
+.public-modal-description-wrap {
+    background: #F8F9FB;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.public-modal-description {
+    font-size: 13px;
+    color: #5B6B8A;
+    line-height: 1.75;
+    margin-bottom: 0;
+    font-style: italic;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Section title */
+.public-modal-meta-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: #B0B8C8;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.public-modal-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #F0F1F3;
+}
+
+.public-modal-meta-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.public-modal-meta-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #9CA3AF;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.public-modal-meta-label i {
+    color: #B0B8C8;
+    font-size: 14px;
+}
+
+.public-modal-meta-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-align: right;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Keyword pills */
+.public-modal-keywords-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.public-modal-keyword-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #EEF0F3;
+    color: #374151;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.public-format-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #FFEBEE;
+    color: #D32F2F;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .public-modal {
+        flex-direction: column;
+        max-height: 95vh;
+    }
+
+    .public-modal-left {
+        width: 100%;
+        flex-shrink: 0;
+        max-height: 280px;
+    }
+
+    .public-modal-img-container {
+        padding: 16px;
+        min-height: 120px;
+    }
+
+    .public-modal-right {
+        padding: 20px;
+    }
+
+    .public-modal-title {
+        font-size: 18px;
+    }
+}

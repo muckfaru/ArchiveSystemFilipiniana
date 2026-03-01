@@ -156,7 +156,9 @@
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
                             data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
+                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
                             
                             <!-- Thumbnail with category badge -->
                             <div class="dashboard-thumb-wrap">
@@ -284,7 +286,9 @@
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
                             data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
+                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
                             
                             <!-- Thumbnail with category badge -->
                             <div class="dashboard-thumb-wrap">
