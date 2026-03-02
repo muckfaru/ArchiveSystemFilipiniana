@@ -30,13 +30,60 @@ if ($editMode) {
     }
 }
 
+function isAjaxRequest()
+{
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
+function normalizePublicationDate($rawDate)
+{
+    $rawDate = trim((string) $rawDate);
+    if ($rawDate === '') {
+        return null;
+    }
+
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $rawDate, $match)) {
+        $year = (int) $match[1];
+        $month = (int) $match[2];
+        $day = (int) $match[3];
+
+        if (!checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+    }
+
+    if (preg_match('/^(\d{4})-(\d{2})$/', $rawDate, $match)) {
+        $year = (int) $match[1];
+        $month = (int) $match[2];
+        if ($month >= 1 && $month <= 12) {
+            return sprintf('%04d-%02d', $year, $month);
+        }
+    }
+
+    return null;
+}
+
+function rejectInvalidPublicationDate()
+{
+    $message = 'Publication date must use a 4-digit year. Use YYYY-MM-DD or YYYY-MM.';
+
+    if (isAjaxRequest()) {
+        echo json_encode(['success' => false, 'message' => $message]);
+        exit;
+    }
+
+    redirect('upload.php?error=' . urlencode($message));
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'upload' || $action === 'edit') {
         $title = sanitize($_POST['title']);
-        $publicationDate = $_POST['publication_date'] ?: null;
+        $publicationDate = normalizePublicationDate($_POST['publication_date'] ?? null);
         $edition = sanitize($_POST['edition'] ?? '');
         $categoryId = intval($_POST['category_id']) ?: null;
         $languageId = intval($_POST['language_id']) ?: null;
@@ -59,6 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'upload') {
+            if (!$publicationDate) {
+                rejectInvalidPublicationDate();
+            }
+
             // Check for upload mode (Single vs Bulk/Bind)
             // The frontend sends 'upload' action for simple uploads.
             // For Bulk Image Upload, the action might be different or handled here.
@@ -272,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Get form data (re-fetching here as it's outside the previous block)
             $title = sanitize($_POST['title']);
-            $publicationDate = $_POST['publication_date'] ?: null;
+            $publicationDate = normalizePublicationDate($_POST['publication_date'] ?? null);
             $edition = sanitize($_POST['edition'] ?? '');
             $categoryId = intval($_POST['category_id']) ?: null;
             $languageId = intval($_POST['language_id']) ?: null;
@@ -281,6 +332,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $publisher = sanitize($_POST['publisher'] ?? '');
             $volumeIssue = sanitize($_POST['volume_issue'] ?? '');
             $description = sanitize($_POST['description'] ?? '');
+
+            if (!$publicationDate) {
+                rejectInvalidPublicationDate();
+            }
 
             $fileCount = count($_FILES['files']['name']);
 
@@ -412,7 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'edit') {
         $editId = intval($_POST['edit_id']);
         $title = sanitize($_POST['title']);
-        $publicationDate = $_POST['publication_date'] ?: null;
+        $publicationDate = normalizePublicationDate($_POST['publication_date'] ?? null);
         $edition = sanitize($_POST['edition'] ?? '');
         $categoryId = intval($_POST['category_id']) ?: null;
         $languageId = intval($_POST['language_id']) ?: null;
@@ -421,6 +476,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $publisher = sanitize($_POST['publisher'] ?? '');
         $volumeIssue = sanitize($_POST['volume_issue'] ?? '');
         $description = sanitize($_POST['description'] ?? '');
+
+        if (!$publicationDate) {
+            rejectInvalidPublicationDate();
+        }
 
         // Handle new thumbnail upload - organized by year/month
         $thumbnailPath = $_POST['existing_thumbnail'] ?? null;

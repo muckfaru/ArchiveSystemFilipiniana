@@ -24,6 +24,7 @@ $limit = 12; // 4 columns x 3 rows
 
 $searchQuery = trim($_GET['q'] ?? '');
 $categoryFilter = $_GET['category'] ?? '';
+$pubDateExpr = "STR_TO_DATE(CONCAT(n.publication_date, IF(LENGTH(n.publication_date)=7, '-01', '')), '%Y-%m-%d')";
 
 // --- Fetch Categories for filter ---
 $catSql = "SELECT c.id, c.name FROM categories c 
@@ -47,9 +48,9 @@ if ($searchQuery) {
          OR n.volume_issue    LIKE ?
          OR c.name            LIKE ?
          OR l.name            LIKE ?
-         OR DATE_FORMAT(n.publication_date, '%Y')       LIKE ?
-         OR DATE_FORMAT(n.publication_date, '%M %Y')    LIKE ?
-         OR DATE_FORMAT(n.publication_date, '%M %d, %Y') LIKE ?
+         OR DATE_FORMAT($pubDateExpr, '%Y')       LIKE ?
+         OR DATE_FORMAT($pubDateExpr, '%M %Y')    LIKE ?
+         OR DATE_FORMAT($pubDateExpr, '%M %d, %Y') LIKE ?
         )";
     $params = array_merge($params, array_fill(0, 11, $like));
 }

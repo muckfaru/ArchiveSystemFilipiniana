@@ -230,9 +230,13 @@
                         <div class="form-row-2col">
                             <div class="form-group">
                                 <label>DATE PUBLISHED</label>
-                                <input type="date" name="publication_date" id="publication_date" placeholder="mm/dd/yyyy"
+                                <input type="date" name="publication_date" id="publication_date" placeholder="mm/dd/yyyy" min="1000-01-01" max="9999-12-31"
                                     value="<?= $editMode ? $editItem['publication_date'] : '' ?>" required>
-                                <div class="invalid-feedback">Publication Date is required.</div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="publication_month_only">
+                                    <label class="form-check-label" for="publication_month_only">I only know month and year</label>
+                                </div>
+                                <div class="invalid-feedback">Use a valid date with a 4-digit year.</div>
                             </div>
                             <div class="form-group">
                                 <label>EDITION</label>

@@ -20,6 +20,7 @@ $editionFilter = $_GET['edition'] ?? '';
 $dateFrom = $_GET['date_from'] ?? '';
 $dateTo = $_GET['date_to'] ?? '';
 $sortFilter = $_GET['sort'] ?? 'newest';
+$pubDateExpr = "STR_TO_DATE(CONCAT(n.publication_date, IF(LENGTH(n.publication_date)=7, '-01', '')), '%Y-%m-%d')";
 
 // --- Fetch Categories with Counts ---
 $catSql = "SELECT c.id, c.name, COUNT(n.id) as count 
@@ -46,7 +47,7 @@ $editionSql = "SELECT DISTINCT edition FROM newspapers
 $editions = $pdo->query($editionSql)->fetchAll(PDO::FETCH_COLUMN);
 
 // Get min and max publication dates for the date range filter
-$dateRangeSql = "SELECT MIN(publication_date) as min_date, MAX(publication_date) as max_date 
+$dateRangeSql = "SELECT MIN(STR_TO_DATE(CONCAT(publication_date, IF(LENGTH(publication_date)=7, '-01', '')), '%Y-%m-%d')) as min_date, MAX(STR_TO_DATE(CONCAT(publication_date, IF(LENGTH(publication_date)=7, '-01', '')), '%Y-%m-%d')) as max_date 
                  FROM newspapers WHERE deleted_at IS NULL AND publication_date IS NOT NULL";
 $dateRange = $pdo->query($dateRangeSql)->fetch();
 $minYear = $dateRange['min_date'] ? date('Y', strtotime($dateRange['min_date'])) : 1850;
@@ -83,20 +84,20 @@ if ($searchQuery) {
          OR n.volume_issue    LIKE ?
          OR c.name            LIKE ?
          OR l.name            LIKE ?
-         OR DATE_FORMAT(n.publication_date, '%Y')       LIKE ?
-         OR DATE_FORMAT(n.publication_date, '%M %Y')    LIKE ?
-         OR DATE_FORMAT(n.publication_date, '%M %d, %Y') LIKE ?
+         OR DATE_FORMAT($pubDateExpr, '%Y')       LIKE ?
+         OR DATE_FORMAT($pubDateExpr, '%M %Y')    LIKE ?
+         OR DATE_FORMAT($pubDateExpr, '%M %d, %Y') LIKE ?
         )";
     $params = array_merge($params, array_fill(0, 11, $like));
 }
 
 if ($dateFrom) {
-    $whereClause .= " AND n.publication_date >= ?";
+    $whereClause .= " AND $pubDateExpr >= STR_TO_DATE(?, '%Y-%m-%d')";
     $params[] = $dateFrom;
 }
 
 if ($dateTo) {
-    $whereClause .= " AND n.publication_date <= ?";
+    $whereClause .= " AND $pubDateExpr <= STR_TO_DATE(?, '%Y-%m-%d')";
     $params[] = $dateTo;
 }
 

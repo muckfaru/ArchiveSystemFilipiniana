@@ -27,6 +27,7 @@ $categoryFilter = $_GET['category'] ?? '';
 $languageFilter = $_GET['language'] ?? '';
 $dateFrom = $_GET['date_from'] ?? '';
 $dateTo = $_GET['date_to'] ?? '';
+$pubDateExpr = "STR_TO_DATE(CONCAT(n.publication_date, IF(LENGTH(n.publication_date)=7, '-01', '')), '%Y-%m-%d')";
 
 $searchResults = [];
 if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) {
@@ -55,12 +56,12 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
     }
 
     if ($dateFrom) {
-        $sql .= " AND n.publication_date >= ?";
+        $sql .= " AND $pubDateExpr >= STR_TO_DATE(?, '%Y-%m-%d')";
         $params[] = $dateFrom;
     }
 
     if ($dateTo) {
-        $sql .= " AND n.publication_date <= ?";
+        $sql .= " AND $pubDateExpr <= STR_TO_DATE(?, '%Y-%m-%d')";
         $params[] = $dateTo;
     }
 

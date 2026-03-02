@@ -829,7 +829,7 @@ $formatLabel = match (true) {
         <?php
         $metaRows = [
             ['bi-bookmark', 'Category', $file['category_name'] ?? '—'],
-            ['bi-calendar3', 'Published', $file['publication_date'] ? date('F j, Y', strtotime($file['publication_date'])) : '—'],
+            ['bi-calendar3', 'Published', $file['publication_date'] ? formatPublicationDate($file['publication_date'], true) : '—'],
             ['bi-building', 'Publisher', $file['publisher'] ?? '—'],
             ['bi-translate', 'Language', $file['language_name'] ?? '—'],
             ['bi-file-earmark', 'Format', $formatLabel],
