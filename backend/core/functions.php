@@ -167,7 +167,7 @@ function countIssues()
 function getYearsCovered()
 {
     global $pdo;
-    $stmt = $pdo->query("SELECT MIN(YEAR(publication_date)) as min_year, MAX(YEAR(publication_date)) as max_year FROM newspapers WHERE deleted_at IS NULL AND publication_date IS NOT NULL");
+    $stmt = $pdo->query("SELECT MIN(CAST(LEFT(publication_date, 4) AS UNSIGNED)) as min_year, MAX(CAST(LEFT(publication_date, 4) AS UNSIGNED)) as max_year FROM newspapers WHERE deleted_at IS NULL AND publication_date REGEXP '^[0-9]{4}-(0[1-9]|1[0-2])(-([0-2][0-9]|3[0-1]))?$'");
     $result = $stmt->fetch();
     if ($result['min_year'] && $result['max_year']) {
         // If min and max year are the same, show only one year
@@ -177,6 +177,26 @@ function getYearsCovered()
         return $result['min_year'] . '-' . $result['max_year'];
     }
     return 'N/A';
+}
+
+function formatPublicationDate($publicationDate, $long = true)
+{
+    $value = trim((string) ($publicationDate ?? ''));
+    if ($value === '') {
+        return '';
+    }
+
+    if (preg_match('/^(\d{4})-(\d{2})$/', $value)) {
+        $timestamp = strtotime($value . '-01');
+        return $timestamp ? date($long ? 'F Y' : 'M Y', $timestamp) : $value;
+    }
+
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value)) {
+        $timestamp = strtotime($value);
+        return $timestamp ? date($long ? 'F j, Y' : 'M Y', $timestamp) : $value;
+    }
+
+    return $value;
 }
 
 /**

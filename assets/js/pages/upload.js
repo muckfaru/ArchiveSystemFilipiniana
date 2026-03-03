@@ -38,9 +38,91 @@ document.addEventListener('DOMContentLoaded', function () {
     const thumbnailPreview = document.getElementById('thumbnailPreview');
     const thumbnailPlaceholder = document.getElementById('thumbnailPlaceholder');
     const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
+    const publicationDateInput = document.getElementById('publication_date');
+    const publicationMonthOnlyToggle = document.getElementById('publication_month_only');
 
     // --- Initialization ---
     const isEditMode = document.querySelector('input[name="action"]').value === 'edit';
+
+    function isValidPublicationDate(value) {
+        const dateValue = (value || '').trim();
+        if (!dateValue) return false;
+
+        const fullDateMatch = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (fullDateMatch) {
+            const year = Number(fullDateMatch[1]);
+            const month = Number(fullDateMatch[2]);
+            const day = Number(fullDateMatch[3]);
+            const parsed = new Date(year, month - 1, day);
+
+            return (
+                parsed.getFullYear() === year &&
+                parsed.getMonth() === month - 1 &&
+                parsed.getDate() === day
+            );
+        }
+
+        const monthOnlyMatch = dateValue.match(/^(\d{4})-(\d{2})$/);
+        if (monthOnlyMatch) {
+            const month = Number(monthOnlyMatch[2]);
+            return month >= 1 && month <= 12;
+        }
+
+        return false;
+    }
+
+    function normalizePublicationDateForInput(value, inputType) {
+        const dateValue = (value || '').trim();
+        if (!dateValue) return '';
+
+        let year = '';
+        let month = '';
+        let day = '01';
+
+        let match = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (match) {
+            year = match[1];
+            month = match[2];
+            day = match[3];
+        } else {
+            match = dateValue.match(/^(\d{4})-(\d{2})$/);
+            if (!match) return '';
+            year = match[1];
+            month = match[2];
+        }
+
+        if (inputType === 'month') {
+            return `${year}-${month}`;
+        }
+
+        return `${year}-${month}-${day}`;
+    }
+
+    function applyPublicationInputMode() {
+        if (!publicationDateInput) return;
+
+        const monthOnly = !!publicationMonthOnlyToggle?.checked;
+        const targetType = monthOnly ? 'month' : 'date';
+        const currentValue = publicationDateInput.value || '';
+
+        if (publicationDateInput.type !== targetType) {
+            publicationDateInput.type = targetType;
+        }
+
+        publicationDateInput.value = normalizePublicationDateForInput(currentValue, targetType);
+
+        if (monthOnly) {
+            publicationDateInput.min = '1000-01';
+            publicationDateInput.max = '9999-12';
+            publicationDateInput.placeholder = 'YYYY-MM';
+        } else {
+            publicationDateInput.min = '1000-01-01';
+            publicationDateInput.max = '9999-12-31';
+            publicationDateInput.placeholder = 'mm/dd/yyyy';
+        }
+
+        publicationDateInput.classList.remove('is-invalid');
+    }
 
     // Capture Original State if Edit Mode
     if (isEditMode) {
@@ -56,6 +138,22 @@ document.addEventListener('DOMContentLoaded', function () {
             const tagsList = keywordsHidden.value.split(',').map(t => t.trim()).filter(t => t);
             setTags(tagsList);
         }
+    }
+
+    applyPublicationInputMode();
+
+    if (publicationMonthOnlyToggle) {
+        publicationMonthOnlyToggle.addEventListener('change', function () {
+            applyPublicationInputMode();
+
+            if (isBindMode) {
+                validateBindModeForm();
+            } else if (activeFileIndex !== -1) {
+                saveCurrentFormData();
+            } else {
+                updateButtons();
+            }
+        });
     }
 
     // --- Event Listeners ---
@@ -157,6 +255,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!validate('category_id')) isValid = false;
             if (!validate('language_id')) isValid = false;
 
+            const publicationDateEl = document.getElementById('publication_date');
+            if (publicationDateEl && publicationDateEl.value && !isValidPublicationDate(publicationDateEl.value)) {
+                publicationDateEl.classList.add('is-invalid');
+                isValid = false;
+            }
+
             // File Validation
             if (!hasFile && !isEdit) {
                 showAlert('danger', "Please select a file to upload.");
@@ -245,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const modalSubtitle = modalEl.querySelector('.modal-header p');
                 const confirmButton = document.getElementById('confirmUploadBtn');
                 const modalIcon = modalEl.querySelector('.modal-header i');
-                
+
                 if (modalTitle) modalTitle.textContent = 'Save Changes?';
                 if (modalSubtitle) modalSubtitle.textContent = 'Confirm to update this archive';
                 if (modalIcon) {
@@ -309,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Check files
         const hasFiles = (fileInput && fileInput.files.length > 0) || (bulkFiles && bulkFiles.length > 0);
         if (hasFiles) return true;
-        
+
         // Check thumbnail changes
         const hasThumbnailChange = thumbnailInput && thumbnailInput.files && thumbnailInput.files.length > 0;
         if (hasThumbnailChange) return true;
@@ -769,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (removeThumbnailBtn) {
                     removeThumbnailBtn.style.display = 'flex';
                 }
-                
+
                 // Update buttons to enable save in edit mode
                 updateButtons();
             };
@@ -924,13 +1028,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!value) return;
                 const el = document.getElementById(id);
                 if (el && !el.value.trim()) {
-                    el.value = value;
+                    el.value = id === 'publication_date'
+                        ? normalizePublicationDateForInput(value, el.type)
+                        : value;
                     el.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 // Update bulk state too
                 if (bulkIdx !== null && bulkFiles[bulkIdx] && metaKey) {
                     if (!bulkFiles[bulkIdx].metadata[metaKey]) {
-                        bulkFiles[bulkIdx].metadata[metaKey] = value;
+                        bulkFiles[bulkIdx].metadata[metaKey] = id === 'publication_date'
+                            ? normalizePublicationDateForInput(value, publicationDateInput?.type || 'date')
+                            : value;
                     }
                 }
             };
@@ -1208,7 +1316,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Populate Form Fields (Safe Set)
         const safelySetValue = (id, value) => {
             const el = document.getElementById(id);
-            if (el) el.value = value || '';
+            if (!el) return;
+            if (id === 'publication_date') {
+                el.value = normalizePublicationDateForInput(value, el.type);
+                return;
+            }
+            el.value = value || '';
         };
 
         safelySetValue('title', file.metadata.title);
@@ -1521,12 +1634,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const date = document.getElementById('publication_date')?.value?.trim();
             const category = document.getElementById('category_id')?.value?.trim();
             const language = document.getElementById('language_id')?.value?.trim();
+            const hasValidDate = isValidPublicationDate(date);
 
             // Single file specific: Check if duplicate error exists
             const hasError = document.getElementById('previewError')?.style.display !== 'none' && document.getElementById('previewError')?.textContent !== '';
 
             // Additional check for required fields being filled
-            const isFormValid = title && date && category && language;
+            const isFormValid = title && date && hasValidDate && category && language;
 
             if (isEdit) {
                 // Edit Mode: Enable if (Dirty OR New File Selected) AND Form Valid AND No Error
@@ -1651,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Check Metadata
         const m = file.metadata;
-        const isMetaComplete = (m.title && m.publication_date && m.category_id && m.language_id);
+        const isMetaComplete = (m.title && m.publication_date && isValidPublicationDate(m.publication_date) && m.category_id && m.language_id);
 
         if (file.isDuplicate) {
             file.status = 'error'; // Duplicate takes precedence
@@ -1671,8 +1785,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const category = document.getElementById('category_id')?.value?.trim();
         const language = document.getElementById('language_id')?.value?.trim();
         const hasFiles = bulkFiles.length > 0;
+        const hasValidDate = isValidPublicationDate(date);
 
-        const isValid = title && date && category && language && hasFiles;
+        const isValid = title && date && hasValidDate && category && language && hasFiles;
 
         const uploadBtns = [
             document.getElementById('uploadBtnDesktop'),

@@ -335,13 +335,14 @@ include __DIR__ . '/../views/layouts/header.php';
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($documents as $paper): ?>
+                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
                     <!-- Newspaper Card Component identical to dashboard -->
                     <div class="col-md-6 col-lg-3">
                         <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
                             data-bs-target="#filePreviewModal" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-date="<?= htmlspecialchars($publicationShort) ?>"
                             data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
                             data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"

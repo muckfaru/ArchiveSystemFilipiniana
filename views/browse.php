@@ -351,11 +351,12 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <?php
                         $catName = $paper['category_name'] ?? 'Uncategorized';
                         $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
+                        $publicationLabel = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], true) : '';
                         ?>
                         <div class="public-file-card browse-file-card-compact" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('F j, Y', strtotime($paper['publication_date'])) : '' ?>"
+                            data-date="<?= htmlspecialchars($publicationLabel) ?>"
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? '') ?>"
                             data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-category="<?= htmlspecialchars($catName) ?>"

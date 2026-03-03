@@ -141,11 +141,13 @@
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($searchResults as $paper): ?>
+                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
+                    <?php $publicationLong = $paper['publication_date'] ? strtoupper(formatPublicationDate($paper['publication_date'], true)) : strtoupper(date('F j, Y', strtotime($paper['created_at']))); ?>
                     <div class="col-md-6 col-lg-3">
                         <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-date="<?= htmlspecialchars($publicationShort) ?>"
                             data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
                             data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
@@ -181,7 +183,7 @@
                             <!-- Card info -->
                             <div class="dashboard-card-info">
                                 <div class="dashboard-card-date">
-                                    <?= $paper['publication_date'] ? strtoupper(date('F j, Y', strtotime($paper['publication_date']))) : strtoupper(date('F j, Y', strtotime($paper['created_at']))) ?>
+                                    <?= $publicationLong ?>
                                 </div>
                                 <div class="dashboard-card-title">
                                     <?= htmlspecialchars($paper['title']) ?>
@@ -271,11 +273,13 @@
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($recentNewspapers as $paper): ?>
+                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
+                    <?php $publicationLong = $paper['publication_date'] ? strtoupper(formatPublicationDate($paper['publication_date'], true)) : strtoupper(date('F j, Y', strtotime($paper['created_at']))); ?>
                     <div class="col-md-6 col-lg-3">
                         <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-date="<?= htmlspecialchars($publicationShort) ?>"
                             data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
                             data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
@@ -325,7 +329,7 @@
                             <!-- Card info -->
                             <div class="dashboard-card-info">
                                 <div class="dashboard-card-date">
-                                    <?= $paper['publication_date'] ? strtoupper(date('F j, Y', strtotime($paper['publication_date']))) : strtoupper(date('F j, Y', strtotime($paper['created_at']))) ?>
+                                    <?= $publicationLong ?>
                                 </div>
                                 <div class="dashboard-card-title">
                                     <?= htmlspecialchars($paper['title']) ?>

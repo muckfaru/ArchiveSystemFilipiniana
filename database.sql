@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS languages (
 CREATE TABLE IF NOT EXISTS newspapers (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
-    publication_date DATE DEFAULT NULL,
+    publication_date VARCHAR(10) DEFAULT NULL,
     edition VARCHAR(100) DEFAULT NULL,
     category_id INT DEFAULT NULL,
     language_id INT DEFAULT NULL,

@@ -127,10 +127,11 @@
                     $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
                     ?>
                     <div class="col-6 col-md-3">
+                        <?php $publicationLabel = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], true) : ''; ?>
                         <div class="public-file-card" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('F j, Y', strtotime($paper['publication_date'])) : '' ?>"
+                            data-date="<?= htmlspecialchars($publicationLabel) ?>"
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? '') ?>"
                             data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-category="<?= htmlspecialchars($catName) ?>"
@@ -164,7 +165,7 @@
                                 <!-- Date -->
                                 <?php if ($paper['publication_date']): ?>
                                     <div class="public-file-date-line">
-                                        <?= pubHighlight(strtoupper(date('F j, Y', strtotime($paper['publication_date']))), $searchQuery) ?>
+                                        <?= pubHighlight(strtoupper($publicationLabel), $searchQuery) ?>
                                     </div>
                                 <?php endif; ?>
 
