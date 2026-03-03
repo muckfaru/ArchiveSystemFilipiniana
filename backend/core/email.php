@@ -28,14 +28,32 @@ function sendEmail($to, $subject, $body)
     $mail = new PHPMailer(true);
 
     try {
+        // Enable verbose debug output (comment out in production)
+        // $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+        
         // SMTP Configuration
         $mail->isSMTP();
         $mail->Host = SMTP_HOST;
         $mail->SMTPAuth = true;
         $mail->Username = SMTP_USERNAME;
         $mail->Password = SMTP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        
+        // Use SMTPS (SSL) for port 465, STARTTLS for port 587
+        if (SMTP_PORT == 465) {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
         $mail->Port = SMTP_PORT;
+        
+        // Additional SMTP options for better compatibility
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
 
         // Sender
         $mail->setFrom(SMTP_USERNAME, SMTP_FROM_NAME);
@@ -48,10 +66,15 @@ function sendEmail($to, $subject, $body)
         $mail->Subject = $subject;
         $mail->Body = $body;
         $mail->AltBody = strip_tags($body);
+        
+        // Character encoding
+        $mail->CharSet = 'UTF-8';
 
         $mail->send();
         return ['success' => true, 'message' => 'Email sent successfully'];
     } catch (Exception $e) {
+        // Log the error for debugging
+        error_log("Email Error: " . $mail->ErrorInfo);
         return ['success' => false, 'message' => $mail->ErrorInfo];
     }
 }

@@ -264,14 +264,69 @@ mark.pub-hl {
     left: 10px;
     right: auto;
     z-index: 2;
-    background: #FFFFFF !important;
-    color: #374151 !important;
+    background: #FFFFFF;
+    color: #374151;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.14);
     margin-bottom: 0 !important;
     font-size: 11px !important;
     padding: 4px 11px !important;
     border-radius: 20px !important;
     font-weight: 600 !important;
+}
+
+/* Category colors for thumbnail badge */
+.pub-thumb-badge.public-cat-politics {
+    background: #EFF6FF !important;
+    color: #2563EB !important;
+}
+
+.pub-thumb-badge.public-cat-sports {
+    background: #F0FDF4 !important;
+    color: #16A34A !important;
+}
+
+.pub-thumb-badge.public-cat-culture {
+    background: #FFF7ED !important;
+    color: #EA580C !important;
+}
+
+.pub-thumb-badge.public-cat-business,
+.pub-thumb-badge.public-cat-finance {
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+}
+
+.pub-thumb-badge.public-cat-news,
+.pub-thumb-badge.public-cat-world-news {
+    background: #FAF5FF !important;
+    color: #9333EA !important;
+}
+
+.pub-thumb-badge.public-cat-entertainment {
+    background: #FDF2F8 !important;
+    color: #DB2777 !important;
+}
+
+.pub-thumb-badge.public-cat-technology {
+    background: #ECFEFF !important;
+    color: #0891B2 !important;
+}
+
+.pub-thumb-badge.public-cat-health {
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+}
+
+.pub-thumb-badge.public-cat-science {
+    background: #ECFDF5 !important;
+    color: #059669 !important;
+}
+
+.pub-thumb-badge.public-cat-other,
+.pub-thumb-badge.public-cat-default,
+.pub-thumb-badge.public-cat-uncategorized {
+    background: #F1F5F9 !important;
+    color: #475569 !important;
 }
 
 /* ── Category base (used on modal badge) ── */
@@ -701,23 +756,15 @@ mark.pub-hl {
     font-family: 'Poppins', sans-serif;
 }
 
-/* Accent colours for specific meta fields (matching reference image) */
-#publicModalDate {
-    color: #C08B5C;
-}
-
+/* All meta values use consistent black color */
+#publicModalDate,
 #publicModalPublisher,
-#publicModalLanguage {
-    color: #2D6A9F;
-}
-
-#publicModalPages {
+#publicModalLanguage,
+#publicModalPages,
+#publicModalVolume,
+#publicModalEdition {
     color: #1a1a1a;
-    font-weight: 700;
-}
-
-#publicModalVolume {
-    color: #2D6A9F;
+    font-weight: 600;
 }
 
 /* Keyword pills */
@@ -1471,7 +1518,7 @@ button.public-admin-login-btn {
     background: var(--primary-dark);
 }
 
-/* List View Layout */
+/* List View Layout - Updated v2 */
 .browse-list-view {
     display: flex !important;
     flex-direction: column !important;
@@ -1486,8 +1533,16 @@ button.public-admin-login-btn {
 }
 
 .browse-list-view .public-thumb-wrap {
-    width: 180px !important;
+    width: 200px !important;
     flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+.browse-list-view .public-file-category {
+    position: absolute !important;
+    top: 12px !important;
+    left: 12px !important;
+    z-index: 2 !important;
 }
 
 .browse-list-view .public-file-thumbnail,
@@ -1498,59 +1553,82 @@ button.public-admin-login-btn {
 
 .browse-list-view .public-file-info {
     flex: 1 !important;
-    padding: 16px 20px !important;
+    padding: 20px 24px !important;
     display: flex !important;
     flex-direction: column !important;
+    gap: 0 !important;
+}
+
+.browse-list-view .public-file-date-line {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #9CA3AF !important;
+    margin-bottom: 6px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
 }
 
 .browse-list-view .public-file-title {
-    font-size: 15px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
     -webkit-line-clamp: 2 !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.4 !important;
 }
 
 .browse-list-view .public-file-description {
-    font-size: 12px !important;
-    -webkit-line-clamp: 3 !important;
-    margin-bottom: 12px !important;
+    font-size: 13px !important;
+    -webkit-line-clamp: 2 !important;
+    margin-bottom: 14px !important;
+    color: #6B7280 !important;
+    line-height: 1.5 !important;
 }
 
-/* Metadata section - only visible in list view, below description */
+/* Metadata section - ONLY visible in list view mode */
 .browse-list-metadata {
     display: none;
 }
 
 .browse-list-view .browse-list-metadata {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 16px 20px !important;
-    margin-top: 12px !important;
-    padding-top: 12px !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px 20px !important;
+    margin-top: 0 !important;
+    padding-top: 14px !important;
     border-top: 1px solid #E5E7EB !important;
 }
 
 .browse-meta-item {
     display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    font-size: 12px !important;
-    color: #6B7280 !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    font-size: 13px !important;
     font-family: 'Poppins', sans-serif !important;
-}
-
-.browse-meta-item i {
-    display: none !important;
-}
-
-.browse-meta-item span {
-    font-weight: 500 !important;
 }
 
 .browse-meta-item::before {
     content: attr(data-label);
+    font-size: 10px !important;
     font-weight: 600 !important;
     color: #9CA3AF !important;
-    margin-right: 4px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: block !important;
+}
+
+.browse-meta-item span {
+    font-weight: 500 !important;
+    color: #374151 !important;
+    font-size: 13px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.browse-meta-item span i {
+    color: #9CA3AF !important;
+    font-size: 13px !important;
+    flex-shrink: 0 !important;
 }
 
 /* Sidebar - New Style */
@@ -2454,10 +2532,43 @@ button.public-admin-login-btn {
     font-weight: 600;
     font-family: 'Poppins', sans-serif;
     transition: all 0.2s ease;
+    position: relative;
+    padding-right: 32px;
 }
 
 .filter-tag i {
     font-size: 13px;
+}
+
+/* Filter remove button */
+.filter-remove {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.1);
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.filter-remove:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.3);
+    transform: translateY(-50%) scale(1.2) rotate(90deg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.filter-remove i {
+    font-size: 12px;
+    font-weight: bold;
 }
 
 /* Category filter tag */
@@ -2535,4 +2646,76 @@ button.public-admin-login-btn {
         width: 100%;
         justify-content: center;
     }
+}
+
+
+/* ==================== Category Badge Above Title ==================== */
+.public-file-category-top {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background: #E0F2FE;
+    color: #0C4A6E;
+    width: fit-content;
+    max-width: 100%;
+}
+
+/* Category colors for badge above title */
+.public-file-category-top.public-cat-politics {
+    background: #EFF6FF;
+    color: #2563EB;
+}
+
+.public-file-category-top.public-cat-sports {
+    background: #F0FDF4;
+    color: #16A34A;
+}
+
+.public-file-category-top.public-cat-culture {
+    background: #FFF7ED;
+    color: #EA580C;
+}
+
+.public-file-category-top.public-cat-business,
+.public-file-category-top.public-cat-finance {
+    background: #FEF2F2;
+    color: #DC2626;
+}
+
+.public-file-category-top.public-cat-news,
+.public-file-category-top.public-cat-world-news {
+    background: #FAF5FF;
+    color: #9333EA;
+}
+
+.public-file-category-top.public-cat-entertainment {
+    background: #FDF2F8;
+    color: #DB2777;
+}
+
+.public-file-category-top.public-cat-technology {
+    background: #ECFEFF;
+    color: #0891B2;
+}
+
+.public-file-category-top.public-cat-health {
+    background: #FEF2F2;
+    color: #DC2626;
+}
+
+.public-file-category-top.public-cat-science {
+    background: #ECFDF5;
+    color: #059669;
+}
+
+.public-file-category-top.public-cat-other,
+.public-file-category-top.public-cat-default,
+.public-file-category-top.public-cat-uncategorized {
+    background: #F1F5F9;
+    color: #475569;
 }

@@ -51,7 +51,7 @@
 
     <!-- ==================== HERO ==================== -->
     <section class="public-hero">
-        <h1 class="public-hero-title">The Archive of Record</h1>
+        <h1 class="public-hero-title">The Historical Press Archive</h1>
         <p class="public-hero-subtitle">
             Explore centuries of global journalism through a fully digitized and searchable newspaper collection.
         </p>

@@ -1,15 +1,14 @@
 <?php
 /**
- * Universal Document Reader - Premium Desktop Edition
+ * Admin Document Reader
  * Archive System - Quezon City Public Library
+ * Requires authentication.
  */
 
 require_once __DIR__ . '/../backend/core/config.php';
 require_once __DIR__ . '/../backend/core/auth.php';
 require_once __DIR__ . '/../backend/core/functions.php';
-require_once __DIR__ . '/../backend/core/calibre.php';
 
-// Get file ID
 $fileId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if (!$fileId) {
@@ -17,13 +16,12 @@ if (!$fileId) {
     exit;
 }
 
-// Fetch file data
 $stmt = $pdo->prepare("
-    SELECT n.*, c.name AS category_name
+    SELECT n.*, c.name AS category_name, l.name AS language_name
     FROM newspapers n
     LEFT JOIN categories c ON n.category_id = c.id
-    WHERE n.id = ?
-      AND n.deleted_at IS NULL
+    LEFT JOIN languages l ON n.language_id = l.id
+    WHERE n.id = ? AND n.deleted_at IS NULL
 ");
 $stmt->execute([$fileId]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,599 +31,1408 @@ if (!$file) {
     exit;
 }
 
-// File info
+// Log activity
+logActivity($currentUser['id'], 'read', $file['title']);
+
 $fileType = strtolower($file['file_type']);
-$fileUrl = 'serve_file.php?file=' . urlencode($file['file_path']);
+$fileUrl = '../serve_file.php?file=' . urlencode($file['file_path']);
 $filePath = __DIR__ . '/../' . $file['file_path'];
 
-// Handle MOBI → EPUB
+// Handle MOBI → EPUB conversion (admin only)
 $epubUrl = null;
 $conversionError = null;
+$needsConversion = false;
 
 if ($fileType === 'mobi') {
-    $result = ensureEpubExists($filePath);
-    if ($result['success']) {
+    require_once __DIR__ . '/../backend/core/calibre.php';
+    
+    // Check if EPUB already exists (fast check, <1 second)
+    $existingEpub = getConvertedEpubPath($filePath);
+    
+    if ($existingEpub) {
+        // EPUB already exists, use it immediately (instant load)
         $epubRelativePath = preg_replace('/\.mobi$/i', '.epub', $file['file_path']);
-        $epubUrl = 'serve_file.php?file=' . urlencode($epubRelativePath);
+        $epubUrl = '../serve_file.php?file=' . urlencode($epubRelativePath);
     } else {
-        $conversionError = $result['error'];
+        // EPUB doesn't exist, mark for conversion
+        $needsConversion = true;
     }
 }
 
-// Handle CBZ - Get list of images
-$cbzImages = [];
-if ($fileType === 'cbz') {
-    $zip = new ZipArchive;
-    if ($zip->open($filePath) === TRUE) {
-        for ($i = 0; $i < $zip->numFiles; $i++) {
-            $name = $zip->getNameIndex($i);
-            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                $cbzImages[] = $name;
-            }
-        }
-        $zip->close();
-        natsort($cbzImages);
-        $cbzImages = array_values($cbzImages);
-    }
-}
-
-// Handle Gallery - JSON array
-if ($fileType === 'gallery' && !empty($file['image_paths'])) {
-    $cbzImages = json_decode($file['image_paths'], true) ?: [];
-}
-
-// Reader type determination
+// Determine reader type
 $readerType = 'unknown';
 $pdfViewerUrl = '';
 
 if ($fileType === 'pdf') {
     $readerType = 'pdf';
     $pdfViewerUrl = 'pdf_viewer.php?file=' . urlencode($file['file_path']);
-
 } elseif ($fileType === 'epub' || ($fileType === 'mobi' && $epubUrl)) {
     $readerType = 'epub';
-} elseif ($fileType === 'cbz' || $fileType === 'gallery') {
-    $readerType = 'cbz';
-} elseif (in_array($fileType, ['jpg', 'jpeg', 'png', 'tiff', 'tif'])) {
+} elseif ($fileType === 'mobi' && $needsConversion) {
+    $readerType = 'mobi-converting';
+} elseif ($fileType === 'gallery') {
+    $readerType = 'gallery';
+    $galleryImages = json_decode($file['image_paths'] ?? '[]', true) ?: [];
+} elseif (in_array($fileType, ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'webp'])) {
     $readerType = 'image';
 }
 
-// Log activity
-logActivity($currentUser['id'], 'read', $file['title']);
+// Human-readable format label
+$formatLabel = match (true) {
+    $fileType === 'gallery' => 'Images',
+    $fileType === 'pdf' => 'PDF',
+    $fileType === 'epub' => 'EPUB',
+    $fileType === 'mobi' => 'MOBI',
+    default => strtoupper($fileType),
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($file['title']) ?> - <?= APP_NAME ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <?= htmlspecialchars($file['title']) ?> — <?= APP_NAME ?>
+    </title>
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Preload Critical Scripts -->
-    <?php if ($readerType === 'epub'): ?>
-        <link rel="preload" href="../assets/js/jszip.min.js" as="script">
-        <link rel="preload" href="../assets/js/epub.min.js" as="script">
-    <?php endif; ?>
-
-    <!-- Styles -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&family=Lora:wght@400;500;600&family=Open+Dyslexic&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&family=Lora:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link
-        href="../assets/css/pages/reader.css?v=<?= file_exists('../assets/css/pages/reader.css') ? filemtime('../assets/css/pages/reader.css') : time() ?>"
-        rel="stylesheet">
 
     <?php if ($readerType === 'epub'): ?>
         <script src="../assets/js/jszip.min.js"></script>
         <script src="../assets/js/epub.min.js"></script>
     <?php endif; ?>
+
+    <style>
+        /* ======================================================
+           ADMIN READER  – Full Featured (Based on Public Reader Design)
+        ====================================================== */
+        :root {
+            --bg: #1a1a1a;
+            --surface: #2a2a2a;
+            --text: #e0e0e0;
+            --muted: #888;
+            --accent: #3A9AFF;
+            --chrome-h: 56px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ── Themes ── */
+        body.theme-light {
+            --bg: #fafafa;
+            --surface: #fff;
+            --text: #1a1a1a;
+            --muted: #666;
+        }
+
+        body.theme-sepia {
+            --bg: #f4ead2;
+            --surface: #ece1c4;
+            --text: #4a3728;
+            --muted: #8a7060;
+        }
+
+        body.theme-dark {
+            --bg: #1a1a1a;
+            --surface: #2a2a2a;
+            --text: #e0e0e0;
+            --muted: #888;
+        }
+
+        body.theme-contrast {
+            --bg: #000;
+            --surface: #111;
+            --text: #fff;
+            --muted: #aaa;
+        }
+
+        /* ── Top Chrome ── */
+        .reader-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--chrome-h);
+            background: var(--surface);
+            border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .reader-top.hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .chrome-left,
+        .chrome-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chrome-center {
+            flex: 1;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 12px;
+        }
+
+        .chrome-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            transition: background 0.15s;
+        }
+
+        .chrome-btn:hover {
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        .chrome-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* ── Reading Area ── */
+        .reader-area {
+            position: fixed;
+            top: var(--chrome-h);
+            bottom: 48px;
+            left: 0;
+            right: 0;
+            background: var(--bg);
+            overflow: hidden;
+        }
+
+        .reader-area.no-bottom {
+            bottom: 0;
+        }
+
+        /* PDF iframe */
+        .pdf-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* EPUB viewer */
+        #epub-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Gallery / Image viewer */
+        .gallery-viewer {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: var(--bg);
+        }
+
+        .gallery-viewer img {
+            max-width: 92%;
+            max-height: 92%;
+            object-fit: contain;
+            border-radius: 6px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            transform-origin: center center;
+            transition: transform 0.15s ease;
+            cursor: zoom-in;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .gal-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .gal-arrow:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .gal-arrow.left {
+            left: 16px;
+        }
+
+        .gal-arrow.right {
+            right: 16px;
+        }
+
+        /* EPUB click zones */
+        .zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        .zone-prev {
+            left: 0;
+            width: 20%;
+        }
+
+        .zone-next {
+            right: 0;
+            width: 20%;
+        }
+
+        /* Loading */
+        .epub-loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            gap: 16px;
+            z-index: 20;
+        }
+
+        .epub-loading.gone {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(58, 154, 255, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Bottom Bar ── */
+        .reader-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: var(--surface);
+            border-top: 1px solid rgba(128, 128, 128, 0.15);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .reader-bottom.hidden {
+            transform: translateY(100%);
+        }
+
+        .progress-bar-outer {
+            flex: 1;
+            height: 4px;
+            background: rgba(128, 128, 128, 0.25);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* ── Panels (Settings / Info) ── */
+        .panel {
+            position: fixed;
+            right: 0;
+            top: var(--chrome-h);
+            bottom: 48px;
+            width: 300px;
+            background: var(--surface);
+            border-left: 1px solid rgba(128, 128, 128, 0.15);
+            z-index: 900;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .panel.open {
+            transform: translateX(0);
+        }
+
+        .panel h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        /* Panel close button */
+        .panel-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(128, 128, 128, 0.1);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .panel-close-btn:hover {
+            background: rgba(128, 128, 128, 0.2);
+            transform: scale(1.05);
+        }
+
+        .panel-close-btn i {
+            font-size: 14px;
+        }
+
+        .setting-row {
+            margin-bottom: 20px;
+        }
+
+        .setting-row label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Theme buttons */
+        .theme-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .theme-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            border: 2.5px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.15s;
+        }
+
+        .theme-btn.active {
+            border-color: var(--accent);
+        }
+
+        .theme-btn.t-light {
+            background: #fafafa;
+            color: #1a1a1a;
+        }
+
+        .theme-btn.t-sepia {
+            background: #f4ead2;
+            color: #4a3728;
+        }
+
+        .theme-btn.t-dark {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .theme-btn.t-contrast {
+            background: #000;
+            color: #fff;
+        }
+
+        /* Font + size selects */
+        .panel select,
+        .panel input[type="range"] {
+            width: 100%;
+        }
+
+        .panel select {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(128, 128, 128, 0.3);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .size-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .size-row span {
+            font-size: 12px;
+            color: var(--muted);
+            min-width: 28px;
+        }
+
+        .size-row input {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        /* Info panel */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.12);
+            font-size: 13px;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .info-val {
+            font-weight: 600;
+            color: var(--text);
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+
+        .back-link:hover {
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        /* Fullscreen */
+        body.fullscreen .reader-top {
+            display: none;
+        }
+
+        body.fullscreen .reader-area {
+            top: 0;
+            bottom: 0;
+        }
+
+        body.fullscreen .reader-bottom {
+            display: none;
+        }
+
+        body.fullscreen .panel {
+            top: 0;
+            bottom: 0;
+        }
+        
+        /* Ensure PDF iframe fills completely in fullscreen */
+        body.fullscreen .pdf-frame {
+            height: 100vh;
+        }
+
+        /* PDF-Only Mode - Hide chrome, show only PDF */
+        body.pdf-only-mode .reader-top {
+            display: none;
+        }
+
+        body.pdf-only-mode .reader-area {
+            top: 0;
+            bottom: 0;
+        }
+
+        body.pdf-only-mode .reader-bottom {
+            display: none;
+        }
+
+        body.pdf-only-mode .pdf-frame {
+            height: 100vh;
+        }
+
+        /* Page nav for PDFs */
+        .page-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .page-nav button {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid rgba(128, 128, 128, 0.3);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-nav button:hover {
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        .page-nav input[type="number"] {
+            width: 52px;
+            text-align: center;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid rgba(128, 128, 128, 0.3);
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 13px;
+        }
+
+        /* Fallback */
+        .fallback {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 16px;
+            color: var(--muted);
+        }
+
+        .fallback i {
+            font-size: 48px;
+        }
+
+        .fallback h3 {
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        /* Conversion Screen */
+        .conversion-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: var(--bg);
+        }
+
+        .conversion-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .conversion-icon {
+            font-size: 64px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .conversion-content h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .conversion-content p {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .conversion-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+        }
+
+        #conversionStatus {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .btn-dl {
+            padding: 10px 24px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .panel {
+                width: 100%;
+            }
+
+            .chrome-center {
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 
-<body class="theme-dark <?= $readerType === 'pdf' ? 'reader-mode-pdf' : '' ?>">
-    <!-- UI Chrome (Auto-hiding) -->
-    <div class="reader-chrome-top" id="chrome-top">
+<body class="theme-dark <?= $readerType === 'pdf' ? 'pdf-only-mode' : '' ?>">
+
+    <!-- ======= TOP CHROME ======= -->
+    <div class="reader-top" id="readerTop">
         <div class="chrome-left">
-            <a href="../dashboard.php" class="chrome-btn" title="Back to Library">
+            <a href="../dashboard.php" class="back-link" title="Back">
                 <i class="bi bi-arrow-left"></i>
+                <span class="d-none d-sm-inline">Back</span>
             </a>
         </div>
         <div class="chrome-center">
-            <h1 class="book-title"><?= htmlspecialchars($file['title']) ?></h1>
+            <?= htmlspecialchars($file['title']) ?>
         </div>
         <div class="chrome-right">
-            <button class="chrome-btn" id="btn-theme" title="Theme Settings">
-                <i class="bi bi-palette"></i>
+            <button class="chrome-btn" id="btnInfo" title="File Info">
+                <i class="bi bi-info-circle"></i>
             </button>
-            <button class="chrome-btn" id="btn-text" title="Text Settings">
-                <i class="bi bi-type"></i>
+            <?php if ($readerType !== 'pdf'): ?>
+                <button class="chrome-btn" id="btnTheme" title="Color Theme">
+                    <i class="bi bi-palette"></i>
+                </button>
+                <button class="chrome-btn" id="btnText" title="Reading Settings">
+                    <i class="bi bi-type"></i>
+                </button>
+            <?php endif; ?>
+            <button class="chrome-btn" id="btnFullscreen" title="Fullscreen">
+                <i class="bi bi-fullscreen"></i>
             </button>
         </div>
     </div>
 
-    <!-- Reading Area -->
-    <div class="reader-container" id="reader-container">
+    <!-- ======= READING AREA ======= -->
+    <div class="reader-area" id="readerArea">
 
         <?php if ($readerType === 'pdf'): ?>
-            <iframe src="<?= $pdfViewerUrl ?>" class="pdf-viewer"></iframe>
+            <iframe id="pdfFrame" class="pdf-frame"
+                src="pdf_viewer.php?file=<?= urlencode($file['file_path']) ?>"></iframe>
+
+        <?php elseif ($readerType === 'mobi-converting'): ?>
+            <div class="conversion-screen" id="conversionScreen">
+                <div class="conversion-icon">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+            </div>
 
         <?php elseif ($readerType === 'epub'): ?>
-            <div id="epub-viewer" class="epub-viewer"></div>
-
-            <!-- Click Zones -->
-            <div class="click-zone zone-left" id="zone-prev" title="Previous Page"></div>
-            <div class="click-zone zone-right" id="zone-next" title="Next Page"></div>
-            <div class="click-zone zone-center" id="zone-menu" title="Toggle Menu"></div>
-
-            <!-- Loading -->
-            <div class="epub-loading" id="epub-loading">
+            <div id="epub-viewer"></div>
+            <div class="zone zone-prev" id="zonePrev"></div>
+            <div class="zone zone-next" id="zoneNext"></div>
+            <div class="epub-loading" id="epubLoading">
                 <div class="spinner"></div>
-                <div class="loading-text">Opening File...</div>
+                <span style="font-size:13px;color:var(--muted);">Opening book…</span>
+            </div>
+
+        <?php elseif ($readerType === 'gallery'): ?>
+            <div class="gallery-viewer" id="galleryViewer">
+                <img id="galleryImg" src="" alt="">
+                <button class="gal-arrow left" id="galPrev"><i class="bi bi-chevron-left"></i></button>
+                <button class="gal-arrow right" id="galNext"><i class="bi bi-chevron-right"></i></button>
             </div>
 
         <?php elseif ($readerType === 'image'): ?>
-            <div class="image-viewer">
-                <img src="<?= $fileUrl ?>" alt="">
+            <div class="gallery-viewer">
+                <img src="<?= $fileUrl ?>" alt="<?= htmlspecialchars($file['title']) ?>">
             </div>
 
-        <?php elseif ($readerType === 'cbz'): ?>
-            <!-- CBZ / Gallery Viewer -->
-            <div id="cbz-viewer"
-                style="display:flex; justify-content:center; align-items:center; height:100%; position:relative;">
-                <img id="cbz-image" src=""
-                    style="max-height:90vh; max-width:100%; object-fit:contain; border-radius:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-
-                <!-- Left/Right Nav Arrows -->
-                <button class="gallery-arrow gallery-left" id="galleryPrev"
-                    style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: background 0.2s;">&#8249;</button>
-                <button class="gallery-arrow gallery-right" id="galleryNext"
-                    style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: background 0.2s;">&#8250;</button>
-            </div>
-
-            <script>
-                const cbzImages = <?= json_encode($cbzImages) ?>;
-                const fileType = '<?= $fileType ?>';
-                const appUrl = '<?= APP_URL ?>';
-                let currentGalleryIndex = 0;
-
-                function renderGalleryImage() {
-                    if (cbzImages.length > 0) {
-                        const imgPath = cbzImages[currentGalleryIndex];
-
-                        // For gallery it's a relative path from app root, for CBZ it's a temp extracted path 
-                        // Note: actual CBZ extract logic would serve via serve_file.php or similar, 
-                        // but gallery specifically uses direct uploads path natively
-                        if (fileType === 'gallery') {
-                            document.getElementById('cbz-image').src = appUrl + '/' + imgPath;
-                        } else {
-                            // Basic CBZ fallback placeholder logic 
-                            // (If CBZ extraction is not fully implemented on server yet)
-                            document.getElementById('cbz-image').src = appUrl + '/' + imgPath;
-                        }
-
-                        // Update Progress Counter in Footer
-                        const progressPercent = document.getElementById('progress-percent');
-                        const locationRef = document.getElementById('location-ref');
-                        const progressFill = document.getElementById('progress-fill');
-
-                        if (progressPercent && locationRef && progressFill) {
-                            const pct = Math.round(((currentGalleryIndex + 1) / cbzImages.length) * 100);
-                            progressPercent.textContent = pct + '%';
-                            locationRef.textContent = `Image ${currentGalleryIndex + 1} of ${cbzImages.length}`;
-                            progressFill.style.width = pct + '%';
-                        }
-                    }
-                }
-
-                document.getElementById('galleryPrev').onclick = function () {
-                    if (cbzImages.length > 0) {
-                        currentGalleryIndex = (currentGalleryIndex - 1 + cbzImages.length) % cbzImages.length;
-                        renderGalleryImage();
-                    }
-                };
-
-                document.getElementById('galleryNext').onclick = function () {
-                    if (cbzImages.length > 0) {
-                        currentGalleryIndex = (currentGalleryIndex + 1) % cbzImages.length;
-                        renderGalleryImage();
-                    }
-                };
-
-                document.addEventListener('keydown', function (e) {
-                    if (cbzImages.length > 0) {
-                        if (e.key === 'ArrowLeft') {
-                            currentGalleryIndex = (currentGalleryIndex - 1 + cbzImages.length) % cbzImages.length;
-                            renderGalleryImage();
-                        }
-                        if (e.key === 'ArrowRight') {
-                            currentGalleryIndex = (currentGalleryIndex + 1) % cbzImages.length;
-                            renderGalleryImage();
-                        }
-                    }
-                });
-
-                // Hide loading overlay explicitly since book.epub logic won't run
-                setTimeout(() => {
-                    const loadingMenu = document.getElementById('epub-loading');
-                    if (loadingMenu) loadingMenu.style.display = 'none';
-                }, 500);
-
-                // Init rendering
-                renderGalleryImage();
-            </script>
         <?php else: ?>
-            <div class="reader-fallback">
-                <div class="fallback-card">
-                    <i class="bi bi-file-earmark-break mb-3" style="font-size: 3rem;"></i>
-                    <h3>Unsupported Format</h3>
-                    <p>This file format cannot be viewed in the browser.</p>
-                    <a href="<?= $fileUrl ?>" download class="btn-download">Download File</a>
-                </div>
+            <div class="fallback">
+                <i class="bi bi-file-earmark-break"></i>
+                <h3>Cannot Preview This File</h3>
+                <?php if ($fileType === 'mobi' && $conversionError): ?>
+                    <p style="font-size:14px;color:#f44;margin:12px 0;">
+                        MOBI Conversion Error: <?= htmlspecialchars($conversionError) ?>
+                    </p>
+                <?php endif; ?>
+                <p style="font-size:14px;">Format:
+                    <?= strtoupper(htmlspecialchars($fileType)) ?>
+                </p>
+                <a href="<?= $fileUrl ?>" download class="btn-dl">
+                    <i class="bi bi-download me-2"></i>Download File
+                </a>
             </div>
         <?php endif; ?>
 
     </div>
 
-    <!-- UI Chrome Bottom -->
-    <div class="reader-chrome-bottom" id="chrome-bottom">
-        <div class="progress-container">
-            <div class="chapter-info" id="chapter-info">Loading...</div>
-            <div class="progress-bar-wrapper" id="progress-bar-wrapper">
-                <div class="progress-bar-fill" id="progress-fill"></div>
+    <!-- ======= BOTTOM BAR ======= -->
+    <div class="reader-bottom" id="readerBottom">
+        <?php if ($readerType === 'pdf'): ?>
+            <div class="page-nav">
+                <button onclick="pdfPage(-1)"><i class="bi bi-chevron-left"></i></button>
+                <span>Page</span>
+                <input type="number" id="pdfPageInput" value="1" min="1">
+                <span id="pdfPageTotal">/ —</span>
+                <button onclick="pdfPage(1)"><i class="bi bi-chevron-right"></i></button>
             </div>
-            <div class="progress-stats">
-                <span id="progress-percent">0%</span>
-                <span class="separator">•</span>
-                <span id="location-ref">Page 1</span>
-            </div>
+        <?php endif; ?>
+        <div class="progress-bar-outer" id="progressOuter">
+            <div class="progress-bar-inner" id="progressBar"></div>
         </div>
+        <div class="progress-label" id="progressLabel">—</div>
     </div>
 
-    <!-- Text Settings Overlay -->
-    <div class="settings-overlay" id="settings-overlay-text">
-        <div class="settings-header">
-            <h3>Typography</h3>
-            <button class="close-settings" data-target="settings-overlay-text"><i class="bi bi-x-lg"></i></button>
-        </div>
-
-        <div class="setting-group">
-            <label>Font Family</label>
-            <select id="font-family-select">
-                <option value="'Merriweather', serif">Merriweather (Serif)</option>
-                <option value="'Lora', serif">Lora (Serif)</option>
-                <option value="'Inter', sans-serif">Inter (Sans)</option>
-                <option value="'OpenDyslexic', sans-serif">Dyslexic</option>
-            </select>
-        </div>
-
-        <div class="setting-group">
-            <label>Font Size</label>
-            <div class="range-control">
-                <span style="font-size: 14px">A</span>
-                <input type="range" id="font-size-range" min="14" max="32" step="1" value="18">
-                <span style="font-size: 20px">A</span>
+    <!-- ======= PANEL: COLOR THEME ======= -->
+    <?php if ($readerType !== 'pdf'): ?>
+        <div class="panel" id="panelTheme">
+            <button class="panel-close-btn" onclick="closeAllPanels()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <h4>Color Theme</h4>
+            <div class="theme-btns">
+                <button class="theme-btn t-light" data-theme="theme-light">Aa</button>
+                <button class="theme-btn t-sepia" data-theme="theme-sepia">Aa</button>
+                <button class="theme-btn t-dark  active" data-theme="theme-dark">Aa</button>
+                <button class="theme-btn t-contrast" data-theme="theme-contrast">Aa</button>
             </div>
         </div>
+    <?php else: ?>
+        <div class="panel" id="panelTheme" style="display:none"></div>
+    <?php endif; ?>
 
-        <div class="setting-group">
-            <label>Line Spacing</label>
-            <div class="range-control">
-                <i class="bi bi-text-paragraph" style="font-size: 0.8em"></i>
-                <input type="range" id="line-height-range" min="1.2" max="2.4" step="0.1" value="1.6">
-                <i class="bi bi-text-paragraph" style="font-size: 1.2em"></i>
+    <!-- ======= PANEL: TYPOGRAPHY ======= -->
+    <?php if ($readerType !== 'pdf'): ?>
+        <div class="panel" id="panelText">
+            <button class="panel-close-btn" onclick="closeAllPanels()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <h4>Reading Settings</h4>
+            <div class="setting-row">
+                <label>Font</label>
+                <select id="fontSelect">
+                    <option value="'Merriweather', serif">Merriweather</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>Font Size <span id="fontSizeVal" style="float:right;color:var(--accent)">18px</span></label>
+                <div class="size-row">
+                    <span>A</span>
+                    <input type="range" id="fontSizeRange" min="13" max="32" value="18">
+                    <span style="font-size:20px">A</span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label>Line Spacing</label>
+                <div class="size-row">
+                    <span><i class="bi bi-text-paragraph" style="font-size:11px"></i></span>
+                    <input type="range" id="lineHeightRange" min="1.2" max="2.6" step="0.1" value="1.7">
+                    <span><i class="bi bi-text-paragraph" style="font-size:17px"></i></span>
+                </div>
             </div>
         </div>
+    <?php else: ?>
+        <div class="panel" id="panelText" style="display:none"></div>
+    <?php endif; ?>
+
+    <!-- ======= PANEL: FILE INFO ======= -->
+    <div class="panel" id="panelInfo">
+        <button class="panel-close-btn" onclick="closeAllPanels()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <h4>File Details</h4>
+        <?php
+        $metaRows = [
+            ['bi-bookmark', 'Category', $file['category_name'] ?? '—'],
+            ['bi-calendar3', 'Published', $file['publication_date'] ? date('F j, Y', strtotime($file['publication_date'])) : '—'],
+            ['bi-building', 'Publisher', $file['publisher'] ?? '—'],
+            ['bi-translate', 'Language', $file['language_name'] ?? '—'],
+            ['bi-file-earmark', 'Format', $formatLabel],
+            ['bi-book', 'Pages', $file['page_count'] ? number_format($file['page_count']) : '—'],
+            ['bi-layers', 'Volume/Issue', $file['volume_issue'] ?? '—'],
+            ['bi-sun', 'Edition', $file['edition'] ?? '—'],
+        ];
+        foreach ($metaRows as [$icon, $label, $val]):
+            if (!$val || ($val === '—' && in_array($label, ['Volume/Issue', 'Edition', 'Language'])))
+                continue; ?>
+            <div class="info-row">
+                <span class="info-label"><i class="bi <?= $icon ?> me-1"></i>
+                    <?= $label ?>
+                </span>
+                <span class="info-val">
+                    <?= htmlspecialchars($val) ?>
+                </span>
+            </div>
+        <?php endforeach; ?>
+        <?php if (!empty($file['keywords'])): ?>
+            <div class="info-row">
+                <span class="info-label"><i class="bi bi-tag me-1"></i>Keywords</span>
+                <span class="info-val">
+                    <?= htmlspecialchars($file['keywords']) ?>
+                </span>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($file['description'])): ?>
+            <div
+                style="margin-top:14px; font-size:13px; line-height:1.7; color:var(--muted); word-break:break-word; overflow-wrap:anywhere; white-space:normal;">
+                <?= htmlspecialchars($file['description']) ?>
+            </div>
+        <?php endif; ?>
     </div>
 
-    <!-- Theme Settings Overlay -->
-    <div class="settings-overlay" id="settings-overlay-theme">
-        <div class="settings-header">
-            <h3>Color Theme</h3>
-            <button class="close-settings" data-target="settings-overlay-theme"><i class="bi bi-x-lg"></i></button>
-        </div>
+    <!-- ======= SCRIPTS ======= -->
+    <script>
+        const READER_TYPE = '<?= $readerType ?>';
+        const FILE_URL = '<?= addslashes($fileUrl) ?>';
+        const APP_URL = '<?= APP_URL ?>';
+        const STORAGE_KEY = 'pub_reader_v1';
+        const FILE_ID = <?= $file['id'] ?>;
+        <?php if ($readerType === 'gallery'): ?>
+            const GAL_IMAGES = <?= json_encode($galleryImages ?? []) ?>;
+        <?php endif; ?>
+        <?php if ($readerType === 'epub'): ?>
+            const EPUB_URL = '<?= $fileType === 'mobi' && $epubUrl ? addslashes($epubUrl) : addslashes($fileUrl) ?>';
+        <?php endif; ?>
 
-        <div class="setting-group">
-            <div class="theme-selector">
-                <button class="theme-btn theme-light" data-theme="theme-light">Aa</button>
-                <button class="theme-btn theme-sepia" data-theme="theme-sepia">Aa</button>
-                <button class="theme-btn theme-dark active" data-theme="theme-dark">Aa</button>
-                <button class="theme-btn theme-contrast" data-theme="theme-contrast">Aa</button>
-            </div>
-        </div>
-    </div>
+        // ── MOBI Conversion Handler ──────────────────────────────────────────────────
+        <?php if ($readerType === 'mobi-converting'): ?>
+        async function convertMobiFile() {
+            try {
+                const response = await fetch(`convert_mobi.php?file_id=${FILE_ID}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload the page to show the EPUB reader
+                    window.location.reload();
+                } else {
+                    // On error, show alert and go back to dashboard
+                    alert('Conversion failed: ' + data.error);
+                    window.location.href = '../dashboard.php';
+                }
+            } catch (error) {
+                // On error, show alert and go back to dashboard
+                alert('Error: ' + error.message);
+                window.location.href = '../dashboard.php';
+            }
+        }
+        
+        // Start conversion when page loads
+        convertMobiFile();
+        <?php endif; ?>
 
-    <!-- JavaScript Logic -->
-    <?php if ($readerType === 'epub'): ?>
-        <script>
-            // Configuration
-            const BOOK_URL = "<?= $fileType === 'mobi' ? $epubUrl : $fileUrl ?>";
-            const STORAGE_KEY = 'reader_settings_v1';
+        // ── Load persisted settings ──────────────────────────────────────────────────
+        let settings = {
+            theme: 'theme-dark',
+            font: "'Merriweather', serif",
+            fontSize: 18,
+            lineHeight: 1.7
+        };
+        try {
+            const s = localStorage.getItem(STORAGE_KEY);
+            if (s) settings = { ...settings, ...JSON.parse(s) };
+        } catch (e) { }
 
-            // Defaults
-            let settings = {
-                theme: 'theme-dark',
-                fontFamily: "'Merriweather', serif",
-                fontSize: 18,
-                lineHeight: 1.6,
-                margin: 60
-            };
+        function saveSettings() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        }
 
-            // Load Settings
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) settings = { ...settings, ...JSON.parse(saved) };
-
-            // DOM Elements
-            const els = {
-                container: document.getElementById('reader-container'),
-                viewer: document.getElementById('epub-viewer'),
-                body: document.body,
-                chromeTop: document.getElementById('chrome-top'),
-                chromeBottom: document.getElementById('chrome-bottom'),
-                overlayText: document.getElementById('settings-overlay-text'),
-                overlayTheme: document.getElementById('settings-overlay-theme'),
-                btnTheme: document.getElementById('btn-theme'),
-                btnText: document.getElementById('btn-text'),
-                closeButtons: document.querySelectorAll('.close-settings'),
-                zoneMenu: document.getElementById('zone-menu'),
-                zonePrev: document.getElementById('zone-prev'),
-                zoneNext: document.getElementById('zone-next'),
-                loading: document.getElementById('epub-loading'),
-                chapterInfo: document.getElementById('chapter-info'),
-                progressFill: document.getElementById('progress-fill'),
-                progressPercent: document.getElementById('progress-percent'),
-                btnThemes: document.querySelectorAll('.theme-btn'),
-                inputFont: document.getElementById('font-family-select'),
-                inputSize: document.getElementById('font-size-range'),
-                inputLine: document.getElementById('line-height-range')
-            };
-
-            // Remove inputMargin from els since it's deleted
-
-            // Apply Theme immediately
-            els.body.className = settings.theme;
-            els.btnThemes.forEach(b => b.classList.toggle('active', b.dataset.theme === settings.theme));
-            els.inputFont.value = settings.fontFamily;
-            els.inputSize.value = settings.fontSize;
-            els.inputLine.value = settings.lineHeight;
-
-            // Initialize Book
-            const book = ePub(BOOK_URL);
-            const rendition = book.renderTo("epub-viewer", {
-                width: "100%",
-                height: "100%",
-                flow: "paginated",
-                manager: "default",
-                spread: "none" // Force single column for distraction-free reading
+        // ── Apply theme to body ──────────────────────────────────────────────────────
+        function applyTheme(t) {
+            document.body.classList.remove('theme-light', 'theme-sepia', 'theme-dark', 'theme-contrast');
+            document.body.classList.add(t);
+            document.querySelectorAll('.theme-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.theme === t);
             });
+        }
+        applyTheme(settings.theme);
 
-            // ─── Theme & Layout Algorithm ────────────────────────────────────────
+        // ── DOM refs ─────────────────────────────────────────────────────────────────
+        const $ = id => document.getElementById(id);
+        const readerTop = $('readerTop');
+        const readerArea = $('readerArea');
+        const readerBottom = $('readerBottom');
+        const progressBar = $('progressBar');
+        const progressLabel = $('progressLabel');
 
-            function updateLayout() {
-                // Apply text styles
-                rendition.themes.default({
-                    'p': {
-                        'font-family': `${settings.fontFamily} !important`,
-                        'font-size': `${settings.fontSize}px !important`,
-                        'line-height': `${settings.lineHeight} !important`,
-                        'text-align': 'justify',
-                        'margin-bottom': '1em !important'
-                    },
-                    'h1': { 'font-family': 'inherit !important', 'line-height': '1.3 !important', 'margin-bottom': '0.5em !important' },
-                    'h2': { 'font-family': 'inherit !important', 'line-height': '1.3 !important' },
-                    'h3': { 'font-family': 'inherit !important' },
-                    'img': { 'max-width': '100% !important', 'height': 'auto !important', 'margin': '0 auto !important', 'display': 'block !important' },
-                    'body': {
-                        'padding': `40px 60px !important`,
-                        'max-width': '900px !important',
-                        'margin': '0 auto !important'
+        // ── Panels ───────────────────────────────────────────────────────────────────
+        const panels = { theme: $('panelTheme'), text: $('panelText'), info: $('panelInfo') };
+
+        function openPanel(key) {
+            Object.entries(panels).forEach(([k, el]) => {
+                el.classList.toggle('open', k === key && !el.classList.contains('open'));
+                if (k !== key) el.classList.remove('open');
+            });
+        }
+
+        function closeAllPanels() {
+            Object.values(panels).forEach(el => el.classList.remove('open'));
+        }
+
+        // ESC key to close panels
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const anyPanelOpen = Object.values(panels).some(el => el.classList.contains('open'));
+                if (anyPanelOpen) {
+                    closeAllPanels();
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+        });
+
+        $('btnInfo').addEventListener('click', () => openPanel('info'));
+        if ($('btnTheme')) $('btnTheme').addEventListener('click', () => openPanel('theme'));
+        if ($('btnText')) $('btnText').addEventListener('click', () => openPanel('text'));
+
+        // ── Fullscreen ───────────────────────────────────────────────────────────────
+        const btnFS = $('btnFullscreen');
+        btnFS.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen?.();
+                btnFS.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+            } else {
+                document.exitFullscreen?.();
+                btnFS.innerHTML = '<i class="bi bi-fullscreen"></i>';
+            }
+        });
+        document.addEventListener('fullscreenchange', () => {
+            const isFS = !!document.fullscreenElement;
+            document.body.classList.toggle('fullscreen', isFS);
+            btnFS.innerHTML = isFS ? '<i class="bi bi-fullscreen-exit"></i>' : '<i class="bi bi-fullscreen"></i>';
+        });
+
+        // ── Theme buttons ────────────────────────────────────────────────────────────
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                settings.theme = btn.dataset.theme;
+                applyTheme(settings.theme);
+                saveSettings();
+                if (typeof updateEpubLayout === 'function') updateEpubLayout();
+            });
+        });
+
+        // ── Typography controls ──────────────────────────────────────────────────────
+        const fontSelect = $('fontSelect');
+        const fontSizeRange = $('fontSizeRange');
+        const fontSizeVal = $('fontSizeVal');
+        const lineHeightRange = $('lineHeightRange');
+
+        if (fontSelect) fontSelect.value = settings.font;
+        if (fontSizeRange) fontSizeRange.value = settings.fontSize;
+        if (fontSizeVal) fontSizeVal.textContent = settings.fontSize + 'px';
+        if (lineHeightRange) lineHeightRange.value = settings.lineHeight;
+
+        if (fontSelect) fontSelect.addEventListener('change', () => {
+            settings.font = fontSelect.value;
+            saveSettings();
+            if (typeof updateEpubLayout === 'function') updateEpubLayout();
+        });
+        if (fontSizeRange) fontSizeRange.addEventListener('input', () => {
+            settings.fontSize = parseInt(fontSizeRange.value);
+            if (fontSizeVal) fontSizeVal.textContent = settings.fontSize + 'px';
+            saveSettings();
+            if (typeof updateEpubLayout === 'function') updateEpubLayout();
+        });
+        if (lineHeightRange) lineHeightRange.addEventListener('input', () => {
+            settings.lineHeight = parseFloat(lineHeightRange.value);
+            saveSettings();
+            if (typeof updateEpubLayout === 'function') updateEpubLayout();
+        });
+
+        // ── Auto-hide chrome on PDF/gallery ─────────────────────────────────────────
+        let chromeTimer;
+        function showChrome() {
+            readerTop.classList.remove('hidden');
+            readerBottom.classList.remove('hidden');
+            clearTimeout(chromeTimer);
+            if (READER_TYPE === 'epub' || READER_TYPE === 'gallery' || READER_TYPE === 'image') {
+                chromeTimer = setTimeout(() => {
+                    if (!document.querySelector('.panel.open')) {
+                        readerTop.classList.add('hidden');
+                        readerBottom.classList.add('hidden');
                     }
-                });
+                }, 3000);
+            }
+        }
+        document.addEventListener('mousemove', showChrome);
+        document.addEventListener('touchstart', showChrome);
+        showChrome();
 
-                // Adjust container color based on theme
-                const themeColors = {
-                    'theme-light': '#fdfaf6',
-                    'theme-sepia': '#f4ecd8',
-                    'theme-dark': '#1a1a1a',
-                    'theme-contrast': '#000000'
-                };
-                const textColor = {
-                    'theme-light': '#2c2c2c',
-                    'theme-sepia': '#5b4636',
-                    'theme-dark': '#cfcfcf',
-                    'theme-contrast': '#ffffff'
-                };
+        // ── Keyboard ─────────────────────────────────────────────────────────────────
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                Object.values(panels).forEach(p => p.classList.remove('open'));
+                if (document.fullscreenElement) document.exitFullscreen();
+            }
+            if (e.key === 'f' || e.key === 'F') btnFS.click();
+        });
 
-                rendition.themes.register(settings.theme, {
-                    'body': { 'color': `${textColor[settings.theme]} !important`, 'background': `${themeColors[settings.theme]} !important` },
-                    'p': { 'color': `${textColor[settings.theme]} !important` },
-                    'div': { 'color': `${textColor[settings.theme]} !important` },
-                    'span': { 'color': `${textColor[settings.theme]} !important` }
-                });
-                rendition.themes.select(settings.theme);
+        // ═══════════════════════════════════════════════════════════════
+        //  GALLERY READER
+        // ═══════════════════════════════════════════════════════════════
+        <?php if ($readerType === 'gallery'): ?>
+            let galIndex = 0;
+            const galImg = $('galleryImg');
+            const galImages = GAL_IMAGES;
+
+            function renderGalImg() {
+                if (!galImages.length) return;
+                const src = galImages[galIndex];
+                galImg.src = '../' + src;
+                const pct = Math.round(((galIndex + 1) / galImages.length) * 100);
+                progressBar.style.width = pct + '%';
+                progressLabel.textContent = `Image ${galIndex + 1} / ${galImages.length}`;
             }
 
-            // ─── UI Chrome / Auto-Hide ──────────────────────────────────────────
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowLeft') { galIndex = (galIndex - 1 + galImages.length) % galImages.length; renderGalImg(); }
+                if (e.key === 'ArrowRight') { galIndex = (galIndex + 1) % galImages.length; renderGalImg(); }
+            });
+            renderGalImg();
 
-            let chromeTimeout;
-            const hideChrome = () => {
-                if (!els.overlayText.classList.contains('visible') &&
-                    !els.overlayTheme.classList.contains('visible') &&
-                    !els.chromeTop.matches(':hover') &&
-                    !els.chromeBottom.matches(':hover')) {
-                    els.body.classList.remove('chrome-visible');
+            // ── Reset zoom when navigating ───────────────────────────────
+            function galNav(dir) {
+                galIndex = (galIndex + dir + galImages.length) % galImages.length;
+                zoomScale = 1;
+                zoomX = 0; zoomY = 0;
+                applyZoom(galImg);
+                renderGalImg();
+            }
+            $('galPrev').addEventListener('click', () => galNav(-1));
+            $('galNext').addEventListener('click', () => galNav(1));
+        <?php endif; ?>
+
+        // ═══════════════════════════════════════════════════════════════
+        //  ZOOM for gallery & single image
+        // ═══════════════════════════════════════════════════════════════
+        <?php if (in_array($readerType, ['gallery', 'image'])): ?>
+            let zoomScale = 1;
+            let zoomX = 0, zoomY = 0;
+            const MIN_ZOOM = 0.5, MAX_ZOOM = 5;
+
+            function applyZoom(img) {
+                img.style.transform = `scale(${zoomScale}) translate(${zoomX}px, ${zoomY}px)`;
+                img.style.cursor = zoomScale > 1 ? 'move' : 'zoom-in';
+            }
+
+            function getZoomTarget() {
+                <?php if ($readerType === 'gallery'): ?>
+                    return $('galleryImg');
+                <?php else: ?>
+                    return document.querySelector('.gallery-viewer img');
+                <?php endif; ?>
+            }
+
+            // ── Mouse wheel zoom ──
+            const viewerEl = <?php if ($readerType === 'gallery'): ?>$('galleryViewer')<?php else: ?>document.querySelector('.gallery-viewer')<?php endif; ?>;
+            if (viewerEl) {
+                viewerEl.addEventListener('wheel', e => {
+                    e.preventDefault();
+                    const img = getZoomTarget();
+                    if (!img) return;
+                    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+                    zoomScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomScale + delta));
+                    if (zoomScale <= 1) { zoomX = 0; zoomY = 0; }
+                    applyZoom(img);
+                }, { passive: false });
+
+                // ── Double-click to reset ──
+                viewerEl.addEventListener('dblclick', () => {
+                    const img = getZoomTarget();
+                    zoomScale = 1; zoomX = 0; zoomY = 0;
+                    if (img) applyZoom(img);
+                });
+
+                // ── Drag to pan when zoomed ──
+                let isDragging = false, dragStartX = 0, dragStartY = 0;
+                viewerEl.addEventListener('mousedown', e => {
+                    if (zoomScale <= 1) return;
+                    isDragging = true;
+                    dragStartX = e.clientX - zoomX;
+                    dragStartY = e.clientY - zoomY;
+                    viewerEl.style.cursor = 'grabbing';
+                });
+                document.addEventListener('mousemove', e => {
+                    if (!isDragging) return;
+                    const img = getZoomTarget();
+                    zoomX = e.clientX - dragStartX;
+                    zoomY = e.clientY - dragStartY;
+                    if (img) applyZoom(img);
+                });
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    viewerEl.style.cursor = '';
+                });
+
+                // ── Touch pinch-to-zoom ──
+                let lastPinchDist = null;
+                viewerEl.addEventListener('touchmove', e => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const dx = e.touches[0].clientX - e.touches[1].clientX;
+                        const dy = e.touches[0].clientY - e.touches[1].clientY;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (lastPinchDist !== null) {
+                            const ratio = dist / lastPinchDist;
+                            zoomScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomScale * ratio));
+                            if (zoomScale <= 1) { zoomX = 0; zoomY = 0; }
+                            const img = getZoomTarget();
+                            if (img) applyZoom(img);
+                        }
+                        lastPinchDist = dist;
+                    }
+                }, { passive: false });
+                viewerEl.addEventListener('touchend', () => { lastPinchDist = null; });
+            }
+        <?php endif; ?>
+
+        // ═══════════════════════════════════════════════════════════════
+        //  PDF PAGE NAVIGATION (using postMessage to viewer iframe)
+        // ═══════════════════════════════════════════════════════════════
+        <?php if ($readerType === 'pdf'): ?>
+            const pdfFrame = $('pdfFrame');
+
+            function pdfPage(delta) {
+                const input = $('pdfPageInput');
+                let p = parseInt(input.value || 1) + delta;
+                const total = parseInt($('pdfPageTotal').textContent.replace('/ ', '')) || 9999;
+                p = Math.max(1, Math.min(p, total));
+                input.value = p;
+                pdfFrame.contentWindow?.postMessage({ type: 'gotoPage', page: p }, '*');
+                const pct = total > 1 ? Math.round(((p) / total) * 100) : 0;
+                progressBar.style.width = pct + '%';
+                progressLabel.textContent = `Page ${p} / ${total}`;
+            }
+
+            $('pdfPageInput').addEventListener('change', () => {
+                const p = parseInt($('pdfPageInput').value) || 1;
+                pdfFrame.contentWindow?.postMessage({ type: 'gotoPage', page: p }, '*');
+            });
+
+            // Receive messages from PDF viewer
+            window.addEventListener('message', e => {
+                if (e.data?.type === 'pdfInfo') {
+                    $('pdfPageTotal').textContent = '/ ' + e.data.total;
+                    $('pdfPageInput').max = e.data.total;
                 }
-            };
+                if (e.data?.type === 'pdfPage') {
+                    $('pdfPageInput').value = e.data.page;
+                    const total = e.data.total || 1;
+                    const pct = Math.round((e.data.page / total) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressLabel.textContent = `Page ${e.data.page} / ${total}`;
+                }
+            });
 
-            const showChrome = () => {
-                els.body.classList.add('chrome-visible');
-                clearTimeout(chromeTimeout);
-                chromeTimeout = setTimeout(hideChrome, 2500);
-            };
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowLeft') pdfPage(-1);
+                if (e.key === 'ArrowRight') pdfPage(1);
+            });
 
-            // Show on any mouse movement
-            document.addEventListener('mousemove', showChrome);
+            // No separate PDF pdfFrame resize for now; viewer handles it
+        <?php endif; ?>
 
-            // Show on click/touch
-            document.addEventListener('click', showChrome);
+        // ═══════════════════════════════════════════════════════════════
+        //  EPUB READER
+        // ═══════════════════════════════════════════════════════════════
+        <?php if ($readerType === 'epub'): ?>
+            const book = ePub(EPUB_URL);
+            const rendition = book.renderTo('epub-viewer', {
+                width: '100%', height: '100%',
+                flow: 'paginated', spread: 'none'
+            });
 
-            // Keep visible while settings are open
-            const keepChrome = () => {
-                clearTimeout(chromeTimeout);
-                els.body.classList.add('chrome-visible');
-            };
-            els.btnText.addEventListener('click', keepChrome);
-            els.btnTheme.addEventListener('click', keepChrome);
-            // This closing brace was for the event listener, not the promise chain.
-            // The original code had an extra `});` here, which is now removed.
+            const LOC_KEY = 'pub_epub_loc_' + encodeURIComponent(EPUB_URL);
 
-            // Initial show
-            showChrome();
+            function updateEpubLayout() {
+                const themeColors = {
+                    'theme-light': ['#fafafa', '#1a1a1a'],
+                    'theme-sepia': ['#f4ead2', '#4a3728'],
+                    'theme-dark': ['#1a1a1a', '#e0e0e0'],
+                    'theme-contrast': ['#000000', '#ffffff'],
+                };
+                const [bg, fg] = themeColors[settings.theme] || themeColors['theme-dark'];
 
-            // ─── Events ──────────────────────────────────────────────────────────
-
-            // Location Storage Key
-            const LOCATION_KEY = 'reader_location_' + encodeURIComponent(BOOK_URL);
+                rendition.themes.default({
+                    'body': {
+                        'background': `${bg} !important`,
+                        'color': `${fg} !important`,
+                        'font-family': `${settings.font} !important`,
+                        'font-size': `${settings.fontSize}px !important`,
+                        'line-height': `${settings.lineHeight} !important`,
+                        'padding': '48px 60px !important',
+                    },
+                    'p': { 
+                        'color': `${fg} !important`, 
+                        'margin-bottom': '1em !important',
+                        'line-height': `${settings.lineHeight} !important`,
+                        'font-family': `${settings.font} !important`,
+                        'font-size': `${settings.fontSize}px !important`
+                    },
+                    'div': { 
+                        'color': `${fg} !important`,
+                        'line-height': `${settings.lineHeight} !important`,
+                        'font-family': `${settings.font} !important`
+                    },
+                    'span': { 
+                        'color': `${fg} !important`,
+                        'font-family': `${settings.font} !important`
+                    },
+                    'h1,h2,h3': { 
+                        'color': `${fg} !important`, 
+                        'font-family': `${settings.font} !important`,
+                        'line-height': `${settings.lineHeight} !important`
+                    },
+                    'img': { 'max-width': '100% !important', 'height': 'auto !important' }
+                });
+            }
 
             book.ready.then(() => {
-                // Load saved location for THIS book
-                const savedLoc = localStorage.getItem(LOCATION_KEY);
-                return rendition.display(savedLoc || undefined);
+                const saved = localStorage.getItem(LOC_KEY);
+                return rendition.display(saved || undefined);
             }).then(() => {
-                // Critical Path Complete: Show Book
-                els.loading.classList.add('hidden');
+                $('epubLoading').classList.add('gone');
+                updateEpubLayout();
 
-                // Defer non-critical setup
-                updateLayout(); // Applied once book is visible
-
-                // Check Cache for Locations
-                const cacheKey = 'epub_locations_' + encodeURIComponent(BOOK_URL);
+                const cacheKey = 'pub_epub_locs_' + encodeURIComponent(EPUB_URL);
                 const cached = localStorage.getItem(cacheKey);
-
                 if (cached) {
                     book.locations.load(cached);
-                    console.log("Locations loaded from cache");
                 } else {
-                    // Generate in background if not cached
-                    book.locations.generate(1000).then((locations) => {
+                    book.locations.generate(1000).then(() => {
                         localStorage.setItem(cacheKey, book.locations.save());
-                        console.log("Locations generated and cached");
                     });
                 }
             }).catch(err => {
-                console.error("Error loading book:", err);
-                els.loading.classList.add('hidden');
-                // If section not found (corrupted cache), try clearing and reloading start
-                if (err.message && err.message.includes('No Section Found')) {
-                    console.warn("Invalid location detected. Resetting.");
-                    localStorage.removeItem(LOCATION_KEY);
-                    rendition.display(); // fallback to start
-                } else {
-                    alert("Error loading eBook: " + err.message);
-                }
+                $('epubLoading').classList.add('gone');
+                console.error('EPUB load error:', err);
             });
 
-            rendition.on('relocated', (location) => {
-                // Save location specific to THIS book
-                localStorage.setItem(LOCATION_KEY, location.start.cfi);
-
-                // Update Progress
+            rendition.on('relocated', loc => {
+                localStorage.setItem(LOC_KEY, loc.start.cfi);
                 if (book.locations.length() > 0) {
-                    const percentage = book.locations.percentageFromCfi(location.start.cfi);
-                    const pct = Math.round(percentage * 100);
-                    els.progressFill.style.width = `${pct}%`;
-                    els.progressPercent.textContent = `${pct}%`;
-                }
-
-                // Update Chapter Title (approximate)
-                // simplified chapter fetching logic
-                /* const chapter = book.navigation.get(location.start.href);
-                if(chapter) els.chapterInfo.textContent = chapter.label; */
-            });
-
-            // Navigation
-            const next = () => rendition.next();
-            const prev = () => rendition.prev();
-            const toggleMenu = () => {
-                els.body.classList.toggle('chrome-visible');
-            };
-
-            els.zoneNext.addEventListener('click', next);
-            els.zonePrev.addEventListener('click', prev);
-            els.zoneMenu.addEventListener('click', toggleMenu);
-
-            // Keyboard
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'ArrowRight' || e.key === ' ') next();
-                if (e.key === 'ArrowLeft') prev();
-                if (e.key === 'm') toggleMenu();
-                if (e.key === 'Escape') {
-                    els.overlayText.classList.remove('visible');
-                    els.overlayTheme.classList.remove('visible');
-                    els.body.classList.remove('chrome-visible');
+                    const pct = Math.round(book.locations.percentageFromCfi(loc.start.cfi) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressLabel.textContent = pct + '% read';
                 }
             });
 
-            // ─── Settings UI ─────────────────────────────────────────────────────
-
-            function saveSettings() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-            }
-
-            // Text Settings
-            els.btnText.addEventListener('click', () => {
-                els.overlayText.classList.toggle('visible');
-                els.overlayTheme.classList.remove('visible'); // Close other
+            $('zonePrev').addEventListener('click', () => rendition.prev());
+            $('zoneNext').addEventListener('click', () => rendition.next());
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowLeft') rendition.prev();
+                if (e.key === 'ArrowRight') rendition.next();
+                if (e.key === ' ') rendition.next();
             });
+        <?php endif; ?>
 
-            // Theme Settings
-            els.btnTheme.addEventListener('click', () => {
-                els.overlayTheme.classList.toggle('visible');
-                els.overlayText.classList.remove('visible'); // Close other
-            });
+    </script>
 
-            // Close Buttons
-            els.closeButtons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const targetId = e.currentTarget.dataset.target;
-                    document.getElementById(targetId).classList.remove('visible');
-                });
-            });
-
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'Escape') {
-                    els.overlayText.classList.remove('visible');
-                    els.overlayTheme.classList.remove('visible');
-                    els.body.classList.remove('chrome-visible');
-                }
-            });
-
-            // Theme Buttons
-            els.btnThemes.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    settings.theme = e.target.dataset.theme;
-                    els.body.className = settings.theme;
-                    els.btnThemes.forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    updateLayout();
-                    saveSettings();
-                });
-            });
-
-            // Range Inputs
-            const updateSetting = (key, value) => {
-                settings[key] = value;
-                updateLayout();
-                saveSettings();
-            };
-
-            els.inputFont.addEventListener('change', (e) => updateSetting('fontFamily', e.target.value));
-            els.inputSize.addEventListener('input', (e) => updateSetting('fontSize', e.target.value));
-            els.inputLine.addEventListener('input', (e) => updateSetting('lineHeight', e.target.value));
-
-        </script>
-    <?php endif; ?>
 </body>
+
+</html>
