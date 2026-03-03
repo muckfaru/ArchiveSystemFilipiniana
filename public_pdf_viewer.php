@@ -30,8 +30,11 @@ $fileUrl = APP_URL . '/serve_file.php?file=' . urlencode($file);
         html,
         body {
             height: 100%;
+            width: 100%;
             background: #1a1a1a;
             overflow: hidden;
+            margin: 0;
+            padding: 0;
         }
 
         #viewerContainer {
@@ -42,9 +45,17 @@ $fileUrl = APP_URL . '/serve_file.php?file=' . urlencode($file);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 16px 0 80px;
+            padding: 16px 0 16px;
             gap: 12px;
             scroll-behavior: smooth;
+            background: #1a1a1a;
+        }
+        
+        /* Fullscreen mode - remove bottom padding */
+        @media (display-mode: fullscreen) {
+            #viewerContainer {
+                padding: 16px 0 0;
+            }
         }
 
         .pdf-page-canvas {
@@ -106,40 +117,63 @@ $fileUrl = APP_URL . '/serve_file.php?file=' . urlencode($file);
             if (isRendering) return;
             isRendering = true;
 
-            pdfDoc = await pdfjsLib.getDocument(PDF_URL).promise;
-            const total = pdfDoc.numPages;
+            try {
+                pdfDoc = await pdfjsLib.getDocument(PDF_URL).promise;
+                const total = pdfDoc.numPages;
 
-            // Tell parent
-            window.parent.postMessage({ type: 'pdfInfo', total }, '*');
+                // Tell parent
+                window.parent.postMessage({ type: 'pdfInfo', total }, '*');
 
-            loadMsg.remove();
+                loadMsg.remove();
 
-            for (let i = 1; i <= total; i++) {
-                const page = await pdfDoc.getPage(i);
-                const vp = page.getViewport({ scale });
-                const canvas = document.createElement('canvas');
-                canvas.className = 'pdf-page-canvas';
-                canvas.dataset.pageNum = i;
-                canvas.width = vp.width;
-                canvas.height = vp.height;
-                container.appendChild(canvas);
-                await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+                // Clear any existing canvases to prevent duplicates
+                const existingCanvases = container.querySelectorAll('.pdf-page-canvas');
+                existingCanvases.forEach(c => c.remove());
+
+                // Render each page sequentially
+                for (let pageNum = 1; pageNum <= total; pageNum++) {
+                    const page = await pdfDoc.getPage(pageNum);
+                    const vp = page.getViewport({ scale });
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page-canvas';
+                    canvas.dataset.pageNum = pageNum;
+                    canvas.width = vp.width;
+                    canvas.height = vp.height;
+                    
+                    container.appendChild(canvas);
+                    
+                    const ctx = canvas.getContext('2d');
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: vp
+                    };
+                    
+                    await page.render(renderContext).promise;
+                }
+            } catch (err) {
+                console.error('PDF rendering error:', err);
+                throw err;
             }
 
             // IntersectionObserver to track current page
             const observer = new IntersectionObserver(entries => {
                 entries.forEach(e => {
                     if (e.isIntersecting) {
-                        const n = parseInt(e.target.dataset.pageNum);
-                        if (n !== currentPage) {
+                        const n = parseInt(e.target.dataset.pageNum, 10);
+                        if (!isNaN(n) && n !== currentPage) {
                             currentPage = n;
                             window.parent.postMessage({ type: 'pdfPage', page: currentPage, total }, '*');
                         }
                     }
                 });
-            }, { root: container, threshold: 0.5 });
+            }, { root: null, threshold: 0.5 });
 
-            container.querySelectorAll('.pdf-page-canvas').forEach(c => observer.observe(c));
+            // Observe all rendered canvases
+            const allCanvases = container.querySelectorAll('.pdf-page-canvas');
+            allCanvases.forEach(c => observer.observe(c));
+            
+            isRendering = false;
         }
 
         renderAll().catch(err => {
@@ -150,11 +184,18 @@ $fileUrl = APP_URL . '/serve_file.php?file=' . urlencode($file);
         // Listen for page jump from parent
         window.addEventListener('message', e => {
             if (e.data?.type === 'gotoPage') {
-                const p = parseInt(e.data.page);
-                const canvas = container.querySelector(`[data-page-num="${p}"]`);
-                if (canvas) {
-                    canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    currentPage = p;
+                const p = parseInt(e.data.page, 10);
+                if (!isNaN(p) && p >= 1 && pdfDoc && p <= pdfDoc.numPages) {
+                    const canvas = container.querySelector(`[data-page-num="${p}"]`);
+                    if (canvas) {
+                        canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        currentPage = p;
+                        window.parent.postMessage({ 
+                            type: 'pdfPage', 
+                            page: currentPage, 
+                            total: pdfDoc.numPages 
+                        }, '*');
+                    }
                 }
             }
         });

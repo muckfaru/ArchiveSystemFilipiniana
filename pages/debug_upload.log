@@ -2073,3 +2073,287 @@ wer
 (
 )
 
+2026-03-02 22:45:24 - Request received. Action: upload
+2026-03-02 22:45:24 - POST Data: Array
+(
+    [action] => upload
+    [title] => L'imposture
+    [publisher] => Georges Bernanos
+    [publication_date] => 2026-02-23
+    [edition] => Morning
+    [category_id] => 10
+    [language_id] => 1
+    [page_count] => 23
+    [volume_issue] => 2
+    [description] => rrtrtrt rtyrty
+    [keywords] => werwrwr
+)
+
+2026-03-02 22:45:24 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg78021.epub
+            [type] => application/epub+zip
+            [tmp_name] => C:\xampp\tmp\php3974.tmp
+            [error] => 0
+            [size] => 325926
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php3975.tmp
+            [error] => 0
+            [size] => 25012
+        )
+
+)
+
+2026-03-02 22:45:24 - Processing upload: pg78021.epub (325926 bytes)
+2026-03-02 22:45:24 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/02/epub/1772462724_412e39d3.epub
+2026-03-02 22:45:24 - DB Insert Success. New ID: 5
+2026-03-03 09:07:57 - Request received. Action: upload
+2026-03-03 09:07:57 - POST Data: Array
+(
+    [action] => upload
+    [title] => wekrjwe
+    [publisher] => kewnrkwen
+    [publication_date] => 2003-02-23
+    [edition] => Morning
+    [category_id] => 10
+    [language_id] => 2
+    [page_count] => 23
+    [volume_issue] => 3
+    [description] => we,krwewrkerwkl
+    [keywords] => qwe
+)
+
+2026-03-03 09:07:57 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => RYAN Daily Time Record (DTR).xlsx - DTR.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\phpDD6.tmp
+            [error] => 0
+            [size] => 65111
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpDD7.tmp
+            [error] => 0
+            [size] => 13234
+        )
+
+)
+
+2026-03-03 09:07:57 - Processing upload: RYAN Daily Time Record (DTR).xlsx - DTR.pdf (65111 bytes)
+2026-03-03 09:07:57 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2003/02/pdf/1772500077_3b08cd18.pdf
+2026-03-03 09:07:57 - DB Insert Success. New ID: 7
+2026-03-03 13:04:30 - Request received. Action: upload
+2026-03-03 13:04:30 - POST Data: Array
+(
+    [action] => upload
+    [title] => The_Palace_and_Park___Its_Natur
+    [publisher] => erter
+    [publication_date] => 2026-03-06
+    [edition] => Morning
+    [category_id] => 3
+    [language_id] => 1
+    [page_count] => 2
+    [volume_issue] => 23
+)
+
+2026-03-03 13:04:30 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg59843-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\php4568.tmp
+            [error] => 0
+            [size] => 11088260
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php4597.tmp
+            [error] => 0
+            [size] => 102529
+        )
+
+)
+
+2026-03-03 13:04:30 - Processing upload: pg59843-images-kf8.mobi (11088260 bytes)
+2026-03-03 13:04:30 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772514270_0250d2e3.mobi
+2026-03-03 13:04:30 - DB Insert Success. New ID: 9
+2026-03-03 13:30:46 - Request received. Action: upload
+2026-03-03 13:30:46 - POST Data: Array
+(
+    [action] => upload
+    [title] => The_Ten_Books_on_Architecture
+    [publisher] => retrt
+    [publication_date] => 2026-03-12
+    [edition] => Evening
+    [category_id] => 1
+    [language_id] => 4
+    [page_count] => 23
+    [volume_issue] => 2
+    [description] => werwerwer
+    [keywords] => ewrwer, wrwerw
+)
+
+2026-03-03 13:30:46 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg20239-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\php52A8.tmp
+            [error] => 0
+            [size] => 14460968
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php52E7.tmp
+            [error] => 0
+            [size] => 12715
+        )
+
+)
+
+2026-03-03 13:30:46 - Processing upload: pg20239-images-kf8.mobi (14460968 bytes)
+2026-03-03 13:30:46 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772515846_1f9315d7.mobi
+2026-03-03 13:30:46 - DB Insert Success. New ID: 10
+2026-03-03 14:11:46 - Request received. Action: upload
+2026-03-03 14:11:46 - POST Data: Array
+(
+    [action] => upload
+    [title] => The_ecclesiastical_architecture
+    [publisher] => ere
+    [publication_date] => 2026-03-19
+    [edition] => Morning
+    [category_id] => 5
+    [language_id] => 2
+    [page_count] => 32
+    [volume_issue] => 2
+    [keywords] => weerwe
+)
+
+2026-03-03 14:11:46 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg65014-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\phpD8F0.tmp
+            [error] => 0
+            [size] => 18082630
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpD93F.tmp
+            [error] => 0
+            [size] => 10711
+        )
+
+)
+
+2026-03-03 14:11:46 - Processing upload: pg65014-images-kf8.mobi (18082630 bytes)
+2026-03-03 14:11:46 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772518306_373c12f6.mobi
+2026-03-03 14:11:46 - DB Insert Success. New ID: 11
+2026-03-03 15:47:55 - Request received. Action: upload
+2026-03-03 15:47:55 - POST Data: Array
+(
+    [action] => upload
+    [title] => The_haunting_hand
+    [publisher] => qwe
+    [publication_date] => 2026-03-07
+    [edition] => Morning
+    [category_id] => 10
+    [language_id] => 4
+    [page_count] => 23
+    [volume_issue] => 2
+    [description] => elkrtjwiehtkhr
+    [keywords] => qwe
+)
+
+2026-03-03 15:47:55 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg78094-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\phpE2F0.tmp
+            [error] => 0
+            [size] => 1177620
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpE2F1.tmp
+            [error] => 0
+            [size] => 12715
+        )
+
+)
+
+2026-03-03 15:47:55 - Processing upload: pg78094-images-kf8.mobi (1177620 bytes)
+2026-03-03 15:47:55 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/mobi/1772524075_27f50d52.mobi
+2026-03-03 15:47:55 - DB Insert Success. New ID: 12
+2026-03-03 16:22:07 - Request received. Action: upload
+2026-03-03 16:22:07 - POST Data: Array
+(
+    [action] => upload
+    [title] => Household_words,_No._2,_April_6
+    [publisher] => knk
+    [publication_date] => 2026-03-02
+    [edition] => Evening
+    [category_id] => 2
+    [language_id] => 3
+    [page_count] => 23
+    [volume_issue] => qwe
+    [description] => wkjerhwr
+    [keywords] => qwwer, rew
+)
+
+2026-03-03 16:22:07 - FILES Data: Array
+(
+    [file] => Array
+        (
+            [name] => pg78099-images-kf8.mobi
+            [type] => application/octet-stream
+            [tmp_name] => C:\xampp\tmp\php32D4.tmp
+            [error] => 0
+            [size] => 252584
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => thumbnail.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php32E5.tmp
+            [error] => 0
+            [size] => 10711
+        )
+
+)
+
+2026-03-03 16:22:07 - Processing upload: pg78099-images-kf8.mobi (252584 bytes)
+2026-03-03 16:22:07 - File moved successfully to C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana\backend\core/../../uploads/newspapers/2026/03/sports/mobi/1772526127_bc3357c6.mobi
+2026-03-03 16:22:07 - DB Insert Success. New ID: 13

@@ -52,27 +52,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user) {
+            // Log for debugging
+            error_log("Password reset requested for user: {$user['email']} (ID: {$user['id']})");
+            
             // Create reset token
             $token = createPasswordResetToken($pdo, $user['id']);
 
             if ($token) {
                 // Generate reset link
                 $resetLink = APP_URL . '/reset-password.php?token=' . $token;
+                
+                // Log the reset link for debugging
+                error_log("Reset link generated: $resetLink");
 
                 // Send email
                 $result = sendPasswordResetEmail($user['email'], $user['full_name'], $resetLink);
 
                 if ($result['success']) {
+                    error_log("Password reset email sent successfully to: {$user['email']}");
                     $showSuccessModal = true;
                 } else {
+                    // Log the error for debugging
+                    error_log("Password reset email failed for {$user['email']}: " . $result['message']);
                     $showErrorModal = true;
-                    $errorMessage = 'Failed to send email. Please try again later.';
+                    $errorMessage = 'Failed to send email. Error: ' . $result['message'];
                 }
             } else {
+                error_log("Failed to create reset token for user ID: {$user['id']}");
                 $showErrorModal = true;
-                $errorMessage = 'An error occurred. Please try again.';
+                $errorMessage = 'An error occurred creating reset token. Please try again.';
             }
         } else {
+            // Log for debugging - email not found
+            error_log("Password reset requested for non-existent email: $email");
             // For security, show success even if email doesn't exist
             $showSuccessModal = true;
         }

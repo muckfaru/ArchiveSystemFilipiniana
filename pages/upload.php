@@ -111,10 +111,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     redirect('upload.php?error=' . urlencode('A file with this name already exists.'));
                 }
 
-                // Generate organized path based on publication date and file type
-                // Format: uploads/newspapers/YYYY/MM/filetype/filename.ext
+                // Generate organized path based on publication date, category, and file type
+                // Format: uploads/newspapers/YYYY/MM/category/filetype/filename.ext
                 $pubDate = $publicationDate ?: date('Y-m-d');
                 list($year, $month) = explode('-', $pubDate);
+                
+                // Get category name for folder
+                $categoryFolder = 'uncategorized';
+                if ($categoryId) {
+                    $stmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+                    $stmt->execute([$categoryId]);
+                    $cat = $stmt->fetch();
+                    if ($cat) {
+                        // Sanitize category name for folder (remove special chars, spaces to underscores)
+                        $categoryFolder = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($cat['name']));
+                    }
+                }
                 
                 // Determine file type folder - each format gets its own folder
                 $typeFolder = '';
@@ -130,8 +142,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $typeFolder = 'documents';
                 }
                 
-                // Create directory structure: uploads/newspapers/YYYY/MM/filetype/
-                $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$typeFolder}/";
+                // Create directory structure: uploads/newspapers/YYYY/MM/category/filetype/
+                $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$categoryFolder}/{$typeFolder}/";
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
@@ -139,21 +151,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Generate unique filename
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
                 $uploadPath = $uploadDir . $newFileName;
-                $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$typeFolder}/" . $newFileName;
+                $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$categoryFolder}/{$typeFolder}/" . $newFileName;
 
                 // Move file
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
                     file_put_contents($logFile, date('Y-m-d H:i:s') . " - File moved successfully to $uploadPath\n", FILE_APPEND);
 
-                    // Handle thumbnail upload - organized by year/month
+                    // Handle thumbnail upload - organized by year/month/category
                     $thumbnailPath = null;
                     if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
                         $thumbFile = $_FILES['thumbnail'];
                         $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
 
                         if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
-                            // Create thumbnail directory: uploads/thumbnails/YYYY/MM/
-                            $thumbDir = UPLOAD_PATH . "thumbnails/{$year}/{$month}/";
+                            // Create thumbnail directory: uploads/newspapers/YYYY/MM/category/thumbnails/
+                            $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$categoryFolder}/thumbnails/";
                             if (!is_dir($thumbDir)) {
                                 mkdir($thumbDir, 0777, true);
                             }
@@ -162,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $thumbPath = $thumbDir . $thumbFileName;
 
                             if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                                $thumbnailPath = "uploads/thumbnails/{$year}/{$month}/" . $thumbFileName;
+                                $thumbnailPath = "uploads/newspapers/{$year}/{$month}/{$categoryFolder}/thumbnails/" . $thumbFileName;
                             }
                         }
                     }
@@ -293,8 +305,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pubDate = $publicationDate ?: date('Y-m-d');
                 list($year, $month) = explode('-', $pubDate);
                 
-                // Create directory structure: uploads/newspapers/YYYY/MM/images/
-                $bulkDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/images";
+                // Get category name for folder
+                $categoryFolder = 'uncategorized';
+                if ($categoryId) {
+                    $stmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+                    $stmt->execute([$categoryId]);
+                    $cat = $stmt->fetch();
+                    if ($cat) {
+                        // Sanitize category name for folder (remove special chars, spaces to underscores)
+                        $categoryFolder = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($cat['name']));
+                    }
+                }
+                
+                // Create directory structure: uploads/newspapers/YYYY/MM/category/images/
+                $bulkDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$categoryFolder}/images";
 
                 if (!is_dir($bulkDir)) {
                     mkdir($bulkDir, 0777, true);
@@ -315,7 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $destination = $bulkDir . '/' . $cleanName;
 
                             if (move_uploaded_file($tmpName, $destination)) {
-                                $relativePath = "uploads/newspapers/{$year}/{$month}/images/" . $cleanName;
+                                $relativePath = "uploads/newspapers/{$year}/{$month}/{$categoryFolder}/images/" . $cleanName;
                                 $savedPaths[] = $relativePath;
                             }
                         }
@@ -333,8 +357,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $thumbFile = $_FILES['thumbnail'];
                     $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
                     if (in_array($thumbExt, ['jpg', 'jpeg', 'png', 'webp'])) {
-                        // Create thumbnail directory: uploads/thumbnails/YYYY/MM/
-                        $thumbDir = UPLOAD_PATH . "thumbnails/{$year}/{$month}/";
+                        // Create thumbnail directory: uploads/newspapers/YYYY/MM/category/thumbnails/
+                        $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$categoryFolder}/thumbnails/";
                         if (!is_dir($thumbDir)) {
                             mkdir($thumbDir, 0777, true);
                         }
@@ -342,7 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
                         $thumbPath = $thumbDir . $thumbFileName;
                         if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                            $thumbnailPath = "uploads/thumbnails/{$year}/{$month}/" . $thumbFileName;
+                            $thumbnailPath = "uploads/newspapers/{$year}/{$month}/{$categoryFolder}/thumbnails/" . $thumbFileName;
                         }
                     }
                 } else {
@@ -422,7 +446,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $volumeIssue = sanitize($_POST['volume_issue'] ?? '');
         $description = sanitize($_POST['description'] ?? '');
 
-        // Handle new thumbnail upload - organized by year/month
+        // Handle new thumbnail upload - organized by year/month/category
         $thumbnailPath = $_POST['existing_thumbnail'] ?? null;
         if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
             $thumbFile = $_FILES['thumbnail'];
@@ -433,8 +457,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pubDate = $publicationDate ?: date('Y-m-d');
                 list($year, $month) = explode('-', $pubDate);
                 
-                // Create thumbnail directory: uploads/thumbnails/YYYY/MM/
-                $thumbDir = UPLOAD_PATH . "thumbnails/{$year}/{$month}/";
+                // Get category name for folder
+                $categoryFolder = 'uncategorized';
+                if ($categoryId) {
+                    $stmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+                    $stmt->execute([$categoryId]);
+                    $cat = $stmt->fetch();
+                    if ($cat) {
+                        // Sanitize category name for folder (remove special chars, spaces to underscores)
+                        $categoryFolder = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($cat['name']));
+                    }
+                }
+                
+                // Create thumbnail directory: uploads/newspapers/YYYY/MM/category/thumbnails/
+                $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$categoryFolder}/thumbnails/";
                 if (!is_dir($thumbDir)) {
                     mkdir($thumbDir, 0777, true);
                 }
@@ -443,7 +479,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $thumbPath = $thumbDir . $thumbFileName;
 
                 if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                    $thumbnailPath = "uploads/thumbnails/{$year}/{$month}/" . $thumbFileName;
+                    $thumbnailPath = "uploads/newspapers/{$year}/{$month}/{$categoryFolder}/thumbnails/" . $thumbFileName;
                 }
             }
         }
@@ -461,6 +497,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pubDate = $publicationDate ?: date('Y-m-d');
                 list($year, $month) = explode('-', $pubDate);
                 
+                // Get category name for folder
+                $categoryFolder = 'uncategorized';
+                if ($categoryId) {
+                    $stmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+                    $stmt->execute([$categoryId]);
+                    $cat = $stmt->fetch();
+                    if ($cat) {
+                        // Sanitize category name for folder (remove special chars, spaces to underscores)
+                        $categoryFolder = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($cat['name']));
+                    }
+                }
+                
                 // Determine file type folder - each format gets its own folder
                 $typeFolder = '';
                 if ($fileExt === 'epub') {
@@ -475,15 +523,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $typeFolder = 'documents';
                 }
                 
-                // Create directory structure
-                $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$typeFolder}/";
+                // Create directory structure: uploads/newspapers/YYYY/MM/category/filetype/
+                $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$categoryFolder}/{$typeFolder}/";
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
                 
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
                 $uploadPath = $uploadDir . $newFileName;
-                $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$typeFolder}/" . $newFileName;
+                $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$categoryFolder}/{$typeFolder}/" . $newFileName;
 
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
                     // Update with new file

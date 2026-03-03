@@ -34,6 +34,27 @@ $fileType = strtolower($file['file_type']);
 $fileUrl = APP_URL . '/serve_file.php?file=' . urlencode($file['file_path']);
 $filePath = __DIR__ . '/' . $file['file_path'];
 
+// Handle MOBI → EPUB conversion (same logic as admin for fast loading)
+$epubUrl = null;
+$conversionError = null;
+$needsConversion = false;
+
+if ($fileType === 'mobi') {
+    require_once __DIR__ . '/backend/core/calibre.php';
+    
+    // Check if EPUB already exists (fast check, <1 second)
+    $existingEpub = getConvertedEpubPath($filePath);
+    
+    if ($existingEpub) {
+        // EPUB already exists, use it immediately (instant load)
+        $epubRelativePath = preg_replace('/\.mobi$/i', '.epub', $file['file_path']);
+        $epubUrl = APP_URL . '/serve_file.php?file=' . urlencode($epubRelativePath);
+    } else {
+        // EPUB doesn't exist, mark for conversion
+        $needsConversion = true;
+    }
+}
+
 // Determine reader type
 $readerType = 'unknown';
 $pdfViewerUrl = '';
@@ -41,8 +62,10 @@ $pdfViewerUrl = '';
 if ($fileType === 'pdf') {
     $readerType = 'pdf';
     $pdfViewerUrl = APP_URL . '/public_pdf_viewer.php?file=' . urlencode($file['file_path']);
-} elseif (in_array($fileType, ['epub', 'mobi'])) {
+} elseif ($fileType === 'epub' || ($fileType === 'mobi' && $epubUrl)) {
     $readerType = 'epub';
+} elseif ($fileType === 'mobi' && $needsConversion) {
+    $readerType = 'mobi-converting';
 } elseif ($fileType === 'gallery') {
     $readerType = 'gallery';
     $galleryImages = json_decode($file['image_paths'] ?? '[]', true) ?: [];
@@ -585,6 +608,7 @@ $formatLabel = match (true) {
 
         body.fullscreen .reader-area {
             top: 0;
+            bottom: 0;
         }
 
         body.fullscreen .reader-bottom {
@@ -594,6 +618,11 @@ $formatLabel = match (true) {
         body.fullscreen .panel {
             top: 0;
             bottom: 0;
+        }
+        
+        /* Ensure PDF iframe fills completely in fullscreen */
+        body.fullscreen .pdf-frame {
+            height: 100vh;
         }
 
         /* Page nav for PDFs */
@@ -651,6 +680,65 @@ $formatLabel = match (true) {
         .fallback h3 {
             font-size: 18px;
             color: var(--text);
+        }
+
+        /* Conversion Screen */
+        .conversion-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: var(--bg);
+        }
+
+        .conversion-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .conversion-icon {
+            font-size: 64px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .conversion-content h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .conversion-content p {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .conversion-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+        }
+
+        #conversionStatus {
+            font-size: 13px;
+            color: var(--muted);
         }
 
         .btn-dl {
@@ -711,6 +799,13 @@ $formatLabel = match (true) {
         <?php if ($readerType === 'pdf'): ?>
             <iframe id="pdfFrame" class="pdf-frame"
                 src="<?= APP_URL ?>/public_pdf_viewer.php?file=<?= urlencode($file['file_path']) ?>"></iframe>
+
+        <?php elseif ($readerType === 'mobi-converting'): ?>
+            <div class="conversion-screen" id="conversionScreen">
+                <div class="conversion-icon">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+            </div>
 
         <?php elseif ($readerType === 'epub'): ?>
             <div id="epub-viewer"></div>
@@ -793,9 +888,7 @@ $formatLabel = match (true) {
             <div class="setting-row">
                 <label>Font</label>
                 <select id="fontSelect">
-                    <option value="'Merriweather', serif">Merriweather (Serif)</option>
-                    <option value="'Lora', serif">Lora (Serif)</option>
-                    <option value="'Inter', sans-serif">Inter (Sans)</option>
+                    <option value="'Merriweather', serif">Merriweather</option>
                     <option value="'Open Sans', sans-serif">Open Sans</option>
                 </select>
             </div>
@@ -871,11 +964,38 @@ $formatLabel = match (true) {
         const FILE_URL = '<?= addslashes($fileUrl) ?>';
         const APP_URL = '<?= APP_URL ?>';
         const STORAGE_KEY = 'pub_reader_v1';
+        const FILE_ID = <?= $file['id'] ?>;
         <?php if ($readerType === 'gallery'): ?>
             const GAL_IMAGES = <?= json_encode($galleryImages ?? []) ?>;
         <?php endif; ?>
         <?php if ($readerType === 'epub'): ?>
-            const EPUB_URL = FILE_URL;
+            const EPUB_URL = '<?= $fileType === 'mobi' && $epubUrl ? addslashes($epubUrl) : addslashes($fileUrl) ?>';
+        <?php endif; ?>
+
+        // ── MOBI Conversion Handler ──────────────────────────────────────────────────
+        <?php if ($readerType === 'mobi-converting'): ?>
+        async function convertMobiFile() {
+            try {
+                const response = await fetch(`${APP_URL}/convert_mobi_public.php?file_id=${FILE_ID}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload the page to show the EPUB reader
+                    window.location.reload();
+                } else {
+                    // On error, show alert and reload
+                    alert('Conversion failed: ' + data.error);
+                    window.location.href = `${APP_URL}/public.php`;
+                }
+            } catch (error) {
+                // On error, show alert and reload
+                alert('Error: ' + error.message);
+                window.location.href = `${APP_URL}/public.php`;
+            }
+        }
+        
+        // Start conversion when page loads
+        convertMobiFile();
         <?php endif; ?>
 
         // ── Load persisted settings ──────────────────────────────────────────────────
@@ -1220,10 +1340,27 @@ $formatLabel = match (true) {
                         'line-height': `${settings.lineHeight} !important`,
                         'padding': '48px 60px !important',
                     },
-                    'p': { 'color': `${fg} !important`, 'margin-bottom': '1em !important' },
-                    'div': { 'color': `${fg} !important` },
-                    'span': { 'color': `${fg} !important` },
-                    'h1,h2,h3': { 'color': `${fg} !important`, 'font-family': `${settings.font} !important` },
+                    'p': { 
+                        'color': `${fg} !important`, 
+                        'margin-bottom': '1em !important',
+                        'line-height': `${settings.lineHeight} !important`,
+                        'font-family': `${settings.font} !important`,
+                        'font-size': `${settings.fontSize}px !important`
+                    },
+                    'div': { 
+                        'color': `${fg} !important`,
+                        'line-height': `${settings.lineHeight} !important`,
+                        'font-family': `${settings.font} !important`
+                    },
+                    'span': { 
+                        'color': `${fg} !important`,
+                        'font-family': `${settings.font} !important`
+                    },
+                    'h1,h2,h3': { 
+                        'color': `${fg} !important`, 
+                        'font-family': `${settings.font} !important`,
+                        'line-height': `${settings.lineHeight} !important`
+                    },
                     'img': { 'max-width': '100% !important', 'height': 'auto !important' }
                 });
             }

@@ -1,3 +1,23 @@
+<?php
+// Helper function to build URL with filter arrays
+function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, $dateTo, $sort) {
+    $params = [];
+    if ($search) $params[] = 'q=' . urlencode($search);
+    foreach ($categories as $cat) {
+        $params[] = 'category[]=' . urlencode($cat);
+    }
+    foreach ($languages as $lang) {
+        $params[] = 'language[]=' . urlencode($lang);
+    }
+    foreach ($editions as $ed) {
+        $params[] = 'edition[]=' . urlencode($ed);
+    }
+    if ($dateFrom) $params[] = 'date_from=' . urlencode($dateFrom);
+    if ($dateTo) $params[] = 'date_to=' . urlencode($dateTo);
+    if ($sort) $params[] = 'sort=' . urlencode($sort);
+    return '?' . implode('&', $params);
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -14,7 +34,39 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Public Page CSS -->
-    <link href="<?= APP_URL ?>/assets/css/pages/public.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/pages/public.css?v=<?= time() ?>" rel="stylesheet">
+    <style>
+        /* Force list view styles - inline to bypass cache */
+        .browse-list-view .browse-list-metadata {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 12px 20px !important;
+            margin-top: 0 !important;
+            padding-top: 14px !important;
+            border-top: 1px solid #E5E7EB !important;
+        }
+        .browse-list-view .public-file-description {
+            margin-bottom: 14px !important;
+        }
+        .browse-meta-item {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 3px !important;
+        }
+        .browse-meta-item::before {
+            content: attr(data-label);
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            color: #9CA3AF !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+        .browse-meta-item span {
+            font-weight: 500 !important;
+            color: #374151 !important;
+            font-size: 13px !important;
+        }
+    </style>
 
     <script>const APP_URL = "<?= APP_URL ?>";</script>
 </head>
@@ -73,17 +125,17 @@
                         <li class="browse-category-item-redesign">
                             <label class="browse-checkbox-label">
                                 <input type="checkbox" name="category" <?= empty($categoryFilter) ? 'checked' : '' ?> 
-                                    onchange="if(this.checked) window.location.href='?q=<?= urlencode($searchQuery) ?>&language=<?= urlencode($languageFilter) ?>&edition=<?= urlencode($editionFilter) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&sort=<?= urlencode($sortFilter) ?>'">
+                                    onchange="if(this.checked) window.location.href='<?= buildFilterUrl([], $searchQuery, $languageFilter, $editionFilter, $dateFrom, $dateTo, $sortFilter) ?>'">
                                 <span>All Categories</span>
                                 <span class="browse-count-badge"><?= number_format($totalCollectionsCount) ?></span>
                             </label>
                         </li>
                         <?php foreach ($categoriesWithCounts as $cat): ?>
-                            <?php $isActive = $categoryFilter == $cat['id']; ?>
+                            <?php $isActive = in_array($cat['id'], $categoryFilter); ?>
                             <li class="browse-category-item-redesign">
                                 <label class="browse-checkbox-label">
-                                    <input type="checkbox" name="category" <?= $isActive ? 'checked' : '' ?> 
-                                        onchange="window.location.href='?category=<?= $cat['id'] ?>&q=<?= urlencode($searchQuery) ?>&language=<?= urlencode($languageFilter) ?>&edition=<?= urlencode($editionFilter) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&sort=<?= urlencode($sortFilter) ?>'">
+                                    <input type="checkbox" name="category[]" value="<?= $cat['id'] ?>" <?= $isActive ? 'checked' : '' ?> 
+                                        onchange="toggleCategoryFilter(<?= $cat['id'] ?>, this.checked)">
                                     <span><?= htmlspecialchars($cat['name']) ?></span>
                                     <span class="browse-count-badge"><?= number_format($cat['count']) ?></span>
                                 </label>
@@ -94,7 +146,7 @@
             </div>
 
             <!-- Edition Filter -->
-            <?php if (!empty($editions)): ?>
+            <?php if (!empty($editionsWithCounts)): ?>
                 <div class="browse-filter-section">
                     <button class="browse-filter-toggle" type="button" data-target="editions">
                         <span>EDITION</span>
@@ -102,13 +154,14 @@
                     </button>
                     <div class="browse-filter-content" id="editions">
                         <ul class="browse-category-list-redesign">
-                            <?php foreach ($editions as $edition): ?>
-                                <?php $isActive = $editionFilter == $edition; ?>
+                            <?php foreach ($editionsWithCounts as $ed): ?>
+                                <?php $isActive = in_array($ed['edition'], $editionFilter); ?>
                                 <li class="browse-category-item-redesign">
                                     <label class="browse-checkbox-label">
-                                        <input type="checkbox" name="edition" <?= $isActive ? 'checked' : '' ?>
-                                            onchange="window.location.href='?edition=<?= urlencode($edition) ?>&q=<?= urlencode($searchQuery) ?>&category=<?= urlencode($categoryFilter) ?>&language=<?= urlencode($languageFilter) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&sort=<?= urlencode($sortFilter) ?>'">
-                                        <span><?= htmlspecialchars($edition) ?></span>
+                                        <input type="checkbox" name="edition[]" value="<?= htmlspecialchars($ed['edition']) ?>" <?= $isActive ? 'checked' : '' ?>
+                                            onchange="toggleEditionFilter('<?= addslashes($ed['edition']) ?>', this.checked)">
+                                        <span><?= htmlspecialchars($ed['edition']) ?></span>
+                                        <span class="browse-count-badge"><?= number_format($ed['count']) ?></span>
                                     </label>
                                 </li>
                             <?php endforeach; ?>
@@ -128,7 +181,7 @@
                         <ul class="browse-category-list-redesign">
                             <?php foreach ($languages as $lang): ?>
                                 <?php 
-                                $isActive = $languageFilter == $lang['id'];
+                                $isActive = in_array($lang['id'], $languageFilter);
                                 // Count documents for this language
                                 $langCountSql = "SELECT COUNT(*) FROM newspapers WHERE deleted_at IS NULL AND language_id = ?";
                                 $langCountStmt = $pdo->prepare($langCountSql);
@@ -137,8 +190,8 @@
                                 ?>
                                 <li class="browse-category-item-redesign">
                                     <label class="browse-checkbox-label">
-                                        <input type="checkbox" name="language" <?= $isActive ? 'checked' : '' ?>
-                                            onchange="window.location.href='?language=<?= $lang['id'] ?>&q=<?= urlencode($searchQuery) ?>&category=<?= urlencode($categoryFilter) ?>&edition=<?= urlencode($editionFilter) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&sort=<?= urlencode($sortFilter) ?>'">
+                                        <input type="checkbox" name="language[]" value="<?= $lang['id'] ?>" <?= $isActive ? 'checked' : '' ?>
+                                            onchange="toggleLanguageFilter(<?= $lang['id'] ?>, this.checked)">
                                         <span><?= htmlspecialchars($lang['name']) ?></span>
                                         <span class="browse-count-badge"><?= number_format($langCount) ?></span>
                                     </label>
@@ -158,9 +211,15 @@
                 <div class="browse-filter-content" id="publication-period">
                     <form method="GET" action="" class="browse-date-range-form" id="dateRangeForm">
                         <input type="hidden" name="q" value="<?= htmlspecialchars($searchQuery) ?>">
-                        <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
-                        <input type="hidden" name="language" value="<?= htmlspecialchars($languageFilter) ?>">
-                        <input type="hidden" name="edition" value="<?= htmlspecialchars($editionFilter) ?>">
+                        <?php foreach ($categoryFilter as $cat): ?>
+                            <input type="hidden" name="category[]" value="<?= htmlspecialchars($cat) ?>">
+                        <?php endforeach; ?>
+                        <?php foreach ($languageFilter as $lang): ?>
+                            <input type="hidden" name="language[]" value="<?= htmlspecialchars($lang) ?>">
+                        <?php endforeach; ?>
+                        <?php foreach ($editionFilter as $ed): ?>
+                            <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
+                        <?php endforeach; ?>
                         <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
                         
                         <div class="browse-date-inputs">
@@ -196,8 +255,15 @@
             <!-- Search Box -->
             <div class="browse-search-box-redesign">
                 <form method="GET" action="" id="browseSearchForm">
-                    <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
-                    <input type="hidden" name="language" value="<?= htmlspecialchars($languageFilter) ?>">
+                    <?php foreach ($categoryFilter as $cat): ?>
+                        <input type="hidden" name="category[]" value="<?= htmlspecialchars($cat) ?>">
+                    <?php endforeach; ?>
+                    <?php foreach ($languageFilter as $lang): ?>
+                        <input type="hidden" name="language[]" value="<?= htmlspecialchars($lang) ?>">
+                    <?php endforeach; ?>
+                    <?php foreach ($editionFilter as $ed): ?>
+                        <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
+                    <?php endforeach; ?>
                     <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
                     <div class="browse-search-input-wrap">
                         <i class="bi bi-search"></i>
@@ -222,8 +288,15 @@
                 <div class="browse-sort-wrap-redesign">
                     <form action="" method="GET" id="sortFilterForm" class="browse-sort-form-redesign">
                         <input type="hidden" name="q" value="<?= htmlspecialchars($searchQuery) ?>">
-                        <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
-                        <input type="hidden" name="language" value="<?= htmlspecialchars($languageFilter) ?>">
+                        <?php foreach ($categoryFilter as $cat): ?>
+                            <input type="hidden" name="category[]" value="<?= htmlspecialchars($cat) ?>">
+                        <?php endforeach; ?>
+                        <?php foreach ($languageFilter as $lang): ?>
+                            <input type="hidden" name="language[]" value="<?= htmlspecialchars($lang) ?>">
+                        <?php endforeach; ?>
+                        <?php foreach ($editionFilter as $ed): ?>
+                            <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
+                        <?php endforeach; ?>
                         
                         <label for="sortSelect">Sort by:</label>
                         <select class="browse-sort-select-redesign" name="sort" id="sortSelect" onchange="this.form.submit()">
@@ -294,7 +367,7 @@
                             data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>"
                             data-keywords="<?= htmlspecialchars($paper['keywords'] ?? '') ?>">
 
-                            <!-- Thumbnail with category badge top-left -->
+                            <!-- Thumbnail -->
                             <div class="public-thumb-wrap">
                                 <?php if ($paper['thumbnail_path']): ?>
                                     <img src="<?= APP_URL ?>/<?= htmlspecialchars($paper['thumbnail_path']) ?>"
@@ -304,21 +377,14 @@
                                         <i class="bi bi-newspaper"></i>
                                     </div>
                                 <?php endif; ?>
-
-                                <!-- Category badge: top-LEFT -->
-                                <span class="public-file-category pub-thumb-badge <?= htmlspecialchars($catClass) ?>">
-                                    <?= htmlspecialchars($catName) ?>
-                                </span>
                             </div>
 
                             <!-- Card body -->
                             <div class="public-file-info">
-                                <!-- Date -->
-                                <?php if ($paper['publication_date']): ?>
-                                    <div class="public-file-date-line">
-                                        <?= highlightSearch(strtoupper(date('F j, Y', strtotime($paper['publication_date']))), $searchQuery) ?>
-                                    </div>
-                                <?php endif; ?>
+                                <!-- Category badge ABOVE title -->
+                                <span class="public-file-category-top <?= htmlspecialchars($catClass) ?>">
+                                    <?= htmlspecialchars($catName) ?>
+                                </span>
 
                                 <!-- Title -->
                                 <div class="public-file-title">
@@ -332,35 +398,59 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- Metadata for List View Only (Below Description) -->
+                                <!-- Metadata with Icons (Below Description) -->
                                 <div class="browse-list-metadata">
+                                    <?php if ($paper['publication_date']): ?>
+                                        <div class="browse-meta-item" data-label="Date:">
+                                            <span>
+                                                <i class="bi bi-calendar3"></i>
+                                                <?= date('M d, Y', strtotime($paper['publication_date'])) ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                    
                                     <?php if (!empty($paper['publisher'])): ?>
                                         <div class="browse-meta-item" data-label="Publisher:">
-                                            <span><?= htmlspecialchars($paper['publisher']) ?></span>
+                                            <span>
+                                                <i class="bi bi-building"></i>
+                                                <?= htmlspecialchars($paper['publisher']) ?>
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                     
                                     <?php if (!empty($paper['language_name'])): ?>
                                         <div class="browse-meta-item" data-label="Language:">
-                                            <span><?= htmlspecialchars($paper['language_name']) ?></span>
+                                            <span>
+                                                <i class="bi bi-translate"></i>
+                                                <?= htmlspecialchars($paper['language_name']) ?>
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                     
                                     <?php if (!empty($paper['page_count'])): ?>
                                         <div class="browse-meta-item" data-label="Pages:">
-                                            <span><?= $paper['page_count'] ?></span>
+                                            <span>
+                                                <i class="bi bi-file-earmark-text"></i>
+                                                <?= $paper['page_count'] ?> Pages
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                     
                                     <?php if (!empty($paper['edition'])): ?>
                                         <div class="browse-meta-item" data-label="Edition:">
-                                            <span><?= htmlspecialchars($paper['edition']) ?></span>
+                                            <span>
+                                                <i class="bi bi-sun"></i>
+                                                <?= htmlspecialchars($paper['edition']) ?>
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                     
                                     <?php if (!empty($paper['volume_issue'])): ?>
                                         <div class="browse-meta-item" data-label="Volume:">
-                                            <span><?= htmlspecialchars($paper['volume_issue']) ?></span>
+                                            <span>
+                                                <i class="bi bi-layers"></i>
+                                                <?= htmlspecialchars($paper['volume_issue']) ?>
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -573,6 +663,89 @@
     
     <!-- Browse Filter Toggle Script -->
     <script>
+        // Category filter toggle function
+        function toggleCategoryFilter(catId, isChecked) {
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            let newCategories = [...currentCategories];
+            
+            if (isChecked) {
+                if (!newCategories.includes(catId.toString())) {
+                    newCategories.push(catId.toString());
+                }
+            } else {
+                newCategories = newCategories.filter(c => c != catId.toString());
+            }
+            
+            buildAndNavigate(newCategories, currentLanguages, currentEditions);
+        }
+        
+        // Language filter toggle function
+        function toggleLanguageFilter(langId, isChecked) {
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            let newLanguages = [...currentLanguages];
+            
+            if (isChecked) {
+                if (!newLanguages.includes(langId.toString())) {
+                    newLanguages.push(langId.toString());
+                }
+            } else {
+                newLanguages = newLanguages.filter(l => l != langId.toString());
+            }
+            
+            buildAndNavigate(currentCategories, newLanguages, currentEditions);
+        }
+        
+        // Edition filter toggle function
+        function toggleEditionFilter(edition, isChecked) {
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            let newEditions = [...currentEditions];
+            
+            if (isChecked) {
+                if (!newEditions.includes(edition)) {
+                    newEditions.push(edition);
+                }
+            } else {
+                newEditions = newEditions.filter(e => e !== edition);
+            }
+            
+            buildAndNavigate(currentCategories, currentLanguages, newEditions);
+        }
+        
+        // Helper function to build URL and navigate
+        function buildAndNavigate(categories, languages, editions) {
+            const params = new URLSearchParams();
+            params.set('q', '<?= addslashes($searchQuery) ?>');
+            categories.forEach(c => params.append('category[]', c));
+            languages.forEach(l => params.append('language[]', l));
+            editions.forEach(e => params.append('edition[]', e));
+            if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
+            if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
+            params.set('sort', '<?= addslashes($sortFilter) ?>');
+            
+            window.location.href = '?' + params.toString();
+        }
+        
+        // Enter key support for date filter
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateForm = document.getElementById('dateRangeForm');
+            const dateInputs = dateForm.querySelectorAll('input[type="number"]');
+            
+            dateInputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        dateForm.submit();
+                    }
+                });
+            });
+        });
+        
         // Filter toggle functionality
         document.querySelectorAll('.browse-filter-toggle').forEach(toggle => {
             toggle.addEventListener('click', function() {
