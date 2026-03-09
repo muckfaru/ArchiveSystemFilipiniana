@@ -22,8 +22,8 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?= APP_URL ?>/assets/css/pages/forgot-password.css" rel="stylesheet">
-    <link href="<?= APP_URL ?>/assets/css/pages/forgot-password-modal.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/auth/forgot-password.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/auth/forgot-password-modal.css" rel="stylesheet">
 </head>
 
 <body>
@@ -48,7 +48,7 @@
                 <button type="submit" class="submit-btn">Send Reset Link</button>
             </form>
 
-            <a href="<?= APP_URL ?>/login.php" class="back-link">
+            <a href="<?= APP_URL ?>/auth/login.php" class="back-link">
                 <i class="bi bi-arrow-left"></i> Back to Login
             </a>
         </div>
@@ -67,7 +67,7 @@
                         We've sent a password reset link to your email address.<br>
                         Please check your inbox.
                     </p>
-                    <a href="<?= APP_URL ?>/login.php" class="btn-primary-desktop">
+                    <a href="<?= APP_URL ?>/auth/login.php" class="btn-primary-desktop">
                         Back to Login
                     </a>
                 </div>
@@ -103,7 +103,7 @@
     </script>
 
     <!-- Page JS -->
-    <script src="<?= APP_URL ?>/assets/js/pages/forgot-password.js"></script>
+    <script src="<?= APP_URL ?>/assets/js/auth/forgot-password.js"></script>
 </body>
 
 </html>

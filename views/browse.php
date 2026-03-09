@@ -34,7 +34,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Public Page CSS -->
-    <link href="<?= APP_URL ?>/assets/css/pages/public.css?v=<?= time() ?>" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/user_pages/public.css?v=<?= time() ?>" rel="stylesheet">
     <style>
         /* Force list view styles - inline to bypass cache */
         .browse-list-view .browse-list-metadata {
@@ -75,18 +75,23 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
-        <a href="<?= APP_URL ?>/public.php" class="public-header-brand">
+        <a href="<?= APP_URL ?>/user_pages/public.php" class="public-header-brand">
             <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
             <span class="public-header-brand-name">Quezon City Public Library</span>
         </a>
         
+        <!-- Hamburger Menu Button (Mobile Only) -->
+        <button class="public-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavCollapse" aria-controls="publicNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-list"></i>
+        </button>
+        
         <!-- Navigation -->
-        <nav class="public-nav">
-            <a href="<?= APP_URL ?>/public.php" class="public-nav-link">
+        <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
+            <a href="<?= APP_URL ?>/user_pages/public.php" class="public-nav-link">
                 <i class="bi bi-house-door"></i>
                 Home
             </a>
-            <a href="<?= APP_URL ?>/browse.php" class="public-nav-link active">
+            <a href="<?= APP_URL ?>/user_pages/browse.php" class="public-nav-link active">
                 <i class="bi bi-grid-3x3-gap"></i>
                 Browse
             </a>
@@ -106,7 +111,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             <div class="browse-sidebar-header">
                 <h3 class="browse-sidebar-title">Filters</h3>
                 <?php if ($searchQuery || $categoryFilter || $languageFilter || $editionFilter || $dateFrom || $dateTo): ?>
-                    <a href="<?= APP_URL ?>/browse.php" class="browse-clear-all">
+                    <a href="<?= APP_URL ?>/user_pages/browse.php" class="browse-clear-all">
                         <i class="bi bi-x-circle"></i>
                         Clear all
                     </a>
@@ -331,7 +336,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <?= $filterTag ?>
                         <?php endforeach; ?>
                     </div>
-                    <a href="<?= APP_URL ?>/browse.php<?= $searchQuery ? '?q=' . urlencode($searchQuery) : '' ?>" class="clear-filters-btn">
+                    <a href="<?= APP_URL ?>/user_pages/browse.php<?= $searchQuery ? '?q=' . urlencode($searchQuery) : '' ?>" class="clear-filters-btn">
                         <i class="bi bi-x-circle me-1"></i>Clear All Filters
                     </a>
                 </div>
@@ -343,19 +348,22 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                     <i class="bi bi-search"></i>
                     <h5>No Results Found</h5>
                     <p>We couldn't find any documents matching your criteria.</p>
-                    <a href="<?= APP_URL ?>/browse.php" class="browse-clear-btn">Clear Filters</a>
+                    <a href="<?= APP_URL ?>/user_pages/browse.php" class="browse-clear-btn">Clear Filters</a>
                 </div>
             <?php else: ?>
                 <div class="browse-grid-compact">
                     <?php foreach ($documents as $paper): ?>
                         <?php
-                        $catName = $paper['category_name'] ?? 'Uncategorized';
+                        $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
                         $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
                         $publicationLabel = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], true) : '';
+                        // Prepare modal metadata as JSON for data attribute
+                        $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
                         ?>
                         <div class="public-file-card browse-file-card-compact" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+                            data-modal-metadata="<?= $modalMetaJson ?>"
                             data-date="<?= htmlspecialchars($publicationLabel) ?>"
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? '') ?>"
                             data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
@@ -455,6 +463,11 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                         </div>
                                     <?php endif; ?>
                                 </div>
+
+                                <!-- Custom Metadata -->
+                                <?php if (!empty($paper['custom_metadata'])): ?>
+                                    <?= renderCustomMetadata($paper['custom_metadata'], 3) ?>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -660,7 +673,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Public Page JS -->
-    <script src="<?= APP_URL ?>/assets/js/pages/public.js"></script>
+    <script src="<?= APP_URL ?>/assets/js/user_pages/public.js"></script>
     
     <!-- Browse Filter Toggle Script -->
     <script>

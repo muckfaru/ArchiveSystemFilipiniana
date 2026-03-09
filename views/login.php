@@ -217,7 +217,7 @@
                     </button>
                 </div>
                 <div class="forgot-link-wrap">
-                    <a href="<?= APP_URL ?>/forgot-password.php" class="forgot-link">Forgot password?</a>
+                    <a href="<?= APP_URL ?>/auth/forgot-password.php" class="forgot-link">Forgot password?</a>
                 </div>
             </div>
 
@@ -245,7 +245,7 @@
     </script>
 
     <!-- Page JS (handles form submit + alert) -->
-    <script src="<?= APP_URL ?>/assets/js/pages/login.js"></script>
+    <script src="<?= APP_URL ?>/assets/js/auth/login.js"></script>
 </body>
 
 </html>

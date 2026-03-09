@@ -1,0 +1,474 @@
+/**
+ * Form Library Styles - Table Layout
+ * Archive System - Quezon City Public Library
+ */
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Create Button */
+#createFormBtn {
+    font-family: 'Poppins', sans-serif;
+    background-color: #3A9AFF;
+    border-color: #3A9AFF;
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+#createFormBtn:hover {
+    background-color: #2a8aef;
+    border-color: #2a8aef;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(58, 154, 255, 0.3);
+}
+
+#createFormBtn i {
+    margin-right: 0.5rem;
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+    width: 450px; /* Increased from 350px */
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.search-box .form-control {
+    font-family: 'Poppins', sans-serif;
+    padding-left: 2.75rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    height: 42px;
+    font-size: 0.9rem;
+}
+
+.search-box .form-control:focus {
+    border-color: #3A9AFF;
+    box-shadow: 0 0 0 0.2rem rgba(58, 154, 255, 0.15);
+}
+
+/* Filter Tabs */
+.filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background-color: #f8f9fa;
+    padding: 0.35rem;
+    border-radius: 8px;
+}
+
+.filter-tab {
+    font-family: 'Poppins', sans-serif;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-tab:hover {
+    color: #3A9AFF;
+    background-color: rgba(58, 154, 255, 0.1);
+}
+
+.filter-tab.active {
+    background-color: #1a1a1a;
+    color: white;
+}
+
+/* Table Container */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e9ecef;
+}
+
+/* Table Styles */
+.forms-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Poppins', sans-serif;
+}
+
+.forms-table thead {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.forms-table thead th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.forms-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.forms-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.forms-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.forms-table tbody td {
+    padding: 1.25rem 1.25rem;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+/* Form Icon */
+.form-icon {
+    font-size: 1.5rem;
+    color: #3A9AFF;
+}
+
+/* Form Name & Description */
+.form-name {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.form-description {
+    font-family: 'Poppins', sans-serif;
+    color: #6c757d;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background-color: #d4f4dd;
+    color: #0d6832;
+}
+
+.status-draft {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-archived {
+    background-color: #e7e7e7;
+    color: #5a5a5a;
+}
+
+/* Last Modified */
+.last-modified-date {
+    font-family: 'Poppins', sans-serif;
+    color: #1a1a1a;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.15rem;
+}
+
+.last-modified-by {
+    font-family: 'Poppins', sans-serif;
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.btn-action {
+    background: transparent;
+    border: 1px solid #dee2e6;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.btn-action:hover {
+    background-color: #f8f9fa;
+    border-color: #3A9AFF;
+    color: #3A9AFF;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e9ecef;
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    font-family: 'Poppins', sans-serif;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #3A9AFF;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #fff5f5;
+    color: #dc3545;
+}
+
+.dropdown-item i {
+    margin-right: 0.5rem;
+    width: 16px;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.pagination-info {
+    font-family: 'Poppins', sans-serif;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-btn {
+    background: white;
+    border: 1px solid #dee2e6;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.page-btn:hover:not(:disabled) {
+    background-color: #f8f9fa;
+    border-color: #3A9AFF;
+    color: #3A9AFF;
+}
+
+.page-btn.active {
+    background-color: #3A9AFF;
+    border-color: #3A9AFF;
+    color: white;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+#noFormsMessage {
+    padding: 3rem 2rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+#noFormsMessage i {
+    color: #6c757d;
+}
+
+#noFormsMessage p {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-top: 1rem;
+}
+
+/* Preview Modal */
+#previewModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+#previewModal .modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+#previewModal .modal-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+#previewModal .modal-body {
+    padding: 1.5rem;
+}
+
+#previewModal .form-preview .form-label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+#previewModal .form-preview .form-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+#previewModal .form-preview .form-control,
+#previewModal .form-preview .form-select {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 6px;
+}
+
+#previewModal .form-preview .form-check-label {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .search-box {
+        width: 300px;
+    }
+}
+
+@media (max-width: 992px) {
+    .page-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    #createFormBtn {
+        width: 100%;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+    
+    .filter-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .filter-tab {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .forms-table {
+        font-size: 0.85rem;
+    }
+    
+    .forms-table thead th,
+    .forms-table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .form-name {
+        font-size: 0.9rem;
+    }
+    
+    .form-description {
+        font-size: 0.8rem;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .forms-table {
+        min-width: 800px;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

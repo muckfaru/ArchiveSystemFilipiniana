@@ -12,5 +12,5 @@ require_once __DIR__ . '/backend/core/config.php';
 require_once __DIR__ . '/backend/core/functions.php';
 
 // Always redirect to the public reader landing page
-redirect(APP_URL . '/public.php');
+redirect(APP_URL . '/user_pages/public.php');
 ?>

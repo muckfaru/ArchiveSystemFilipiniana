@@ -12,21 +12,21 @@
             <span class="nav-section-title">GENERAL</span>
             <ul class="nav-list">
                 <li class="nav-item">
-                    <a href="<?= APP_URL ?>/dashboard.php"
+                    <a href="<?= APP_URL ?>/admin_pages/dashboard.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">
                         <i class="bi bi-grid-fill"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="<?= APP_URL ?>/pages/users.php"
+                    <a href="<?= APP_URL ?>/admin_pages/users.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : '' ?>">
                         <i class="bi bi-people-fill"></i>
                         <span>Users</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="<?= APP_URL ?>/pages/history.php"
+                    <a href="<?= APP_URL ?>/admin_pages/history.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'history.php' ? 'active' : '' ?>">
                         <i class="bi bi-clock-history"></i>
                         <span>History</span>
@@ -39,22 +39,38 @@
         <div class="nav-section">
             <span class="nav-section-title">ARCHIVE MANAGEMENT</span>
             <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="<?= APP_URL ?>/pages/upload.php"
+                <li class="nav-item position-relative">
+                    <a href="<?= APP_URL ?>/admin_pages/upload.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'upload.php' ? 'active' : '' ?>">
                         <i class="bi bi-cloud-upload"></i>
                         <span>Upload</span>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="<?= APP_URL ?>/pages/trash.php"
-                        class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'trash.php' ? 'active' : '' ?>">
-                        <i class="bi bi-trash3"></i>
-                        <span>Trash</span>
+                    <a href="#uploadSubmenu" data-bs-toggle="collapse"
+                        aria-expanded="<?= in_array(basename($_SERVER['PHP_SELF']), ['upload.php', 'form-library.php', 'form-builder.php', 'metadata-display.php']) ? 'true' : 'false' ?>"
+                        class="submenu-toggle position-absolute d-flex align-items-center justify-content-center"
+                        style="right: 20px; top: 2px; height: 44px; width: 32px; z-index: 5; color: #6B7280; text-decoration: none;">
+                        <i class="bi bi-chevron-down dropdown-indicator"></i>
                     </a>
+                    <ul class="collapse sidebar-submenu list-unstyled <?= in_array(basename($_SERVER['PHP_SELF']), ['upload.php', 'form-library.php', 'form-builder.php', 'metadata-display.php']) ? 'show' : '' ?>"
+                        id="uploadSubmenu">
+                        <li class="nav-item">
+                            <a href="<?= APP_URL ?>/admin_pages/form-library.php"
+                                class="nav-link sub-nav-link <?= in_array(basename($_SERVER['PHP_SELF']), ['form-library.php', 'form-builder.php']) ? 'active' : '' ?>">
+                                <i class="bi bi-ui-checks-grid"></i>
+                                <span>Custom Metadata</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= APP_URL ?>/admin_pages/metadata-display.php"
+                                class="nav-link sub-nav-link <?= basename($_SERVER['PHP_SELF']) == 'metadata-display.php' ? 'active' : '' ?>">
+                                <i class="bi bi-eye"></i>
+                                <span>Metadata Display</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li class="nav-item">
-                    <a href="<?= APP_URL ?>/pages/settings.php"
+                    <a href="<?= APP_URL ?>/admin_pages/settings.php"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : '' ?>">
                         <i class="bi bi-gear-fill"></i>
                         <span>Settings</span>
@@ -94,7 +110,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="<?= APP_URL ?>/logout.php" class="btn btn-danger">
+                <a href="<?= APP_URL ?>/auth/logout.php" class="btn btn-danger">
                     <i class="bi bi-box-arrow-right me-1"></i> Logout
                 </a>
             </div>

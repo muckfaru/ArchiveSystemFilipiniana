@@ -17,7 +17,7 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Public Page CSS -->
-    <link href="<?= APP_URL ?>/assets/css/pages/public.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/user_pages/public.css" rel="stylesheet">
 
     <script>const APP_URL = "<?= APP_URL ?>";</script>
 </head>
@@ -26,18 +26,23 @@
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
-        <a href="<?= APP_URL ?>/public.php" class="public-header-brand">
+        <a href="<?= APP_URL ?>/user_pages/public.php" class="public-header-brand">
             <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
             <span class="public-header-brand-name">Quezon City Public Library</span>
         </a>
         
+        <!-- Hamburger Menu Button (Mobile Only) -->
+        <button class="public-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavCollapse" aria-controls="publicNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-list"></i>
+        </button>
+        
         <!-- Navigation -->
-        <nav class="public-nav">
-            <a href="<?= APP_URL ?>/public.php" class="public-nav-link <?= !isset($_GET['view']) || $_GET['view'] !== 'browse' ? 'active' : '' ?>">
+        <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
+            <a href="<?= APP_URL ?>/user_pages/public.php" class="public-nav-link <?= !isset($_GET['view']) || $_GET['view'] !== 'browse' ? 'active' : '' ?>">
                 <i class="bi bi-house-door"></i>
                 Home
             </a>
-            <a href="<?= APP_URL ?>/public.php?view=browse" class="public-nav-link <?= isset($_GET['view']) && $_GET['view'] === 'browse' ? 'active' : '' ?>">
+            <a href="<?= APP_URL ?>/user_pages/public.php?view=browse" class="public-nav-link <?= isset($_GET['view']) && $_GET['view'] === 'browse' ? 'active' : '' ?>">
                 <i class="bi bi-grid-3x3-gap"></i>
                 Browse
             </a>
@@ -88,7 +93,7 @@
                         </strong> results
                     <?php endif; ?>
                 </span>
-                <a href="<?= APP_URL ?>/public.php" class="text-decoration-none"
+                <a href="<?= APP_URL ?>/user_pages/public.php" class="text-decoration-none"
                     style="font-size: 12px; color: #3A9AFF; font-weight: 600;">
                     <i class="bi bi-x-circle me-1"></i>Clear filters
                 </a>
@@ -114,36 +119,31 @@
                 <i class="bi bi-search"></i>
                 <h5>No Results Found</h5>
                 <p style="font-size: 14px;">We couldn't find any documents matching your criteria.</p>
-                <a href="<?= APP_URL ?>/public.php" class="public-read-btn"
+                <a href="<?= APP_URL ?>/user_pages/public.php" class="public-read-btn"
                     style="width: auto; display: inline-flex; margin-top: 16px; padding: 10px 24px;">
                     Browse All
                 </a>
             </div>
         <?php else: ?>
-            <div class="row g-5">
+            <div class="row g-4">
                 <?php foreach ($documents as $paper): ?>
                     <?php
-                    $catName = $paper['category_name'] ?? 'Uncategorized';
+                    $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
                     $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
                     ?>
                     <div class="col-6 col-md-3">
-                        <?php $publicationLabel = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], true) : ''; ?>
-                        <div class="public-file-card" data-id="<?= $paper['id'] ?>"
+                        <?php 
+                        // Prepare modal metadata as JSON for data attribute
+                        $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
+                        ?>
+                        <div class="public-file-card" 
+                            data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= htmlspecialchars($publicationLabel) ?>"
-                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? '') ?>"
-                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
-                            data-category="<?= htmlspecialchars($catName) ?>"
-                            data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-page-count="<?= $paper['page_count'] ?? '' ?>"
-                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
-                            data-edition="<?= htmlspecialchars($paper['edition'] ?? '') ?>"
-                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>"
-                            data-keywords="<?= htmlspecialchars($paper['keywords'] ?? '') ?>">
+                            data-modal-metadata="<?= $modalMetaJson ?>">
 
-                            <!-- Thumbnail with category badge top-left -->
+                            <!-- Thumbnail -->
                             <div class="public-thumb-wrap">
                                 <?php if ($paper['thumbnail_path']): ?>
                                     <img src="<?= APP_URL ?>/<?= htmlspecialchars($paper['thumbnail_path']) ?>"
@@ -153,32 +153,31 @@
                                         <i class="bi bi-newspaper"></i>
                                     </div>
                                 <?php endif; ?>
-
-                                <!-- Category badge: top-LEFT -->
-                                <span class="public-file-category pub-thumb-badge <?= htmlspecialchars($catClass) ?>">
-                                    <?= htmlspecialchars($catName) ?>
-                                </span>
                             </div>
 
                             <!-- Card body -->
                             <div class="public-file-info">
-                                <!-- Date -->
-                                <?php if ($paper['publication_date']): ?>
-                                    <div class="public-file-date-line">
-                                        <?= pubHighlight(strtoupper($publicationLabel), $searchQuery) ?>
-                                    </div>
-                                <?php endif; ?>
-
                                 <!-- Title -->
                                 <div class="public-file-title">
                                     <?= pubHighlight($paper['title'], $searchQuery) ?>
                                 </div>
 
-                                <!-- Description -->
-                                <?php if (!empty($paper['description'])): ?>
-                                    <div class="public-file-description">
-                                        <?= pubHighlight($paper['description'], $searchQuery) ?>
-                                    </div>
+                                <!-- Display only publication date -->
+                                <?php if (!empty($paper['display_metadata'])): ?>
+                                    <?php foreach ($paper['display_metadata'] as $meta): ?>
+                                        <?php 
+                                        // Only show publication date on card
+                                        $label = strtolower(trim($meta['label']));
+                                        if ($label === 'publication date' || $label === 'date published' || $label === 'date'): 
+                                        ?>
+                                            <div class="public-file-date">
+                                                <?= pubHighlight($meta['value'], $searchQuery) ?>
+                                            </div>
+                                        <?php 
+                                            break; // Only show first date found
+                                        endif; 
+                                        ?>
+                                    <?php endforeach; ?>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -244,6 +243,10 @@
         <?php endif; ?>
     </div>
 
+
+
+
+
     <!-- ==================== FILE PREVIEW MODAL ==================== -->
     <div id="publicModalBackdrop" class="public-modal-backdrop">
         <div class="public-modal" role="dialog" aria-modal="true">
@@ -270,56 +273,14 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
 
-                <!-- Category badge ABOVE title -->
-                <span id="publicModalCategory" class="public-modal-category-badge">CATEGORY</span>
-
                 <!-- Title -->
                 <h2 id="publicModalTitle" class="public-modal-title">File Title</h2>
-
-                <!-- Description (italic quote block) -->
-                <div id="publicModalDescriptionWrap" class="public-modal-description-wrap" style="display: none;">
-                    <p id="publicModalDescription" class="public-modal-description"></p>
-                </div>
 
                 <!-- Section label -->
                 <p class="public-modal-meta-section-title">Document Details</p>
 
-                <!-- Meta rows -->
-                <div class="public-modal-meta-row">
-                    <span class="public-modal-meta-label"><i class="bi bi-calendar3"></i> Publication Date</span>
-                    <span id="publicModalDate" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row">
-                    <span class="public-modal-meta-label"><i class="bi bi-building"></i> Publisher</span>
-                    <span id="publicModalPublisher" class="public-modal-meta-value">—</span>
-                </div>
-
-
-                <div class="public-modal-meta-row" id="modalRowLanguage">
-                    <span class="public-modal-meta-label"><i class="bi bi-translate"></i> Language</span>
-                    <span id="publicModalLanguage" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowPages">
-                    <span class="public-modal-meta-label"><i class="bi bi-book"></i> Pages</span>
-                    <span id="publicModalPages" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowVolume">
-                    <span class="public-modal-meta-label"><i class="bi bi-layers"></i> Volume / Issue</span>
-                    <span id="publicModalVolume" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowEdition">
-                    <span class="public-modal-meta-label"><i class="bi bi-sun"></i> Edition</span>
-                    <span id="publicModalEdition" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowKeywords">
-                    <span class="public-modal-meta-label"><i class="bi bi-tags"></i> Keywords</span>
-                    <div id="publicModalKeywords" class="public-modal-keywords-wrap"></div>
-                </div>
+                <!-- Dynamic metadata rows container -->
+                <div id="publicModalMetadata"></div>
             </div>
         </div>
     </div>
@@ -404,7 +365,7 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Public Page JS -->
-    <script src="<?= APP_URL ?>/assets/js/pages/public.js"></script>
+    <script src="<?= APP_URL ?>/assets/js/user_pages/public.js"></script>
     <!-- Admin Login Modal JS -->
     <script>
         (function () {
