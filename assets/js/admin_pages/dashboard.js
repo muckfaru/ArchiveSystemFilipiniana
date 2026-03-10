@@ -23,6 +23,38 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentFileId = null;
     let currentCardElement = null; // Store reference to the card element
 
+    // Show empty state when all cards have been deleted
+    function showEmptyStateIfNeeded() {
+        const remainingCards = document.querySelectorAll('.dashboard-file-card');
+        if (remainingCards.length > 0) return;
+
+        // Find the recent-activities container
+        const recentActivities = document.querySelector('.recent-activities');
+        if (!recentActivities) return;
+
+        // Replace entire content with empty state
+        recentActivities.innerHTML = `
+            <div class="recent-activities-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <h2 class="recent-activities-title mb-0">Recent Activities</h2>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="${APP_URL}/user_pages/collections.php" class="view-all-link m-0">View all</a>
+                </div>
+            </div>
+            <div class="empty-state-container">
+                <div class="empty-state-icon">
+                    <i class="bi bi-cloud-upload"></i>
+                </div>
+                <h5 class="empty-state-title">No Archives Yet</h5>
+                <p class="empty-state-text">Start building your repository by uploading documents.</p>
+                <a href="${APP_URL}/admin_pages/upload.php" class="btn btn-primary empty-state-btn">
+                    <i class="bi bi-plus-lg me-2"></i>Upload Now
+                </a>
+            </div>
+        `;
+    }
+
     // Category color mapping
     const categoryColors = {
         'culture': { bg: '#FFF3E0', color: '#E65100' },
@@ -395,7 +427,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         }
 
-                        // 4. Refresh stat cards live
+                        // 4. Show empty state if no cards remain
+                        showEmptyStateIfNeeded();
+
+                        // 5. Refresh stat cards live
                         refreshStats();
                     } else {
                         alert('Error deleting item: ' + (data.message || 'Unknown error'));
@@ -595,6 +630,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             const card = cb.closest('.col-md-6, .col-lg-3');
                             if (card) card.remove();
                         });
+
+                        // Show empty state if no cards remain
+                        showEmptyStateIfNeeded();
 
                         // Reset select all button
                         if (selectAllCheck) selectAllCheck.checked = false;
