@@ -27,7 +27,7 @@ $sortFilter = $_GET['sort'] ?? 'newest';
 // --- Fetch Categories with Counts ---
 $catSql = "SELECT cmv.field_value as id, cmv.field_value as name, COUNT(DISTINCT n.id) as count 
            FROM custom_metadata_values cmv
-           INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+           INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
            LEFT JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
            WHERE cmf.field_label = 'Category'
            GROUP BY cmv.field_value
@@ -41,7 +41,7 @@ $totalCollectionsCount = $pdo->query($totalDocsSql)->fetchColumn();
 // Get languages for filter
 $langSql = "SELECT cmv.field_value as id, cmv.field_value as name 
             FROM custom_metadata_values cmv
-            INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+            INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
             INNER JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
             WHERE cmf.field_label = 'Language'
             GROUP BY cmv.field_value 
@@ -51,7 +51,7 @@ $languages = $pdo->query($langSql)->fetchAll();
 // Get editions for filter with counts
 $editionSql = "SELECT cmv.field_value as edition, COUNT(DISTINCT n.id) as count 
                FROM custom_metadata_values cmv
-               INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+               INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
                INNER JOIN newspapers n ON cmv.file_id = n.id
                WHERE cmf.field_label = 'Edition' AND n.deleted_at IS NULL 
                AND cmv.field_value IS NOT NULL AND cmv.field_value != ''
@@ -64,7 +64,7 @@ $dateRangeSql = "SELECT
                  MIN(STR_TO_DATE(cmv.field_value, '%Y-%m-%d')) as min_date, 
                  MAX(STR_TO_DATE(cmv.field_value, '%Y-%m-%d')) as max_date 
                  FROM custom_metadata_values cmv
-                 INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+                 INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
                  INNER JOIN newspapers n ON cmv.file_id = n.id
                  WHERE (cmf.field_label = 'Publication Date' OR cmf.field_label = 'Date Issued') 
                  AND n.deleted_at IS NULL 
@@ -81,7 +81,7 @@ if (!empty($categoryFilter)) {
     $placeholders = implode(',', array_fill(0, count($categoryFilter), '?'));
     $whereClause .= " AND EXISTS (
         SELECT 1 FROM custom_metadata_values cmv2
-        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        INNER JOIN custom_metadata_fields cmf2 ON cmv2.field_id = cmf2.id
         WHERE cmv2.file_id = n.id 
         AND cmf2.field_label = 'Category' 
         AND cmv2.field_value IN ($placeholders)
@@ -93,7 +93,7 @@ if (!empty($languageFilter)) {
     $placeholders = implode(',', array_fill(0, count($languageFilter), '?'));
     $whereClause .= " AND EXISTS (
         SELECT 1 FROM custom_metadata_values cmv2
-        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        INNER JOIN custom_metadata_fields cmf2 ON cmv2.field_id = cmf2.id
         WHERE cmv2.file_id = n.id 
         AND cmf2.field_label = 'Language' 
         AND cmv2.field_value IN ($placeholders)
@@ -105,7 +105,7 @@ if (!empty($editionFilter)) {
     $placeholders = implode(',', array_fill(0, count($editionFilter), '?'));
     $whereClause .= " AND EXISTS (
         SELECT 1 FROM custom_metadata_values cmv2
-        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        INNER JOIN custom_metadata_fields cmf2 ON cmv2.field_id = cmf2.id
         WHERE cmv2.file_id = n.id 
         AND cmf2.field_label = 'Edition' 
         AND cmv2.field_value IN ($placeholders)
@@ -130,7 +130,7 @@ if ($searchQuery) {
 if ($dateFrom) {
     $whereClause .= " AND EXISTS (
         SELECT 1 FROM custom_metadata_values cmv2
-        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        INNER JOIN custom_metadata_fields cmf2 ON cmv2.field_id = cmf2.id
         WHERE cmv2.file_id = n.id 
         AND (cmf2.field_label = 'Publication Date' OR cmf2.field_label = 'Date Issued') 
         AND STR_TO_DATE(cmv2.field_value, '%Y-%m-%d') >= STR_TO_DATE(?, '%Y-%m-%d')
@@ -141,7 +141,7 @@ if ($dateFrom) {
 if ($dateTo) {
     $whereClause .= " AND EXISTS (
         SELECT 1 FROM custom_metadata_values cmv2
-        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        INNER JOIN custom_metadata_fields cmf2 ON cmv2.field_id = cmf2.id
         WHERE cmv2.file_id = n.id 
         AND (cmf2.field_label = 'Publication Date' OR cmf2.field_label = 'Date Issued') 
         AND STR_TO_DATE(cmv2.field_value, '%Y-%m-%d') <= STR_TO_DATE(?, '%Y-%m-%d')
