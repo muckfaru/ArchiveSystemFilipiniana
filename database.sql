@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS newspapers (
     thumbnail_path VARCHAR(500) DEFAULT NULL,
     -- Bulk image gallery support
     is_bulk_image TINYINT(1) DEFAULT 0,
-    image_paths TEXT DEFAULT NULL,
+    image_paths JSON DEFAULT NULL,
     -- Conversion tracking for MOBI to EPUB
     conversion_status ENUM(
         'uploaded',
@@ -127,9 +127,6 @@ CREATE TABLE IF NOT EXISTS newspapers (
     converted_at DATETIME DEFAULT NULL,
     -- User tracking
     uploaded_by INT NOT NULL,
-    -- Bulk image gallery support
-    is_bulk_image TINYINT(1) DEFAULT 0,
-    image_paths JSON DEFAULT NULL,
     -- Soft delete
     deleted_by INT DEFAULT NULL,
     deleted_at DATETIME DEFAULT NULL,
