@@ -333,6 +333,56 @@ function showAlert($type, $message)
 }
 
 /**
+ * Get organized upload path based on Year/Month/FileType structure
+ * Uses publication date for folder organization (falls back to current date)
+ * 
+ * @param string $fileExt File extension or type (pdf, epub, mobi, thumbnail, etc.)
+ * @param string $fileName The filename to use
+ * @param string|null $publicationDate Publication date (Y-m-d format) to determine year/month folders
+ * @return array ['dir' => full dir path, 'relative_dir' => relative dir, 'full_path' => full file path, 'relative_path' => relative file path]
+ */
+function getOrganizedUploadPath($fileExt, $fileName, $publicationDate = null)
+{
+    // Use publication date if provided, otherwise current date
+    if ($publicationDate && strtotime($publicationDate)) {
+        $timestamp = strtotime($publicationDate);
+        $year = date('Y', $timestamp);
+        $month = date('m', $timestamp);
+    } else {
+        $year = date('Y');
+        $month = date('m');
+    }
+
+    // Map file extension to subfolder
+    $ext = strtolower($fileExt);
+    if ($ext === 'pdf') {
+        $typeFolder = 'pdf';
+    } elseif ($ext === 'epub') {
+        $typeFolder = 'epub';
+    } elseif ($ext === 'mobi') {
+        $typeFolder = 'mobi';
+    } elseif ($ext === 'thumbnail') {
+        $typeFolder = 'thumbnail';
+    } else {
+        $typeFolder = 'images'; // jpg, jpeg, png, webp, cbz, gallery, etc.
+    }
+
+    $relativeDir = "uploads/newspapers/$year/$month/$typeFolder";
+    $fullDir = UPLOAD_PATH . "newspapers/$year/$month/$typeFolder";
+
+    if (!is_dir($fullDir)) {
+        mkdir($fullDir, 0777, true);
+    }
+
+    return [
+        'dir' => $fullDir,
+        'relative_dir' => $relativeDir,
+        'full_path' => $fullDir . '/' . $fileName,
+        'relative_path' => $relativeDir . '/' . $fileName
+    ];
+}
+
+/**
  * Get and clear alert message
  */
 function getAlert()

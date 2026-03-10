@@ -10,6 +10,7 @@ set_time_limit(0);
 ini_set('memory_limit', '1024M');
 
 require_once __DIR__ . '/../backend/core/config.php';
+require_once __DIR__ . '/../backend/core/functions.php';
 // We need to manually include DB connection if not in config
 if (!isset($pdo)) {
     require_once __DIR__ . '/includes/db_connection.php'; // Adjust if needed
@@ -97,7 +98,8 @@ function processBulkImageJob($job, $items)
 
     // Create unique filename
     $zipFilename = uniqid('archive_') . '.cbz';
-    $zipPath = UPLOAD_PATH . 'newspapers/' . $zipFilename;
+    $cbzPathInfo = getOrganizedUploadPath('cbz', $zipFilename, $metadata['publication_date'] ?? null);
+    $zipPath = $cbzPathInfo['full_path'];
 
     // Ensure directory exists
     if (!is_dir(dirname($zipPath))) {
@@ -138,12 +140,11 @@ function processBulkImageJob($job, $items)
     // Create Thumbnail
     $thumbPath = '';
     if ($thumbnailFile && file_exists($thumbnailFile)) {
-        $thumbFilename = uniqid('thumb_') . '.jpg'; // Assume jpg/png
-        $thumbPathReal = UPLOAD_PATH . 'thumbnails/' . $thumbFilename;
-        if (!is_dir(dirname($thumbPathReal)))
-            mkdir(dirname($thumbPathReal), 0777, true);
-        copy($thumbnailFile, $thumbPathReal);
-        $thumbPath = 'uploads/thumbnails/' . $thumbFilename;
+        $thumbExt = strtolower(pathinfo($thumbnailFile, PATHINFO_EXTENSION)) ?: 'jpg';
+        $thumbFilename = uniqid('thumb_') . '.' . $thumbExt;
+        $thumbPathInfo = getOrganizedUploadPath('thumbnail', $thumbFilename, $metadata['publication_date'] ?? null);
+        copy($thumbnailFile, $thumbPathInfo['full_path']);
+        $thumbPath = $thumbPathInfo['relative_path'];
     }
 
     // Insert into newspapers
@@ -192,7 +193,8 @@ function processBulkDocumentJob($job, $items)
             // Move file to final location
             $ext = pathinfo($item['original_name'], PATHINFO_EXTENSION);
             $newFilename = uniqid('doc_') . '.' . $ext;
-            $finalPath = UPLOAD_PATH . 'newspapers/' . $newFilename;
+            $docPathInfo = getOrganizedUploadPath($ext, $newFilename, $meta['publication_date'] ?? null);
+            $finalPath = $docPathInfo['full_path'];
 
             if (!is_dir(dirname($finalPath)))
                 mkdir(dirname($finalPath), 0777, true);
