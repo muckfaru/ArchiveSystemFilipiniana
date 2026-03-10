@@ -39,9 +39,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         /* Force list view styles - inline to bypass cache */
         .browse-list-view .browse-list-metadata {
             display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 12px 20px !important;
-            margin-top: 0 !important;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+            gap: 10px 20px !important;
+            margin-top: auto !important;
             padding-top: 14px !important;
             border-top: 1px solid #E5E7EB !important;
         }
@@ -65,6 +65,24 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             font-weight: 500 !important;
             color: #374151 !important;
             font-size: 13px !important;
+        }
+        /* Hide custom-meta (renderCustomMetadata output) in browse - already shown via browse-list-metadata */
+        .browse-file-card-compact .dashboard-card-custom-meta {
+            display: none !important;
+        }
+        /* Responsive list view */
+        @media (max-width: 768px) {
+            .browse-list-view .browse-file-card-compact {
+                flex-direction: column !important;
+            }
+            .browse-list-view .public-thumb-wrap {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 200px !important;
+            }
+            .browse-list-view .browse-list-metadata {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
         }
     </style>
 
@@ -473,11 +491,6 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                         </div>
                                     <?php endif; ?>
                                 </div>
-
-                                <!-- Custom Metadata -->
-                                <?php if (!empty($paper['custom_metadata'])): ?>
-                                    <?= renderCustomMetadata($paper['custom_metadata'], 3) ?>
-                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

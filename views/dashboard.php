@@ -181,9 +181,10 @@
                                 <!-- Category badge on thumbnail -->
                                 <?php 
                                     $searchCatVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                                    $searchCatClass = 'dashboard-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $searchCatVal));
                                     if ($searchCatVal && strtolower($searchCatVal) !== 'uncategorized'): 
                                 ?>
-                                <span class="dashboard-thumb-badge">
+                                <span class="dashboard-thumb-badge <?= htmlspecialchars($searchCatClass) ?>">
                                     <?= htmlspecialchars($searchCatVal) ?>
                                 </span>
                                 <?php endif; ?>
@@ -307,9 +308,10 @@
                                 <!-- Category badge on thumbnail -->
                                 <?php 
                                     $categoryVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                                    $catClass = 'dashboard-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $categoryVal));
                                     if ($categoryVal && strtolower($categoryVal) !== 'uncategorized'): 
                                 ?>
-                                <span class="dashboard-thumb-badge">
+                                <span class="dashboard-thumb-badge <?= htmlspecialchars($catClass) ?>">
                                     <?= htmlspecialchars($categoryVal) ?>
                                 </span>
                                 <?php endif; ?>

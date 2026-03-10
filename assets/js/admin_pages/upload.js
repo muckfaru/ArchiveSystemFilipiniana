@@ -1102,17 +1102,50 @@ document.addEventListener('DOMContentLoaded', function () {
             // Use publisher; fall back to creator (author) only if publisher blank
             const publisher = m.publisher || m.creator || '';
 
-            fillField('title', m.title, 'title');
-            fillField('publisher', publisher, 'publisher');
-            fillField('publication_date', m.publication_date, 'publication_date');
-            fillField('description', m.description, 'description');
+            // ── Smart field finder: match form fields by label ──
+            // Form fields use id="field_XX", so we find them by their label text
+            const fieldMap = {};
+            document.querySelectorAll('.form-group label, .form-group-full label').forEach(lbl => {
+                const input = lbl.closest('.form-group, .form-group-full')?.querySelector('input, textarea, select');
+                if (input && input.id) {
+                    const label = lbl.textContent.replace(/\*/g, '').trim().toLowerCase();
+                    fieldMap[label] = input.id;
+                }
+            });
 
-            // Keywords → tags
+            // Fill by label match (falls back to hardcoded id if no label match)
+            const findFieldId = (labels) => {
+                for (const l of labels) {
+                    if (fieldMap[l]) return fieldMap[l];
+                }
+                return null;
+            };
+
+            const titleFieldId = findFieldId(['title']) || 'title';
+            const publisherFieldId = findFieldId(['publisher']) || 'publisher';
+            const dateFieldId = findFieldId(['date', 'date published', 'publication date', 'date issued']) || 'publication_date';
+            const descFieldId = findFieldId(['description']) || 'description';
+
+            fillField(titleFieldId, m.title, 'title');
+            fillField(publisherFieldId, publisher, 'publisher');
+            fillField(dateFieldId, m.publication_date, 'publication_date');
+            fillField(descFieldId, m.description, 'description');
+
+            // Keywords → tags (find by label or fall back to hidden input)
+            const tagsFieldId = findFieldId(['tags', 'keywords']);
             if (m.keywords) {
-                const hiddenKw = document.getElementById('keywordsHidden');
+                // Try the tags widget hidden input first
+                const hiddenKw = tagsFieldId
+                    ? document.getElementById(tagsFieldId + '_hidden')
+                    : document.getElementById('keywordsHidden');
                 if (hiddenKw && !hiddenKw.value.trim()) {
                     hiddenKw.value = m.keywords;
-                    if (typeof setTags === 'function') {
+                    const pillsFieldName = hiddenKw.id.replace('_hidden', '');
+                    if (typeof addTagChip === 'function') {
+                        m.keywords.split(',').map(t => t.trim()).filter(Boolean).forEach(tag => {
+                            addTagChip(pillsFieldName, tag);
+                        });
+                    } else if (typeof setTags === 'function') {
                         setTags(m.keywords.split(',').map(t => t.trim()).filter(Boolean));
                     }
                     if (bulkIdx !== null && bulkFiles[bulkIdx]) {
@@ -1123,7 +1156,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Language: auto-select the matched DB language_id
             if (data.languageId) {
-                const langEl = document.getElementById('language_id');
+                const langFieldId = findFieldId(['language']) || 'language_id';
+                const langEl = document.getElementById(langFieldId);
                 if (langEl && !langEl.value) {
                     langEl.value = data.languageId;
                     langEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1136,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Re-validate: refresh tab statuses and counters
             if (bulkIdx !== null) {
                 // Trigger status recalculation via field input event (saveCurrentFormData path)
-                const titleInp = document.getElementById('title');
+                const titleInp = document.getElementById(titleFieldId);
                 if (titleInp) titleInp.dispatchEvent(new Event('input', { bubbles: true }));
                 // Refresh tab cards and counters
                 if (typeof renderTabs === 'function') renderTabs();
@@ -1181,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Subtle success flash on title field (optional visual feedback)
-            const titleEl = document.getElementById('title');
+            const titleEl = document.getElementById(titleFieldId);
             if (titleEl && m.title) {
                 titleEl.style.transition = 'background 0.4s';
                 titleEl.style.background = '#f0fff4';

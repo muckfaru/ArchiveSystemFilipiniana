@@ -1032,7 +1032,7 @@ $formatLabel = match (true) {
         <?php if ($readerType === 'mobi-converting'): ?>
         async function convertMobiFile() {
             try {
-                const response = await fetch(APP_URL + `/admin_pages/convert_mobi.php?file_id=${FILE_ID}`);
+                const response = await fetch(APP_URL + `/user_pages/convert_mobi.php?file_id=${FILE_ID}`);
                 const data = await response.json();
                 
                 if (data.success) {

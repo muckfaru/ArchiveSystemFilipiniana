@@ -229,10 +229,9 @@ function countCategories()
     $stmt = $pdo->query("
         SELECT COUNT(DISTINCT cmv.field_value) as total 
         FROM custom_metadata_values cmv
-        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
-        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
         INNER JOIN newspapers n ON cmv.file_id = n.id
-        WHERE (cmf.field_name = 'category' OR LOWER(COALESCE(cmf.field_label, ff.field_label)) IN ('category', 'categories'))
+        WHERE LOWER(ff.field_label) IN ('category', 'categories')
         AND n.deleted_at IS NULL
         AND cmv.field_value IS NOT NULL 
         AND cmv.field_value != ''
@@ -1087,4 +1086,60 @@ function getMetadataValueByLabel($customMetadata, $labels, $default = '')
     }
 
     return $default;
+}
+
+/**
+ * Override newspapers.title with the custom metadata "Title" field value.
+ * 
+ * The newspapers.title column may contain the original filename or an
+ * auto-extracted title from file metadata. The user-entered custom
+ * metadata "Title" field should take priority when it has a value.
+ *
+ * @param array &$documents Array of document rows (by reference)
+ * @param PDO $pdo Database connection
+ */
+function applyTitleOverrides(&$documents, $pdo)
+{
+    if (empty($documents)) return;
+
+    $fileIds = array_column($documents, 'id');
+
+    // Find the "Title" field ID from form_fields
+    $titleFieldId = null;
+    try {
+        $stmt = $pdo->query("
+            SELECT ff.id FROM form_fields ff
+            JOIN form_templates ft ON ff.form_id = ft.id AND ft.is_active = 1
+            WHERE LOWER(TRIM(ff.field_label)) = 'title'
+            LIMIT 1
+        ");
+        $row = $stmt->fetch();
+        if ($row) {
+            $titleFieldId = $row['id'];
+        }
+    } catch (PDOException $e) {
+        // Silently ignore if tables don't exist
+    }
+
+    if (!$titleFieldId) return;
+
+    // Fetch title values for all documents in one query
+    $placeholders = implode(',', array_fill(0, count($fileIds), '?'));
+    $stmt = $pdo->prepare("
+        SELECT file_id, field_value
+        FROM custom_metadata_values
+        WHERE field_id = ? AND file_id IN ($placeholders)
+        AND field_value IS NOT NULL AND field_value != ''
+    ");
+    $params = array_merge([$titleFieldId], $fileIds);
+    $stmt->execute($params);
+    $titleValues = $stmt->fetchAll(PDO::FETCH_KEY_PAIR); // file_id => title
+
+    // Override
+    foreach ($documents as &$doc) {
+        if (isset($titleValues[$doc['id']]) && !empty($titleValues[$doc['id']])) {
+            $doc['title'] = $titleValues[$doc['id']];
+        }
+    }
+    unset($doc);
 }

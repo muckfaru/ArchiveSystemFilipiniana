@@ -1678,10 +1678,23 @@ button.public-admin-login-btn {
     flex-direction: row !important;
     max-width: 100% !important;
     align-items: stretch !important;
+    border-radius: 12px !important;
+    border: 1px solid #E5E7EB !important;
+    background: #FFFFFF !important;
+    overflow: hidden !important;
+    min-height: 180px !important;
+    transition: all 0.2s ease !important;
+}
+
+.browse-list-view .browse-file-card-compact:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-2px) !important;
+    border-color: #D1D5DB !important;
 }
 
 .browse-list-view .public-thumb-wrap {
-    width: 200px !important;
+    width: 180px !important;
+    min-width: 180px !important;
     flex-shrink: 0 !important;
     position: relative !important;
 }
@@ -1695,8 +1708,10 @@ button.public-admin-login-btn {
 
 .browse-list-view .public-file-thumbnail,
 .browse-list-view .public-file-thumbnail-placeholder {
-    aspect-ratio: 3/4 !important;
+    aspect-ratio: auto !important;
+    width: 100% !important;
     height: 100% !important;
+    object-fit: cover !important;
 }
 
 .browse-list-view .public-file-info {
@@ -1705,6 +1720,13 @@ button.public-admin-login-btn {
     display: flex !important;
     flex-direction: column !important;
     gap: 0 !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+}
+
+.browse-list-view .public-file-category-top {
+    align-self: flex-start !important;
+    margin-bottom: 8px !important;
 }
 
 .browse-list-view .public-file-date-line {
@@ -1717,11 +1739,12 @@ button.public-admin-login-btn {
 }
 
 .browse-list-view .public-file-title {
-    font-size: 18px !important;
+    font-size: 17px !important;
     font-weight: 600 !important;
     -webkit-line-clamp: 2 !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 8px !important;
     line-height: 1.4 !important;
+    color: #1F2937 !important;
 }
 
 .browse-list-view .public-file-description {
@@ -1739,9 +1762,9 @@ button.public-admin-login-btn {
 
 .browse-list-view .browse-list-metadata {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 12px 20px !important;
-    margin-top: 0 !important;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 10px 20px !important;
+    margin-top: auto !important;
     padding-top: 14px !important;
     border-top: 1px solid #E5E7EB !important;
 }

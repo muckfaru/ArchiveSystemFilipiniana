@@ -25,11 +25,25 @@ try {
 }
 
 // Get categories and languages for filters
-$categories = getCategories();
+// Fetch categories from custom metadata values (not the old categories table)
+$catStmt = $pdo->query("
+    SELECT DISTINCT cmv.field_value as id, cmv.field_value as name
+    FROM custom_metadata_values cmv
+    INNER JOIN form_fields ff ON cmv.field_id = ff.id
+    INNER JOIN newspapers n ON cmv.file_id = n.id
+    WHERE LOWER(ff.field_label) IN ('category', 'categories')
+    AND n.deleted_at IS NULL
+    AND cmv.field_value IS NOT NULL AND cmv.field_value != ''
+    ORDER BY cmv.field_value ASC
+");
+$categories = $catStmt->fetchAll();
 $languages = getLanguages();
 
 // Get recent newspapers
 $recentNewspapers = getRecentNewspapers(8);
+
+// Apply title overrides from custom metadata "Title" field
+applyTitleOverrides($recentNewspapers, $pdo);
 
 // INTEGRATION: Load display configuration for file cards
 $cardFields = getVisibleFields($pdo, 'card');
@@ -116,6 +130,9 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $searchResults = $stmt->fetchAll();
+
+    // Apply title overrides from custom metadata "Title" field
+    applyTitleOverrides($searchResults, $pdo);
 
     // INTEGRATION: Attach display-configured metadata to search results
     if (!empty($searchResults)) {

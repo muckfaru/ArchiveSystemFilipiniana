@@ -642,6 +642,71 @@ body .sidebar-title {
     font-weight: 600 !important;
 }
 
+/* Category color variants for dashboard badge */
+.dashboard-thumb-badge.dashboard-cat-politics {
+    background: #EFF6FF !important;
+    color: #2563EB !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-sports {
+    background: #F0FDF4 !important;
+    color: #16A34A !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-culture {
+    background: #FFF7ED !important;
+    color: #EA580C !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-business,
+.dashboard-thumb-badge.dashboard-cat-finance {
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-news,
+.dashboard-thumb-badge.dashboard-cat-world-news {
+    background: #FAF5FF !important;
+    color: #9333EA !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-entertainment {
+    background: #FDF2F8 !important;
+    color: #DB2777 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-technology {
+    background: #ECFEFF !important;
+    color: #0891B2 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-health {
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-science {
+    background: #ECFDF5 !important;
+    color: #059669 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-education {
+    background: #FEF3C7 !important;
+    color: #D97706 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-history {
+    background: #FDF4FF !important;
+    color: #A855F7 !important;
+}
+
+.dashboard-thumb-badge.dashboard-cat-other,
+.dashboard-thumb-badge.dashboard-cat-default,
+.dashboard-thumb-badge.dashboard-cat-uncategorized {
+    background: #F1F5F9 !important;
+    color: #475569 !important;
+}
+
 /* Card info section */
 .dashboard-card-info {
     padding: 14px 16px 16px;
