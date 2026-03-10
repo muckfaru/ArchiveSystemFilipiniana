@@ -28,7 +28,7 @@ $categoryFilter = $_GET['category'] ?? '';
 // --- Fetch Categories for filter ---
 $catSql = "SELECT DISTINCT cmv.field_value as id, cmv.field_value as name 
            FROM custom_metadata_values cmv
-           INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+           INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
            INNER JOIN newspapers n ON cmv.file_id = n.id
            WHERE cmf.field_label = 'Category' AND n.deleted_at IS NULL
            ORDER BY cmv.field_value ASC";
@@ -55,7 +55,7 @@ if ($searchQuery) {
 if ($categoryFilter && $categoryFilter !== 'all') {
     $whereClause .= " AND EXISTS (
         SELECT 1 FROM custom_metadata_values cmv2
-        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        INNER JOIN custom_metadata_fields cmf2 ON cmv2.field_id = cmf2.id
         WHERE cmv2.file_id = n.id 
         AND cmf2.field_label = 'Category' 
         AND cmv2.field_value = ?
