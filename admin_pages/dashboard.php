@@ -60,8 +60,18 @@ if (!empty($recentNewspapers)) {
 $searchQuery = $_GET['q'] ?? '';
 $categoryFilter = $_GET['category'] ?? '';
 $languageFilter = $_GET['language'] ?? '';
-$dateFrom = $_GET['date_from'] ?? '';
-$dateTo = $_GET['date_to'] ?? '';
+$dateFrom = trim($_GET['date_from'] ?? '');
+$dateTo = trim($_GET['date_to'] ?? '');
+
+// Convert year-only input to full date for SQL comparison
+$dateFromSql = $dateFrom;
+$dateToSql = $dateTo;
+if ($dateFrom !== '' && preg_match('/^\d{4}$/', $dateFrom)) {
+    $dateFromSql = $dateFrom . '-01-01';
+}
+if ($dateTo !== '' && preg_match('/^\d{4}$/', $dateTo)) {
+    $dateToSql = $dateTo . '-12-31';
+}
 
 $searchResults = [];
 if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) {
@@ -110,7 +120,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
             AND (cmf.field_label = 'Publication Date' OR cmf.field_label = 'Date Issued') 
             AND STR_TO_DATE(cmv2.field_value, '%Y-%m-%d') >= STR_TO_DATE(?, '%Y-%m-%d')
         )";
-        $params[] = $dateFrom;
+        $params[] = $dateFromSql;
     }
 
     if ($dateTo) {
@@ -122,7 +132,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
             AND (cmf.field_label = 'Publication Date' OR cmf.field_label = 'Date Issued') 
             AND STR_TO_DATE(cmv2.field_value, '%Y-%m-%d') <= STR_TO_DATE(?, '%Y-%m-%d')
         )";
-        $params[] = $dateTo;
+        $params[] = $dateToSql;
     }
 
     $sql .= " ORDER BY n.created_at DESC LIMIT 50";

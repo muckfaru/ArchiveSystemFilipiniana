@@ -20,9 +20,19 @@ $languageFilter = isset($_GET['language']) ? (is_array($_GET['language']) ? $_GE
 $languageFilter = array_filter($languageFilter, fn($l) => $l !== '' && $l !== 'all'); // Remove empty and 'all'
 $editionFilter = isset($_GET['edition']) ? (is_array($_GET['edition']) ? $_GET['edition'] : [$_GET['edition']]) : [];
 $editionFilter = array_filter($editionFilter, fn($e) => $e !== '' && $e !== 'all'); // Remove empty and 'all'
-$dateFrom = $_GET['date_from'] ?? '';
-$dateTo = $_GET['date_to'] ?? '';
+$dateFrom = trim($_GET['date_from'] ?? '');
+$dateTo = trim($_GET['date_to'] ?? '');
 $sortFilter = $_GET['sort'] ?? 'newest';
+
+// Convert year-only input to full date for SQL comparison
+$dateFromSql = $dateFrom;
+$dateToSql = $dateTo;
+if ($dateFrom !== '' && preg_match('/^\d{4}$/', $dateFrom)) {
+    $dateFromSql = $dateFrom . '-01-01';
+}
+if ($dateTo !== '' && preg_match('/^\d{4}$/', $dateTo)) {
+    $dateToSql = $dateTo . '-12-31';
+}
 
 // --- Fetch Categories with Counts ---
 $catSql = "SELECT cmv.field_value as id, cmv.field_value as name, COUNT(DISTINCT n.id) as count 
@@ -135,7 +145,7 @@ if ($dateFrom) {
         AND (cmf2.field_label = 'Publication Date' OR cmf2.field_label = 'Date Issued') 
         AND STR_TO_DATE(cmv2.field_value, '%Y-%m-%d') >= STR_TO_DATE(?, '%Y-%m-%d')
     )";
-    $params[] = $dateFrom;
+    $params[] = $dateFromSql;
 }
 
 if ($dateTo) {
@@ -146,7 +156,7 @@ if ($dateTo) {
         AND (cmf2.field_label = 'Publication Date' OR cmf2.field_label = 'Date Issued') 
         AND STR_TO_DATE(cmv2.field_value, '%Y-%m-%d') <= STR_TO_DATE(?, '%Y-%m-%d')
     )";
-    $params[] = $dateTo;
+    $params[] = $dateToSql;
 }
 
 // --- Count total for pagination ---
@@ -255,7 +265,9 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
     $filters = [];
 
     // Helper function to build URL params
-    $buildParams = function ($cats, $langs, $editions) use ($searchQuery, $dateFrom, $dateTo, $sortFilter) {
+    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter) {
+        $useDateFrom = ($overrideDateFrom !== null) ? $overrideDateFrom : $dateFrom;
+        $useDateTo = ($overrideDateTo !== null) ? $overrideDateTo : $dateTo;
         $params = [];
         if ($searchQuery)
             $params[] = 'q=' . urlencode($searchQuery);
@@ -265,10 +277,10 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
             $params[] = 'language[]=' . urlencode($l);
         foreach ($editions as $e)
             $params[] = 'edition[]=' . urlencode($e);
-        if ($dateFrom)
-            $params[] = 'date_from=' . urlencode($dateFrom);
-        if ($dateTo)
-            $params[] = 'date_to=' . urlencode($dateTo);
+        if ($useDateFrom)
+            $params[] = 'date_from=' . urlencode($useDateFrom);
+        if ($useDateTo)
+            $params[] = 'date_to=' . urlencode($useDateTo);
         if ($sortFilter)
             $params[] = 'sort=' . urlencode($sortFilter);
         return '?' . implode('&', $params);
@@ -343,7 +355,7 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
         } else {
             $dateLabel = 'Until ' . htmlspecialchars($dateTo);
         }
-        $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter);
+        $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter, '', '');
 
         $filters[] = '<span class="filter-tag filter-date">
             <i class="bi bi-calendar3 me-1"></i>' . $dateLabel . '
