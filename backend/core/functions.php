@@ -423,11 +423,11 @@ function getCustomMetadataValuesForFiles($fileIds)
 
     $stmt = $pdo->prepare("
         SELECT cmv.file_id, cmv.field_id, cmv.field_value, 
-               ff.field_label, ff.field_type
+               cmf.field_label, cmf.field_type
         FROM custom_metadata_values cmv
-        INNER JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
         WHERE cmv.file_id IN ($placeholders)
-        ORDER BY ff.display_order ASC
+        ORDER BY cmf.display_order ASC
     ");
     $stmt->execute($fileIds);
 
@@ -728,21 +728,20 @@ function getDisplayConfig($pdo, $context = 'both')
     }
 
     if (!$tableExists) {
-        // Fallback to all active form fields if no config table yet
+        // Fallback to all active custom metadata fields if no config table yet
         $query = "
             SELECT 
-                ff.id as field_id,
-                ff.field_label as field_name,
-                ff.field_label,
-                ff.field_type,
+                cmf.id as field_id,
+                cmf.field_label as field_name,
+                cmf.field_label,
+                cmf.field_type,
                 1 as show_on_card,
                 1 as show_in_modal,
-                ff.display_order as card_display_order,
-                ff.display_order as modal_display_order
-            FROM form_fields ff
-            JOIN form_templates ft ON ff.form_id = ft.id
-            WHERE ft.is_active = 1
-            ORDER BY ff.display_order ASC
+                cmf.display_order as card_display_order,
+                cmf.display_order as modal_display_order
+            FROM custom_metadata_fields cmf
+            WHERE cmf.is_enabled = 1
+            ORDER BY cmf.display_order ASC
         ";
         $stmt = $pdo->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -752,27 +751,26 @@ function getDisplayConfig($pdo, $context = 'both')
 
     $query = "
         SELECT 
-            ff.id as field_id,
-            ff.field_label as field_name,
-            ff.field_label,
-            ff.field_type,
+            cmf.id as field_id,
+            cmf.field_label as field_name,
+            cmf.field_label,
+            cmf.field_type,
             COALESCE(mdc.show_on_card, 1) as show_on_card,
             COALESCE(mdc.show_in_modal, 1) as show_in_modal,
-            ff.display_order as card_display_order,
-            ff.display_order as modal_display_order
-        FROM form_fields ff
-        JOIN form_templates ft ON ff.form_id = ft.id
-        LEFT JOIN metadata_display_config mdc ON ff.id = mdc.form_field_id
-        WHERE ft.is_active = 1
+            cmf.display_order as card_display_order,
+            cmf.display_order as modal_display_order
+        FROM custom_metadata_fields cmf
+        LEFT JOIN metadata_display_config mdc ON cmf.id = mdc.form_field_id
+        WHERE cmf.is_enabled = 1
     ";
 
     // Apply context filtering
     if ($context === 'card') {
-        $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ff.display_order ASC";
+        $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY cmf.display_order ASC";
     } elseif ($context === 'modal') {
-        $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ff.display_order ASC";
+        $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY cmf.display_order ASC";
     } else {
-        $query .= " ORDER BY ff.display_order ASC";
+        $query .= " ORDER BY cmf.display_order ASC";
     }
 
     $stmt = $pdo->query($query);
