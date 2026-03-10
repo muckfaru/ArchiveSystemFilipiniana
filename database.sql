@@ -54,22 +54,6 @@ CREATE TABLE IF NOT EXISTS custom_metadata_fields (
     INDEX idx_field_name (field_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Custom Metadata Values Table
--- Stores user-entered custom metadata values for each file
-CREATE TABLE IF NOT EXISTS custom_metadata_values (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    file_id INT NOT NULL COMMENT 'References newspapers.id',
-    field_id INT DEFAULT NULL COMMENT 'References custom_metadata_fields.id',
-    field_value TEXT DEFAULT NULL COMMENT 'User-entered value for this field',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (file_id) REFERENCES newspapers(id) ON DELETE CASCADE,
-    FOREIGN KEY (field_id) REFERENCES custom_metadata_fields(id) ON DELETE SET NULL,
-    INDEX idx_file_id (file_id),
-    INDEX idx_field_id (field_id),
-    UNIQUE KEY unique_file_field (file_id, field_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Form Templates Table
 -- Stores reusable form templates with predefined field configurations
 CREATE TABLE IF NOT EXISTS form_templates (
@@ -119,6 +103,22 @@ CREATE TABLE IF NOT EXISTS newspapers (
     FOREIGN KEY (uploaded_by) REFERENCES users (id),
     FOREIGN KEY (deleted_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- Custom Metadata Values Table
+-- Stores user-entered custom metadata values for each file
+CREATE TABLE IF NOT EXISTS custom_metadata_values (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    file_id INT NOT NULL COMMENT 'References newspapers.id',
+    field_id INT DEFAULT NULL COMMENT 'References custom_metadata_fields.id',
+    field_value TEXT DEFAULT NULL COMMENT 'User-entered value for this field',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (file_id) REFERENCES newspapers(id) ON DELETE CASCADE,
+    FOREIGN KEY (field_id) REFERENCES custom_metadata_fields(id) ON DELETE SET NULL,
+    INDEX idx_file_id (file_id),
+    INDEX idx_field_id (field_id),
+    UNIQUE KEY unique_file_field (file_id, field_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Activity Logs Table
 CREATE TABLE IF NOT EXISTS activity_logs (
