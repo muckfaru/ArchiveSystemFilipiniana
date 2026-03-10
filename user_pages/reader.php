@@ -59,9 +59,12 @@ if ($fileType === 'mobi') {
         // EPUB already exists, use it immediately (instant load)
         $epubRelativePath = preg_replace('/\.mobi$/i', '.epub', $file['file_path']);
         $epubUrl = '../serve_file.php?file=' . urlencode($epubRelativePath);
-    } else {
-        // EPUB doesn't exist, mark for conversion
+    } elseif (isCalibreAvailable()) {
+        // Calibre is installed, mark for conversion
         $needsConversion = true;
+    } else {
+        // No EPUB and no Calibre — will show download fallback
+        $conversionError = 'Calibre ebook-convert is not installed. MOBI files cannot be converted to EPUB for web reading. You can download the file instead.';
     }
 }
 
@@ -79,13 +82,32 @@ if ($fileType === 'pdf') {
 } elseif ($fileType === 'gallery') {
     $readerType = 'gallery';
     $galleryImages = json_decode($file['image_paths'] ?? '[]', true) ?: [];
+} elseif ($fileType === 'cbz') {
+    // CBZ = Comic Book Zip — extract image list from the archive
+    $readerType = 'gallery';
+    $galleryImages = [];
+    $cbzPath = __DIR__ . '/../' . $file['file_path'];
+    if (file_exists($cbzPath)) {
+        $zip = new ZipArchive();
+        if ($zip->open($cbzPath) === true) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = $zip->getNameIndex($i);
+                $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                    $galleryImages[] = $name;
+                }
+            }
+            $zip->close();
+            sort($galleryImages);
+        }
+    }
 } elseif (in_array($fileType, ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'webp'])) {
     $readerType = 'image';
 }
 
 // Human-readable format label
 $formatLabel = match (true) {
-    $fileType === 'gallery' => 'Images',
+    $fileType === 'gallery' || $fileType === 'cbz' => 'Images',
     $fileType === 'pdf' => 'PDF',
     $fileType === 'epub' => 'EPUB',
     $fileType === 'mobi' => 'MOBI',
@@ -840,12 +862,16 @@ $formatLabel = match (true) {
 
         <?php else: ?>
             <div class="fallback">
-                <i class="bi bi-file-earmark-break"></i>
-                <h3>Cannot Preview This File</h3>
                 <?php if ($fileType === 'mobi' && $conversionError): ?>
-                    <p style="font-size:14px;color:#f44;margin:12px 0;">
-                        MOBI Conversion Error: <?= htmlspecialchars($conversionError) ?>
+                    <i class="bi bi-book" style="font-size:48px;color:#64748B;margin-bottom:16px;"></i>
+                    <h3>MOBI Web Preview Unavailable</h3>
+                    <p style="font-size:14px;color:#94a3b8;margin:12px 0;max-width:420px;line-height:1.6;">
+                        This MOBI file needs Calibre to convert it to EPUB for web reading. 
+                        Calibre is not currently installed on the server. You can download the file and read it with a local e-book reader instead.
                     </p>
+                <?php else: ?>
+                    <i class="bi bi-file-earmark-break"></i>
+                    <h3>Cannot Preview This File</h3>
                 <?php endif; ?>
                 <p style="font-size:14px;">Format:
                     <?= strtoupper(htmlspecialchars($fileType)) ?>
@@ -1006,21 +1032,21 @@ $formatLabel = match (true) {
         <?php if ($readerType === 'mobi-converting'): ?>
         async function convertMobiFile() {
             try {
-                const response = await fetch(`convert_mobi.php?file_id=${FILE_ID}`);
+                const response = await fetch(APP_URL + `/admin_pages/convert_mobi.php?file_id=${FILE_ID}`);
                 const data = await response.json();
                 
                 if (data.success) {
                     // Reload the page to show the EPUB reader
                     window.location.reload();
                 } else {
-                    // On error, show alert and go back to dashboard
+                    // On error, show alert and go back
                     alert('Conversion failed: ' + data.error);
-                    window.location.href = '../admin_pages/dashboard.php';
+                    window.location.href = '../user_pages/public.php';
                 }
             } catch (error) {
-                // On error, show alert and go back to dashboard
+                // On error, show alert and go back
                 alert('Error: ' + error.message);
-                window.location.href = '../admin_pages/dashboard.php';
+                window.location.href = '../user_pages/public.php';
             }
         }
         
@@ -1182,11 +1208,16 @@ $formatLabel = match (true) {
             let galIndex = 0;
             const galImg = $('galleryImg');
             const galImages = GAL_IMAGES;
+            const IS_CBZ = <?= json_encode($fileType === 'cbz') ?>;
 
             function renderGalImg() {
                 if (!galImages.length) return;
                 const src = galImages[galIndex];
-                galImg.src = APP_URL + '/serve_file.php?file=' + encodeURIComponent(src);
+                if (IS_CBZ) {
+                    galImg.src = APP_URL + '/user_pages/serve_cbz_image.php?file_id=' + FILE_ID + '&image_path=' + encodeURIComponent(src);
+                } else {
+                    galImg.src = APP_URL + '/serve_file.php?file=' + encodeURIComponent(src);
+                }
                 const pct = Math.round(((galIndex + 1) / galImages.length) * 100);
                 progressBar.style.width = pct + '%';
                 progressLabel.textContent = `Image ${galIndex + 1} / ${galImages.length}`;
