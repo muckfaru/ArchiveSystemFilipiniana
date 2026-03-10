@@ -13,13 +13,33 @@ header('Content-Type: application/json');
 // Handle Move to Trash
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'move_to_trash') {
     try {
+        $currentUser = getCurrentUser();
+
+        // Handle Bulk Delete
+        if (isset($_POST['item_ids']) && is_array($_POST['item_ids'])) {
+            $successCount = 0;
+            $ids = array_map('intval', $_POST['item_ids']);
+            foreach ($ids as $id) {
+                if ($id > 0) {
+                    $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NOW(), deleted_by = ? WHERE id = ?");
+                    if ($stmt->execute([$currentUser['id'], $id])) {
+                        // Log activity
+                        $titleStmt = $pdo->prepare("SELECT title FROM newspapers WHERE id = ?");
+                        $titleStmt->execute([$id]);
+                        $item = $titleStmt->fetch();
+                        logActivity($currentUser['id'], 'delete', $item['title'] ?? "Archive", $id);
+                        $successCount++;
+                    }
+                }
+            }
+            echo json_encode(['success' => true, 'count' => $successCount]);
+            exit;
+        }
+
+        // Handle Single Delete
         $id = intval($_POST['item_id'] ?? 0);
 
-        // CSRF check would be good here, but for now relying on auth
-
         if ($id > 0) {
-            $currentUser = getCurrentUser();
-
             $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NOW(), deleted_by = ? WHERE id = ?");
             $success = $stmt->execute([$currentUser['id'], $id]);
 

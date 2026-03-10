@@ -31,7 +31,7 @@ require_once __DIR__ . '/../../backend/core/config.php';
     <!-- Page Specific CSS -->
     <?php if (isset($pageCss)): ?>
         <?php foreach ((array) $pageCss as $css): ?>
-            <link href="<?= APP_URL ?>/assets/css/pages/<?= $css ?>" rel="stylesheet">
+            <link href="<?= APP_URL ?>/assets/css/admin_pages/<?= $css ?>" rel="stylesheet">
         <?php endforeach; ?>
     <?php endif; ?>
 

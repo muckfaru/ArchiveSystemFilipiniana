@@ -1,0 +1,314 @@
+/**
+ * Form Builder Styles
+ * Archive System - Quezon City Public Library
+ */
+
+/* Container */
+.form-builder-container {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Header */
+.form-builder-header {
+    margin-bottom: 1.5rem !important;
+}
+
+.form-builder-header h4 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.form-builder-header .btn {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-builder-header .btn-primary {
+    background-color: #3A9AFF;
+    border-color: #3A9AFF;
+}
+
+.form-builder-header .btn-primary:hover {
+    background-color: #2a8aef;
+    border-color: #2a8aef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(58, 154, 255, 0.3);
+}
+
+/* Form Metadata Card */
+.form-builder-container .card {
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.form-builder-container .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.25rem;
+}
+
+.form-builder-container .card-header h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-builder-container .form-label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.form-builder-container .form-control,
+.form-builder-container .form-select {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.form-builder-container .form-control:focus,
+.form-builder-container .form-select:focus {
+    border-color: #3A9AFF;
+    box-shadow: 0 0 0 0.2rem rgba(58, 154, 255, 0.25);
+}
+
+/* Field Types Sidebar */
+.field-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field-type-item {
+    font-family: 'Poppins', sans-serif;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    cursor: grab;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.field-type-item:hover {
+    background-color: #e9ecef;
+    border-color: #3A9AFF;
+    transform: translateX(4px);
+}
+
+.field-type-item:active {
+    cursor: grabbing;
+}
+
+.field-type-item i {
+    font-size: 1.2rem;
+    color: #3A9AFF;
+}
+
+/* Form Canvas */
+.form-canvas {
+    min-height: 400px;
+    padding: 1rem;
+    background-color: #fafbfc;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+}
+
+.canvas-empty-state {
+    font-family: 'Poppins', sans-serif;
+}
+
+.canvas-empty-state i {
+    color: #dee2e6;
+}
+
+.canvas-empty-state p {
+    color: #6c757d;
+}
+
+/* Form Field Items */
+.form-field-item {
+    background-color: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-field-item:hover {
+    border-color: #3A9AFF;
+    box-shadow: 0 2px 8px rgba(58, 154, 255, 0.15);
+}
+
+.form-field-item.selected {
+    border-color: #3A9AFF;
+    background-color: #f0f8ff;
+    box-shadow: 0 2px 8px rgba(58, 154, 255, 0.2);
+}
+
+.field-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+.field-drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+
+.field-drag-handle:active {
+    cursor: grabbing;
+}
+
+.field-label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    color: #2c3e50;
+    flex-grow: 1;
+}
+
+.field-type-badge {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.form-field-item .badge.bg-danger {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.75rem;
+}
+
+.form-field-item .btn-outline-danger {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Sortable States */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #e9ecef;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+}
+
+/* Field Configuration Panel */
+#fieldConfigPanel .card-body {
+    padding: 1.25rem;
+}
+
+#noFieldSelected {
+    font-family: 'Poppins', sans-serif;
+}
+
+#noFieldSelected i {
+    color: #dee2e6;
+}
+
+#noFieldSelected p {
+    color: #6c757d;
+}
+
+/* Options Editor */
+#optionsList .input-group {
+    margin-bottom: 0.5rem;
+}
+
+#optionsList .form-control {
+    font-family: 'Poppins', sans-serif;
+}
+
+#optionsList .btn-outline-danger {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+#optionsList .btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+#addOptionBtn {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+}
+
+/* Save Button */
+#saveFieldConfigBtn {
+    font-family: 'Poppins', sans-serif;
+    background-color: #3A9AFF;
+    border-color: #3A9AFF;
+    font-weight: 500;
+}
+
+#saveFieldConfigBtn:hover {
+    background-color: #2a8aef;
+    border-color: #2a8aef;
+}
+
+/* Form Check */
+.form-check-label {
+    font-family: 'Poppins', sans-serif;
+    color: #2c3e50;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .form-builder-container .row > div {
+        margin-bottom: 1rem;
+    }
+    
+    .form-canvas {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-builder-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .form-builder-header > div {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-builder-header .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .field-type-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .field-type-item {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 576px) {
+    .field-item-header {
+        flex-wrap: wrap;
+    }
+    
+    .field-label {
+        flex-basis: 100%;
+        margin-bottom: 0.5rem;
+    }
+}

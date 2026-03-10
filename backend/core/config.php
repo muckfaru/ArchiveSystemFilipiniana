@@ -32,7 +32,7 @@ define('CALIBRE_CONVERT_PATH', 'C:\xampp\htdocs\tools\calibre\CalibrePortable\Ca
 // 2. Generate an App Password at https://myaccount.google.com/apppasswords
 // 3. Replace the values below with your Gmail and App Password
 define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
+define('SMTP_PORT', 465);  // Changed from 587 to 465 (SSL)
 define('SMTP_USERNAME', 'archivesystemfilipiniana@gmail.com');  // Replace with your Gmail
 define('SMTP_PASSWORD', 'folx ljgj qnub zjxn');      // Replace with your App Password
 define('SMTP_FROM_NAME', 'Archive System Filipiniana');

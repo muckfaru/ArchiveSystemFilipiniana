@@ -28,14 +28,32 @@ function sendEmail($to, $subject, $body)
     $mail = new PHPMailer(true);
 
     try {
+        // Enable verbose debug output (comment out in production)
+        // $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+        
         // SMTP Configuration
         $mail->isSMTP();
         $mail->Host = SMTP_HOST;
         $mail->SMTPAuth = true;
         $mail->Username = SMTP_USERNAME;
         $mail->Password = SMTP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        
+        // Use SMTPS (SSL) for port 465, STARTTLS for port 587
+        if (SMTP_PORT == 465) {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
         $mail->Port = SMTP_PORT;
+        
+        // Additional SMTP options for better compatibility
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
 
         // Sender
         $mail->setFrom(SMTP_USERNAME, SMTP_FROM_NAME);
@@ -48,10 +66,15 @@ function sendEmail($to, $subject, $body)
         $mail->Subject = $subject;
         $mail->Body = $body;
         $mail->AltBody = strip_tags($body);
+        
+        // Character encoding
+        $mail->CharSet = 'UTF-8';
 
         $mail->send();
         return ['success' => true, 'message' => 'Email sent successfully'];
     } catch (Exception $e) {
+        // Log the error for debugging
+        error_log("Email Error: " . $mail->ErrorInfo);
         return ['success' => false, 'message' => $mail->ErrorInfo];
     }
 }
@@ -138,14 +161,14 @@ function sendPasswordResetEmail($email, $name, $resetLink)
 
     $body = "
     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-        <div style='background-color: #4C3939; padding: 20px; text-align: center;'>
+        <div style='background-color: #3A9AFF; padding: 20px; text-align: center;'>
             <h1 style='color: white; margin: 0;'>Password Reset</h1>
         </div>
         <div style='padding: 30px; background-color: #f9f9f9;'>
             <p>Hello <strong>$name</strong>,</p>
             <p>We received a request to reset your password. Click the button below to set a new password:</p>
             <div style='text-align: center; margin: 30px 0;'>
-                <a href='$resetLink' style='background-color: #4C3939; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block;'>Reset Password</a>
+                <a href='$resetLink' style='background-color: #3A9AFF; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block;'>Reset Password</a>
             </div>
             <p style='color: #666; font-size: 14px;'>This link will expire in 24 hours.</p>
             <p style='color: #666; font-size: 14px;'>If you didn't request this, you can safely ignore this email.</p>

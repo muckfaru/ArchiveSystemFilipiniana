@@ -1,0 +1,13 @@
+/**
+ * Metadata Display Configuration Page Styles
+ * Archive System - Quezon City Public Library
+ */
+
+/* Spin animation for apply button loading state */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.spin {
+    display: inline-block;
+    animation: spin 0.75s linear infinite;
+}

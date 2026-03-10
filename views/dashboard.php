@@ -7,7 +7,14 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="top-search-pill d-flex align-items-center flex-grow-1 position-relative p-1">
                         <input type="text" class="form-control border-0 bg-transparent shadow-none px-3" name="q"
-                            placeholder="Search digital archives..." value="<?= htmlspecialchars($searchQuery) ?>">
+                            id="searchInput" placeholder="Search digital archives..."
+                            value="<?= htmlspecialchars($searchQuery) ?>">
+                        <?php if ($searchQuery): ?>
+                            <button type="button" class="btn-clear-search" onclick="clearSearch()"
+                                style="position: absolute; right: 15px; background: none; border: none; color: #9CA3AF; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;">
+                                <i class="bi bi-x-lg" style="font-size: 14px;"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
 
                     <div class="filter-dropdown-container">
@@ -30,9 +37,9 @@
         <div class="col-md-5 col-lg-4 text-end d-flex justify-content-end align-items-center gap-3">
             <div class="current-datetime-display d-flex flex-column text-end pe-4"
                 style="border-right: 1px solid #E0E0E0;">
-                <div id="currentDate" class="fw-bold text-dark mb-0" style="font-size: 12px; letter-spacing: 0.2px;">
+                <div id="currentDate" class="fw-bold text-dark mb-0" style="font-size: 15px; letter-spacing: 0.2px;">
                     Monday, 21 October 2024</div>
-                <div id="currentTime" class="text-muted" style="font-size: 11px;">14:32:05 PM</div>
+                <div id="currentTime" class="text-muted" style="font-size: 14px;">14:32:05 PM</div>
             </div>
         </div>
     </div>
@@ -45,7 +52,7 @@
             <div class="stat-card">
                 <div class="stat-card-header">
                     <span class="stat-card-title">Total Archives</span>
-                    <i class="bi bi-file-earmark-text-fill stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                    <i class="bi bi-file-earmark-text-fill stat-card-icon" style="color: #3A9AFF; font-size: 1.2rem;"></i>
                 </div>
                 <div class="stat-card-value">
                     <?= number_format($totalArchives) ?>
@@ -55,11 +62,11 @@
         <div class="col-md-6 col-lg-3">
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <span class="stat-card-title">Issues Count</span>
-                    <i class="bi bi-files-alt stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                    <span class="stat-card-title">Total Views</span>
+                    <i class="bi bi-eye stat-card-icon" style="color: #3A9AFF; font-size: 1.2rem;"></i>
                 </div>
                 <div class="stat-card-value">
-                    <?= number_format($totalIssues) ?>
+                    <?= number_format($totalViews) ?>
                 </div>
             </div>
         </div>
@@ -67,7 +74,7 @@
             <div class="stat-card">
                 <div class="stat-card-header">
                     <span class="stat-card-title">Years Covered</span>
-                    <i class="bi bi-calendar-range-fill stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                    <i class="bi bi-calendar-range-fill stat-card-icon" style="color: #3A9AFF; font-size: 1.2rem;"></i>
                 </div>
                 <div class="stat-card-value">
                     <?= $yearsCovered ?>
@@ -78,7 +85,7 @@
             <div class="stat-card">
                 <div class="stat-card-header">
                     <span class="stat-card-title">Total Categories</span>
-                    <i class="bi bi-grid-3x3-gap-fill stat-card-icon" style="color: #4C3939; font-size: 1.2rem;"></i>
+                    <i class="bi bi-grid-3x3-gap-fill stat-card-icon" style="color: #3A9AFF; font-size: 1.2rem;"></i>
                 </div>
                 <div class="stat-card-value">
                     <?= $totalCategories ?>
@@ -91,25 +98,35 @@
 <!-- Search Results (if any) -->
 <?php if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo): ?>
     <div class="mb-4">
-        <!-- New Mockup Header for Search Results -->
-        <div class="search-results-banner p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center"
-            style="background-color: #F5F6F8; border: 1px solid #EBEBEB;">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-info-circle-fill" style="color: #4C3939;"></i>
-                <span class="text-secondary fw-medium" style="font-size: 13px;">Showing results for
-                    <strong>"<?= htmlspecialchars($searchQuery ?: 'Selected Filters') ?>"</strong></span>
-            </div>
-            <a href="<?= APP_URL ?>/dashboard.php" class="btn btn-link p-0 text-uppercase fw-bold text-decoration-none"
-                style="color: #4C3939; font-size: 11px; letter-spacing: 1px;">
-                Clear Search
-            </a>
-        </div>
-
         <div class="d-flex justify-content-between align-items-end mb-4">
-            <h4 class="fw-bold mb-0 text-dark">Search Results</h4>
-            <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">
-                <?= count($searchResults) ?> Documents Found
-            </span>
+            <div>
+                <h4 class="fw-bold mb-1 text-dark" style="font-weight: 700 !important;">Search Results</h4>
+                <?php if ($searchQuery): ?>
+                    <p class="text-muted mb-0" style="font-size: 14px;">
+                        Showing results for "<span class="fw-semibold text-dark"><?= htmlspecialchars($searchQuery) ?></span>"
+                    </p>
+                <?php elseif ($categoryFilter): ?>
+                    <p class="text-muted mb-0" style="font-size: 14px;">
+                        Filtered by category: <span class="fw-semibold text-dark"><?php
+                        foreach ($categories as $cat) {
+                            if ($cat['id'] == $categoryFilter) {
+                                echo htmlspecialchars($cat['name']);
+                                break;
+                            }
+                        }
+                        ?></span>
+                    </p>
+                <?php endif; ?>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">
+                    <?= count($searchResults) ?> Documents Found
+                </span>
+                <a href="<?= APP_URL ?>/admin_pages/dashboard.php" class="text-uppercase fw-bold text-decoration-none"
+                    style="color: #3A9AFF; font-size: 11px; letter-spacing: 1px;">
+                    Clear Search
+                </a>
+            </div>
         </div>
         <?php if (empty($searchResults)): ?>
             <div class="text-center py-5">
@@ -118,73 +135,70 @@
                 </div>
                 <h5 class="fw-bold text-secondary">No Results Found</h5>
                 <p class="text-muted small">We couldn't find any documents matching your criteria.</p>
-                <a href="<?= APP_URL ?>/dashboard.php" class="btn btn-outline-secondary btn-sm mt-2 rounded-pill px-4">
+                <a href="<?= APP_URL ?>/admin_pages/dashboard.php" class="btn btn-outline-secondary btn-sm mt-2 rounded-pill px-4">
                     Clear Filters
                 </a>
             </div>
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($searchResults as $paper): ?>
+                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
+                    <?php $publicationLong = $paper['publication_date'] ? strtoupper(formatPublicationDate($paper['publication_date'], true)) : strtoupper(date('F j, Y', strtotime($paper['created_at']))); ?>
                     <div class="col-md-6 col-lg-3">
-                        <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
-                            data-bs-target="#filePreviewModal" data-id="<?= $paper['id'] ?>"
-                            data-title="<?= htmlspecialchars($paper['title']) ?>"
+                        <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
+                            data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-date="<?= htmlspecialchars($publicationShort) ?>"
                             data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
                             data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
                             data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
                             data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                            data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
+                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>"
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
+                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
-                            <?php if ($paper['thumbnail_path']): ?>
-                                <div class="position-relative">
-                                    <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
-                                    <?php if (!empty($paper['is_bulk_image'])): ?>
-                                        <div class="position-absolute top-0 end-0 m-2 badge shadow-sm"
-                                            style="font-size: 10px; background-color: #4C3939; color: white;">
-                                            <i class="bi bi-images"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="newspaper-thumbnail bg-secondary d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-newspaper text-white" style="font-size: 48px;"></i>
-                                </div>
-                            <?php endif; ?>
-                            <div class="newspaper-info">
-                                <div class="newspaper-category <?= strtolower($paper['category_name'] ?? '') ?>">
-                                    <?= strtoupper($paper['category_name'] ?? 'UNCATEGORIZED') ?>
-                                </div>
-                                <h6 class="newspaper-title">
-                                    <?= htmlspecialchars($paper['title']) ?>
-                                </h6>
-                                <div class="newspaper-date mb-2">
-                                    <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : 'N/A' ?>
-                                </div>
-                                <?php if (!empty($paper['keywords'])): ?>
-                                    <div class="mt-auto pt-2 d-flex gap-1 flex-wrap">
-                                        <?php
-                                        $tags = array_filter(array_map('trim', explode(',', $paper['keywords'])));
-                                        foreach (array_slice($tags, 0, 3) as $tag):
-                                            ?>
-                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
-                                                style="font-size: 10px;">
-                                                <?= htmlspecialchars($tag) ?>
-                                            </span>
-                                        <?php endforeach; ?>
-                                        <?php if (count($tags) > 3): ?>
-                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
-                                                style="font-size: 10px;">
-                                                +<?= count($tags) - 3 ?>
-                                            </span>
-                                        <?php endif; ?>
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
+                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
+
+                            <!-- Thumbnail with category badge -->
+                            <div class="dashboard-thumb-wrap">
+                                <?php if ($paper['thumbnail_path']): ?>
+                                    <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="dashboard-file-thumbnail"
+                                        alt="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>">
+                                <?php else: ?>
+                                    <div class="dashboard-file-thumbnail-placeholder">
+                                        <i class="bi bi-newspaper"></i>
                                     </div>
                                 <?php endif; ?>
+
+                                <!-- Category badge on thumbnail -->
+                                <span class="dashboard-thumb-badge">
+                                    <?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>
+                                </span>
+                            </div>
+
+                            <!-- Card info -->
+                            <div class="dashboard-card-info">
+                                <div class="dashboard-card-title">
+                                    <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
+                                </div>
+
+                                <!-- INTEGRATION: Display custom metadata using display configuration -->
+                                <?= renderCardMetadata($paper['custom_metadata'] ?? []) ?>
+                            </div>
+
+                            <!-- Admin action buttons (shown on hover) -->
+                            <div class="dashboard-card-actions">
+                                <button class="btn btn-edit"
+                                    onclick="event.stopPropagation(); window.location.href='<?= APP_URL ?>/admin_pages/upload.php?edit=<?= $paper['id'] ?>'">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <button class="btn btn-delete" onclick="event.stopPropagation(); deleteFile(<?= $paper['id'] ?>)">
+                                    <i class="bi bi-trash3"></i> Delete
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -197,97 +211,116 @@
 <?php if (empty($searchQuery) && empty($categoryFilter) && empty($languageFilter) && empty($dateFrom) && empty($dateTo)): ?>
     <!-- Recent Activities -->
     <div class="recent-activities">
-        <div class="recent-activities-header">
-            <h2 class="recent-activities-title">Recent Activities</h2>
-            <a href="<?= APP_URL ?>/pages/collections.php" class="view-all-link">View all</a>
+        <div class="recent-activities-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <h2 class="recent-activities-title mb-0">Recent Activities</h2>
+                <span id="selectedFilesCount" class="badge bg-primary"
+                    style="display: none; font-size: 12px; padding: 6px 12px; border-radius: 20px;">
+                    <i class="bi bi-check-circle"></i>
+                    <span id="selectedCount">0</span> selected
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <?php if (!empty($recentNewspapers)): ?>
+                    <div class="form-check m-0">
+                        <input class="form-check-input shadow-none" type="checkbox" id="dashboardSelectAll"
+                            style="cursor: pointer; width: 16px; height: 16px; margin-top: 2px;">
+                        <label class="form-check-label text-muted fw-semibold" for="dashboardSelectAll"
+                            style="font-size: 13px; cursor: pointer; user-select: none;">Select All</label>
+                    </div>
+                    <button type="button" id="dashboardBulkDeleteBtn"
+                        class="btn btn-sm btn-danger d-none d-flex align-items-center gap-1"
+                        style="border-radius: 6px; padding: 4px 10px;">
+                        <i class="bi bi-trash3"></i> Delete
+                    </button>
+                <?php endif; ?>
+                <a href="<?= APP_URL ?>/user_pages/collections.php" class="view-all-link m-0">View all</a>
+            </div>
         </div>
 
         <?php if (empty($recentNewspapers)): ?>
-            <div class="text-center py-5 bg-light rounded-4 border border-dashed">
-                <div class="mb-3">
-                    <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm"
-                        style="width: 60px; height: 60px;">
-                        <i class="bi bi-cloud-upload text-secondary" style="font-size: 24px;"></i>
-                    </div>
+            <div class="empty-state-container">
+                <div class="empty-state-icon">
+                    <i class="bi bi-cloud-upload"></i>
                 </div>
-                <h5 class="fw-bold text-secondary">No Archives Yet</h5>
-                <p class="text-muted small mb-3">Start building your repository by uploading documents.</p>
-                <a href="<?= APP_URL ?>/pages/upload.php" class="btn btn-primary rounded-pill px-4"
-                    style="background: #4C3939; border: none;">
+                <h5 class="empty-state-title">No Archives Yet</h5>
+                <p class="empty-state-text">Start building your repository by uploading documents.</p>
+                <a href="<?= APP_URL ?>/admin_pages/upload.php" class="btn btn-primary empty-state-btn">
                     <i class="bi bi-plus-lg me-2"></i>Upload Now
                 </a>
             </div>
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($recentNewspapers as $paper): ?>
+                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
+                    <?php $publicationLong = $paper['publication_date'] ? strtoupper(formatPublicationDate($paper['publication_date'], true)) : strtoupper(date('F j, Y', strtotime($paper['created_at']))); ?>
                     <div class="col-md-6 col-lg-3">
-                        <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
-                            data-bs-target="#filePreviewModal" data-id="<?= $paper['id'] ?>"
-                            data-title="<?= htmlspecialchars($paper['title']) ?>"
+                        <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
+                            data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= $paper['publication_date'] ? date('M Y', strtotime($paper['publication_date'])) : 'N/A' ?>"
+                            data-date="<?= htmlspecialchars($publicationShort) ?>"
                             data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
                             data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
                             data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
                             data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                            data-category="<?= htmlspecialchars($paper['category_name'] ?? 'Uncategorized') ?>"
+                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>"
                             data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
+                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>">
-                            <?php if ($paper['thumbnail_path']): ?>
-                                <div class="position-relative">
-                                    <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
-                                    <?php if (!empty($paper['is_bulk_image'])): ?>
-                                        <div class="position-absolute top-0 end-0 m-2 badge shadow-sm"
-                                            style="font-size: 10px; background-color: #4C3939; color: white;">
-                                            <i class="bi bi-images"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="newspaper-thumbnail bg-secondary d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-newspaper text-white" style="font-size: 48px;"></i>
-                                </div>
-                            <?php endif; ?>
+                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
+                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
 
-                            <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
-                                <div class="position-absolute top-0 start-0 m-2 badge bg-success shadow-sm"
-                                    style="font-size: 10px; z-index: 2;">
-                                    NEW
-                                </div>
-                            <?php endif; ?>
+                            <!-- Thumbnail with category badge -->
+                            <div class="dashboard-thumb-wrap">
+                                <!-- Checkbox for multi-select -->
+                                <input class="form-check-input dashboard-item-checkbox shadow-none bg-white" type="checkbox"
+                                    value="<?= $paper['id'] ?>" onclick="event.stopPropagation();">
 
-                            <div class="newspaper-info">
-                                <div class="newspaper-category <?= strtolower($paper['category_name'] ?? '') ?>">
-                                    <?= strtoupper($paper['category_name'] ?? 'UNCATEGORIZED') ?>
-                                </div>
-                                <h6 class="newspaper-title">
-                                    <?= htmlspecialchars($paper['title']) ?>
-                                </h6>
-                                <div class="newspaper-date mb-2">
-                                    <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : date('d F Y', strtotime($paper['created_at'])) ?>
-                                </div>
-                                <?php if (!empty($paper['keywords'])): ?>
-                                    <div class="mt-auto pt-2 d-flex gap-1 flex-wrap">
-                                        <?php
-                                        $tags = array_filter(array_map('trim', explode(',', $paper['keywords'])));
-                                        foreach (array_slice($tags, 0, 3) as $tag):
-                                            ?>
-                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
-                                                style="font-size: 10px;">
-                                                <?= htmlspecialchars($tag) ?>
-                                            </span>
-                                        <?php endforeach; ?>
-                                        <?php if (count($tags) > 3): ?>
-                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1"
-                                                style="font-size: 10px;">
-                                                +<?= count($tags) - 3 ?>
-                                            </span>
-                                        <?php endif; ?>
+                                <?php if ($paper['thumbnail_path']): ?>
+                                    <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="dashboard-file-thumbnail"
+                                        alt="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>">
+                                <?php else: ?>
+                                    <div class="dashboard-file-thumbnail-placeholder">
+                                        <i class="bi bi-newspaper"></i>
                                     </div>
                                 <?php endif; ?>
+
+                                <!-- Category badge on thumbnail -->
+                                <span class="dashboard-thumb-badge">
+                                    <?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>
+                                </span>
+
+                                <!-- NEW badge for recent uploads -->
+                                <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
+                                    <div class="position-absolute bottom-0 start-0 m-2 badge bg-success shadow-sm"
+                                        style="font-size: 10px; z-index: 2;">
+                                        NEW
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Card info -->
+                            <div class="dashboard-card-info">
+                                <div class="dashboard-card-title">
+                                    <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
+                                </div>
+
+                                <!-- INTEGRATION: Display custom metadata using display configuration -->
+                                <?= renderCardMetadata($paper['custom_metadata'] ?? []) ?>
+                            </div>
+
+                            <!-- Admin action buttons (shown on hover) -->
+                            <div class="dashboard-card-actions">
+                                <button class="btn btn-edit"
+                                    onclick="event.stopPropagation(); window.location.href='<?= APP_URL ?>/admin_pages/upload.php?edit=<?= $paper['id'] ?>'">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <button class="btn btn-delete" onclick="event.stopPropagation(); deleteFile(<?= $paper['id'] ?>)">
+                                    <i class="bi bi-trash3"></i> Delete
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -297,130 +330,96 @@
     </div>
 <?php endif; ?>
 
-<!-- File Preview Modal -->
+<!-- File Preview Modal (Admin) -->
 <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content"
-            style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content public-modal-content">
             <div class="modal-body p-0">
-                <div class="row g-0">
-                    <!-- Left: Preview Image & Actions -->
-                    <div class="col-md-6 d-flex flex-column" style="background: #2C2C2C;">
-                        <!-- Image Container -->
-                        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-4 position-relative"
-                            style="min-height: 300px;">
-                            <div class="photo-viewer-container position-relative">
-                                <img id="photoViewerImg" src="" class="w-100 rounded"
-                                    style="max-height:480px; object-fit:contain; display: block;">
-                                <div id="noPreviewIcon" style="display: none; padding: 60px; text-align: center;">
-                                    <i class="bi bi-file-earmark-text" style="font-size: 60px; color: #666;"></i>
-                                </div>
+                <div class="public-modal">
+                    <!-- Left: Image + Action Buttons -->
+                    <div class="public-modal-left">
+                        <div class="public-modal-img-container">
+                            <img id="photoViewerImg" src="" class="public-modal-img" alt="File Preview"
+                                style="display: none;">
+                            <div id="noPreviewIcon" class="public-modal-no-img" style="display: none;">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>No preview available</span>
                             </div>
                         </div>
-
-                        <!-- Action Buttons -->
-                        <div class="p-3 d-flex gap-2" style="background: #2C2C2C;">
-                            <a href="#" id="readNowBtn"
-                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                style="background: #4A3B32; color: white; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500;">
-                                <i class="bi bi-book-half"></i> Read Now
+                        <div class="public-modal-actions">
+                            <a id="readNowBtn" href="#" target="_blank" class="public-read-btn">
+                                <i class="bi bi-book-half"></i> Read Full Document
                             </a>
-                            <a href="#" id="editBtn"
-                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                style="background: #fff; color: #333; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500;">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <button type="button" id="deleteBtn"
-                                class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                style="background: #FFEBEE; color: #C62828; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500; border: none;">
-                                <i class="bi bi-trash3"></i> Delete
-                            </button>
+                            <div class="admin-action-buttons">
+                                <a href="#" id="editBtn" class="admin-action-btn admin-edit-btn">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <button type="button" id="deleteBtn" class="admin-action-btn admin-delete-btn">
+                                    <i class="bi bi-trash3"></i> Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right: Details -->
-                    <div class="col-md-6 bg-white p-4 position-relative">
-                        <button type="button" class="btn-close position-absolute" data-bs-dismiss="modal"
-                            style="right: 15px; top: 15px; opacity: 0.5;"></button>
+                    <!-- Right: Metadata -->
+                    <div class="public-modal-right">
+                        <button type="button" class="public-modal-close" data-bs-dismiss="modal" title="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
 
-                        <div class="d-flex flex-column h-100">
-                            <!-- Header -->
-                            <div class="mb-4">
-                                <h5 id="previewTitle" class="fw-bold mb-1" style="color: #1a1a1a; font-size: 18px;">
-                                    File Preview</h5>
-                                <div id="previewCategory" class="newspaper-category mb-0" style="font-size: 12px;">
-                                    ARCHIVE MANAGEMENT SYSTEM
-                                </div>
-                            </div>
+                        <span id="previewCategory" class="public-modal-category-badge">CATEGORY</span>
+                        <h2 id="previewTitle" class="public-modal-title">File Title</h2>
 
-                            <!-- Metadata -->
-                            <div class="flex-grow-1">
-                                <p class="text-uppercase text-muted fw-bold mb-3"
-                                    style="font-size: 10px; letter-spacing: 1.5px;">Metadata Details</p>
+                        <div id="metaDescriptionWrap" class="public-modal-description-wrap" style="display: none;">
+                            <p id="metaDescription" class="public-modal-description"></p>
+                        </div>
 
-                                <div class="d-flex flex-column gap-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;">
-                                            <i class="bi bi-calendar3 me-2"></i>Publication Date
-                                        </span>
-                                        <span id="metaDate" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
+                        <p class="public-modal-meta-section-title">Document Details</p>
 
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;">
-                                            <i class="bi bi-globe me-2"></i>Edition
-                                        </span>
-                                        <span id="metaEdition" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
+                        <div class="public-modal-meta-row">
+                            <span class="public-modal-meta-label"><i class="bi bi-calendar3"></i> Publication
+                                Date</span>
+                            <span id="metaDate" class="public-modal-meta-value">—</span>
+                        </div>
 
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;">
-                                            <i class="bi bi-building me-2"></i>Publisher
-                                        </span>
-                                        <span id="metaPublisher" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
+                        <div class="public-modal-meta-row">
+                            <span class="public-modal-meta-label"><i class="bi bi-building"></i> Publisher</span>
+                            <span id="metaPublisher" class="public-modal-meta-value">—</span>
+                        </div>
 
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;">
-                                            <i class="bi bi-file-text me-2"></i>Page Count
-                                        </span>
-                                        <span id="metaPages" class="fw-bold"
-                                            style="color: #333; font-size: 13px;">-</span>
-                                    </div>
+                        <div class="public-modal-meta-row" id="modalRowLanguage">
+                            <span class="public-modal-meta-label"><i class="bi bi-translate"></i> Language</span>
+                            <span id="metaLanguage" class="public-modal-meta-value">—</span>
+                        </div>
 
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;">
-                                            <i class="bi bi-file-earmark me-2"></i>Format
-                                        </span>
-                                        <span id="metaFormat" class="badge"
-                                            style="background: #FFEBEE; color: #D32F2F; font-size: 11px; padding: 4px 10px; font-weight: 600;">PDF</span>
-                                    </div>
+                        <div class="public-modal-meta-row" id="modalRowPages">
+                            <span class="public-modal-meta-label"><i class="bi bi-book"></i> Pages</span>
+                            <span id="metaPages" class="public-modal-meta-value">—</span>
+                        </div>
 
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 13px;">
-                                            <i class="bi bi-person me-2"></i>Uploaded by
-                                        </span>
-                                        <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1">
-                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-1"
-                                                style="width: 18px; height: 18px; font-size: 9px;">A</div>
-                                            <span id="metaUploader" class="fw-medium"
-                                                style="color: #333; font-size: 12px;">Admin</span>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="public-modal-meta-row" id="modalRowVolume">
+                            <span class="public-modal-meta-label"><i class="bi bi-layers"></i> Volume / Issue</span>
+                            <span id="metaVolume" class="public-modal-meta-value">—</span>
+                        </div>
 
-                                <!-- Tags -->
-                                <div class="mt-4">
-                                    <p class="text-uppercase text-muted fw-bold mb-2"
-                                        style="font-size: 10px; letter-spacing: 1.5px;">Tags</p>
-                                    <div id="metaTags" class="d-flex gap-2 flex-wrap">
-                                        <!-- Tags populated via JS -->
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="public-modal-meta-row" id="modalRowEdition">
+                            <span class="public-modal-meta-label"><i class="bi bi-sun"></i> Edition</span>
+                            <span id="metaEdition" class="public-modal-meta-value">—</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowFormat">
+                            <span class="public-modal-meta-label"><i class="bi bi-file-earmark"></i> Format</span>
+                            <span id="metaFormat" class="public-format-badge">PDF</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowUploader">
+                            <span class="public-modal-meta-label"><i class="bi bi-person"></i> Uploaded by</span>
+                            <span id="metaUploader" class="public-modal-meta-value">Admin</span>
+                        </div>
+
+                        <div class="public-modal-meta-row" id="modalRowKeywords">
+                            <span class="public-modal-meta-label"><i class="bi bi-tags"></i> Keywords</span>
+                            <div id="metaTags" class="public-modal-keywords-wrap"></div>
                         </div>
                     </div>
                 </div>
@@ -431,22 +430,47 @@
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-danger">Confirm Delete</h5>
+    <div class="modal-dialog modal-dialog-centered modal-standard">
+        <div class="modal-content modal-minimalist">
+            <div class="modal-header">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon icon-danger">
+                    <i class="bi bi-trash3"></i>
+                </div>
+                <h5 class="modal-title">Confirm Delete</h5>
             </div>
-            <div class="modal-body py-4">
-                <p class="mb-0 text-muted">Are you sure you want to move this item to trash? This action can be
+            <div class="modal-body">
+                <p>Are you sure you want to move this item to trash? This action can be undone from the Trash page.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash3 me-1"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div class="modal fade" id="bulkDeleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-standard">
+        <div class="modal-content modal-minimalist">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon icon-danger">
+                    <i class="bi bi-trash3"></i>
+                </div>
+                <h5 class="modal-title">Confirm Bulk Delete</h5>
+            </div>
+            <div class="modal-body">
+                <p id="bulkDeleteMessage">Are you sure you want to move selected items to trash? This action can be
                     undone from the Trash page.</p>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                    style="border-radius: 8px; font-weight: 500;">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn"
-                    style="border-radius: 8px; font-weight: 500; background: #D32F2F; border: none;">
-                    <i class="bi bi-trash3 me-2"></i>Delete
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmBulkDeleteBtn">
+                    <i class="bi bi-trash3 me-1"></i>Delete
                 </button>
             </div>
         </div>
@@ -455,18 +479,15 @@
 
 <!-- Upload Success Modal -->
 <div class="modal fade" id="uploadSuccessModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
-            <div class="modal-body text-center p-4">
-                <div class="mb-3">
-                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
-                        style="width: 64px; height: 64px;">
-                        <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
-                    </div>
-                </div>
-                <h5 class="fw-bold mb-2">Upload Complete!</h5>
-                <p class="text-muted small mb-4">Your document has been successfully added to the archive.</p>
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Done</button>
+    <div class="modal-dialog modal-dialog-centered modal-sm-standard">
+        <div class="modal-content modal-sm-minimalist">
+            <div class="modal-icon icon-success">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <h5 class="modal-title">Upload Complete!</h5>
+            <div class="modal-body">
+                <p>Your document has been successfully added to the archive.</p>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Done</button>
             </div>
         </div>
     </div>
@@ -474,18 +495,15 @@
 
 <!-- Delete Success Modal -->
 <div class="modal fade" id="deleteSuccessModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
-            <div class="modal-body text-center p-4">
-                <div class="mb-3">
-                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
-                        style="width: 64px; height: 64px;">
-                        <i class="bi bi-trash3 text-danger" style="font-size: 32px;"></i>
-                    </div>
-                </div>
-                <h5 class="fw-bold mb-2">Item Deleted</h5>
-                <p class="text-muted small mb-4">The item has been moved to trash successfully.</p>
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+    <div class="modal-dialog modal-dialog-centered modal-sm-standard">
+        <div class="modal-content modal-sm-minimalist">
+            <div class="modal-icon icon-success">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <h5 class="modal-title">Item Deleted</h5>
+            <div class="modal-body">
+                <p>The item has been moved to trash successfully.</p>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Login View
+ * Login View – minimalist modal style
  * Archive System - Quezon City Public Library
  */
 ?>
@@ -10,76 +10,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login -
-        <?= APP_NAME ?>
-    </title>
+    <title>Login – <?= APP_NAME ?></title>
 
     <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="<?= APP_URL ?>/assets/css/pages/login.css" rel="stylesheet">
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #F3F4F6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            padding: 24px;
+        }
+
+        /* ── Card ── */
+        .login-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 40px 36px 36px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.10);
+        }
+
+        .login-heading {
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            text-align: center;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+
+        .login-subtext {
+            font-size: 13px;
+            color: #6B7280;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* ── Fields ── */
+        .login-field {
+            margin-bottom: 16px;
+        }
+
+        .login-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .login-field input {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            color: #111827;
+            background: #FAFAFA;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .login-field input:focus {
+            border-color: #3A9AFF;
+            background: #FFFFFF;
+        }
+
+        /* ── Password wrapper with eye toggle ── */
+        .pass-wrap {
+            position: relative;
+        }
+
+        .pass-wrap input {
+            padding-right: 40px;
+        }
+
+        .pass-wrap .eye-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            cursor: pointer;
+            padding: 2px;
+            font-size: 15px;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+
+        .pass-wrap .eye-btn:hover {
+            color: #374151;
+        }
+
+        /* ── Forgot password link ── */
+        .forgot-link-wrap {
+            margin-top: 6px;
+        }
+
+        .forgot-link {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 12px;
+            font-weight: 500;
+            color: #3A9AFF;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .forgot-link:hover {
+            color: #2d87ef;
+            text-decoration: underline;
+        }
+
+        /* ── Submit button ── */
+        .login-btn {
+            width: 100%;
+            padding: 11px;
+            margin-top: 20px;
+            background: #3A9AFF;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.18s;
+        }
+
+        .login-btn:hover:not(:disabled) {
+            background: #2d87ef;
+        }
+
+        .login-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        /* ── Alert ── */
+        .error-alert {
+            background: #FEE2E2;
+            color: #B91C1C;
+            border-radius: 8px;
+            padding: 10px 13px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="login-wrapper">
-        <div class="login-bg"></div>
-        <div class="login-overlay"></div>
+    <div class="login-card">
+        <h1 class="login-heading">Admin Login</h1>
+        <p class="login-subtext">Please login to continue</p>
 
-        <div class="login-card">
-            <!-- Logo area based on visual, might be circular bg if needed, but using plain image as requested -->
-            <img src="<?= APP_URL ?>/assets/images/logo.png" alt="QCPL Logo" class="login-logo">
+        <div id="alert-container"></div>
 
-            <h1 class="login-title">QUEZON CITY PUBLIC LIBRARY</h1>
-            <p class="login-subtitle">Please login to continue</p>
+        <form id="loginForm" novalidate>
+            <div class="login-field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username"
+                    autocomplete="username" required>
+            </div>
 
-            <div id="alert-container"></div>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="username" class="form-label">USERNAME</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-person-fill input-icon"></i>
-                        <input type="text" class="form-control" id="username" name="username"
-                            placeholder="Enter your username" required>
-                    </div>
+            <div class="login-field">
+                <label for="password">Password</label>
+                <div class="pass-wrap">
+                    <input type="password" id="password" name="password" placeholder="Enter your password"
+                        autocomplete="current-password" required>
+                    <button type="button" class="eye-btn" id="togglePassword" tabindex="-1">
+                        <i class="bi bi-eye" id="eyeIcon"></i>
+                    </button>
                 </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">PASSWORD</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-lock-fill input-icon"></i>
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Enter your password" required style="padding-right: 45px;">
-                        <i class="bi bi-eye-slash-fill password-toggle" id="togglePassword"></i>
-                    </div>
+                <div class="forgot-link-wrap">
+                    <a href="<?= APP_URL ?>/auth/forgot-password.php" class="forgot-link">Forgot password?</a>
                 </div>
+            </div>
 
-                <a href="<?= APP_URL ?>/forgot-password.php" class="forgot-password">Forgot Password?</a>
-
-                <button type="submit" class="login-btn">
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    <span class="btn-text">LOGIN</span>
-                </button>
-            </form>
-        </div>
+            <button type="submit" class="login-btn">
+                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                <span class="btn-text">Login</span>
+            </button>
+        </form>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Config for JS -->
     <script>
         const APP_URL = "<?= APP_URL ?>";
+
+        // Eye toggle
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const pw = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            const isPass = pw.type === 'password';
+            pw.type = isPass ? 'text' : 'password';
+            icon.className = isPass ? 'bi bi-eye-slash-fill' : 'bi bi-eye';
+        });
     </script>
 
-    <!-- Page JS -->
-    <script src="<?= APP_URL ?>/assets/js/pages/login.js"></script>
+    <!-- Page JS (handles form submit + alert) -->
+    <script src="<?= APP_URL ?>/assets/js/auth/login.js"></script>
 </body>
 
 </html>

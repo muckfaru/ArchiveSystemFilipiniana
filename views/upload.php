@@ -13,7 +13,7 @@
     <!-- Custom CSS -->
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
-    <link href="<?= APP_URL ?>/assets/css/pages/upload.css?v=<?= time() ?>" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/admin_pages/upload.css?v=<?= time() ?>" rel="stylesheet">
 </head>
 
 <body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
@@ -97,18 +97,18 @@
 
         <!-- Edit Mode Indicator (Refactored) -->
         <?php if ($editMode && !empty($editItem['file_name'])): ?>
-            <div class="card border-0 shadow-sm mb-4" id="editModeIndicator" style="border-left: 5px solid #C08B5C !important; background-color: #fff;">
+            <div class="card border-0 shadow-sm mb-4" id="editModeIndicator" style="border-left: 5px solid #3A9AFF !important; background-color: #fff;">
                 <div class="card-body d-flex align-items-center justify-content-between p-4">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: rgba(192, 139, 92, 0.1); color: #C08B5C;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: rgba(58, 154, 255, 0.1); color: #3A9AFF;">
                             <i class="bi bi-pencil-square fs-4"></i>
                         </div>
                         <div>
-                            <small class="text-uppercase fw-bold" style="font-size: 0.75rem; color: #C08B5C; letter-spacing: 0.5px;">You are editing</small>
+                            <small class="text-uppercase fw-bold" style="font-size: 0.75rem; color: #3A9AFF; letter-spacing: 0.5px;">You are editing</small>
                             <div class="fw-bold text-dark fs-5"><?= htmlspecialchars($editItem['file_name']) ?></div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
+                    <button type="button" class="btn btn-outline-primary btn-sm" style="border-color: #3A9AFF; color: #3A9AFF;" onclick="document.getElementById('fileInput').click()">
                         <i class="bi bi-arrow-repeat me-1"></i> Change File
                     </button>
                 </div>
@@ -148,21 +148,22 @@
                 </div>
 
                 <!-- Photo Stats (Images) -->
-                <div class="bulk-stats-wrapper px-4" id="photoStatsWrapper" style="display: none; justify-content: flex-start; gap: 24px;">
-                    <div id="bulkPhotoInfoMessage" class="d-none m-0 py-1 px-3" style="flex: 0 0 auto;">
-                        <i class="bi bi-info-circle-fill"></i>
-                        <span>All photos in this bulk upload share a single metadata entry.</span>
+                <div class="photo-stats-wrapper" id="photoStatsWrapper" style="display: none;">
+                    <div class="photo-stats-left">
+                        <div class="info-badge">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span>All photos share a single metadata entry</span>
+                        </div>
+                        <div class="stat-divider-vertical"></div>
+                        <div class="photo-count-display">
+                            <span class="count-number" id="totalPhotosCount">0</span>
+                            <span class="count-label">Photos</span>
+                        </div>
                     </div>
-
-                    <div class="stat-col" style="flex: 0 0 auto;">
-                        <span class="stat-label">TOTAL PHOTOS</span>
-                        <span class="stat-number" id="totalPhotosCount">0</span>
-                    </div>
-                    
-                    <div class="stat-col action-col ms-auto" style="flex: 0 0 auto;">
-                         <!-- Dropdown / Add Photos action can go here if needed later -->
-                        <button type="button" class="btn btn-add-files" id="addMorePhotosBtn" onclick="document.getElementById('fileInput').click()">
-                            + ADD PHOTOS
+                    <div class="photo-stats-right">
+                        <button type="button" class="btn-add-photos" id="addMorePhotosBtn" onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Add Photos</span>
                         </button>
                     </div>
                 </div>
@@ -176,8 +177,8 @@
             </div>
 
             <!-- Photo Gallery Grid Container -->
-            <div id="pageOrderGridWrapper" class="border-bottom p-3 bg-light" style="display: none; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
-                <div id="pageOrderGrid" class="d-inline-flex gap-3 align-items-center">
+            <div id="pageOrderGridWrapper" class="border-bottom p-4 bg-light" style="display: none; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
+                <div id="pageOrderGrid" class="d-inline-flex gap-3 align-items-start" style="padding: 8px 0;">
                     <!-- Photo thumbnails injected via JS -->
                 </div>
             </div>
@@ -191,7 +192,7 @@
                 <!-- Alert Container -->
                 <div id="alertContainer"><?php if (isset($_GET['error'])): ?><div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="bi bi-exclamation-circle me-2"></i><?= htmlspecialchars($_GET['error']) ?><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><?php endif; ?><?php if ($alert): ?><div class="alert alert-<?= $alert['type'] ?> alert-dismissible fade show" role="alert"><i class="bi bi-<?= $alert['type'] == 'success' ? 'check-circle' : 'exclamation-circle' ?> me-2"></i><?= htmlspecialchars($alert['message']) ?><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><?php endif; ?></div>
     
-                <form id="uploadForm" action="<?= APP_URL ?>/pages/upload.php" method="POST" enctype="multipart/form-data">
+                <form id="uploadForm" action="<?= APP_URL ?>/admin_pages/upload.php" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="<?= $editMode ? 'edit' : 'upload' ?>">
                     <?php if ($editMode): ?>
                         <input type="hidden" name="edit_id" value="<?= $editItem['id'] ?>">
@@ -212,96 +213,540 @@
                             <span id="currentFileName" class="badge bg-light text-dark border d-none"></span>
                         </div>
 
-                        <div class="form-row-2col">
-                            <div class="form-group">
-                                <label>ARCHIVE TITLE</label>
-                                <input type="text" name="title" id="title" placeholder="Enter title..."
-                                    value="<?= $editMode ? htmlspecialchars($editItem['title']) : '' ?>" required>
-                                <div class="invalid-feedback">Title is required.</div>
+                        <?php if (empty($formFields) && empty($customFields)): ?>
+                        <!-- Empty State: No Active Form Template -->
+                        <div class="empty-state-container text-center py-5">
+                            <div class="empty-state-icon mb-3">
+                                <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
                             </div>
-                            <div class="form-group">
-                                <label>PUBLISHER</label>
-                                <input type="text" name="publisher" id="publisher" placeholder="Enter publisher name..."
-                                    value="<?= $editMode ? htmlspecialchars($editItem['publisher']) : '' ?>">
-                            </div>
+                            <h3 class="empty-state-title">No Metadata Fields Defined</h3>
+                            <p class="empty-state-description text-muted">
+                                Please customize your metadata structure to start uploading archives.<br>
+                                Define fields like Author, Date, and Keywords to keep your library organized.
+                            </p>
+                            <a href="<?= APP_URL ?>/admin_pages/form-library.php" class="btn btn-primary mt-3">
+                                <i class="bi bi-gear"></i> Configure Metadata Fields
+                            </a>
                         </div>
+                        <?php else: ?>
+                        <!-- Custom Metadata Fields (Form Template Fields) -->
+                        <?php if (!empty($formFields)): ?>
 
-                        <div class="form-row-2col">
-                            <div class="form-group">
-                                <label>DATE PUBLISHED</label>
-                                <input type="date" name="publication_date" id="publication_date" placeholder="mm/dd/yyyy"
-                                    value="<?= $editMode ? $editItem['publication_date'] : '' ?>" required>
-                                <div class="invalid-feedback">Publication Date is required.</div>
-                            </div>
-                            <div class="form-group">
-                                <label>EDITION</label>
-                                <select name="edition" id="edition">
-                                    <option value="" selected disabled>Select Edition...</option>
-                                    <option value="Morning" <?= ($editMode && $editItem['edition'] === 'Morning') ? 'selected' : '' ?>>Morning</option>
-                                    <option value="Evening" <?= ($editMode && $editItem['edition'] === 'Evening') ? 'selected' : '' ?>>Evening</option>
-                                    <option value="Special" <?= ($editMode && $editItem['edition'] === 'Special') ? 'selected' : '' ?>>Special</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row-2col">
-                            <div class="form-group">
-                                <label>CATEGORY</label>
-                                <select name="category_id" id="category_id" required>
-                                    <option value="" selected disabled>Select Category...</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?= $cat['id'] ?>" <?= ($editMode && $editItem['category_id'] == $cat['id']) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($cat['name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="invalid-feedback">Please select a category.</div>
-                            </div>
-                            <div class="form-group">
-                                <label>LANGUAGE</label>
-                                <select name="language_id" id="language_id" required>
-                                    <option value="" selected disabled>Select Language...</option>
-                                    <?php foreach ($languages as $lang): ?>
-                                        <option value="<?= $lang['id'] ?>" <?= ($editMode && $editItem['language_id'] == $lang['id']) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($lang['name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="invalid-feedback">Please select a language.</div>
-                            </div>
-                        </div>
-
-                        <div class="form-row-2col">
-                            <div class="form-group">
-                                <label>PAGE COUNT</label>
-                                <input type="number" name="page_count" id="page_count" placeholder="1" min="1"
-                                    value="<?= $editMode ? $editItem['page_count'] : '' ?>">
-                            </div>
-                            <div class="form-group">
-                                <label>VOLUME / ISSUE REFERENCE</label>
-                                <input type="text" name="volume_issue" id="volume_issue" placeholder="e.g., Vol. 1, No. 1"
-                                    value="<?= $editMode ? htmlspecialchars($editItem['volume_issue']) : '' ?>">
-                            </div>
-                        </div>
-
+                        <?php 
+                        // Group fields for 2-column layout
+                        $fieldIndex = 0;
+                        $totalFields = count($formFields);
+                        
+                        while ($fieldIndex < $totalFields):
+                            $field = $formFields[$fieldIndex];
+                            $fieldName = 'field_' . $field['id'];
+                            $fieldValue = $customMetadataValues[$field['id']] ?? '';
+                            $required = $field['is_required'] ? 'required' : '';
+                            $requiredAttr = $field['is_required'] ? 'data-required="true"' : '';
+                            
+                            // Check if this field should take full width
+                            $isFullWidth = in_array($field['field_type'], ['textarea', 'checkbox', 'radio', 'tags']);
+                            
+                            if ($isFullWidth):
+                                // Full width field
+                        ?>
                         <div class="form-group-full">
-                            <label>KEYWORDS / TAGS</label>
-                            <div class="tags-input">
-                                <input type="text" id="tagInput" placeholder="Type a tag and press enter...">
-                                <button type="button" id="addTagBtn" class="btn-add-tag">
-                                    +
-                                </button>
+                            <label>
+                                <?= strtoupper(htmlspecialchars($field['field_label'])) ?>
+                                <?php if ($field['is_required']): ?>
+                                    <span class="text-danger">*</span>
+                                <?php endif; ?>
+                            </label>
+                            
+                            <?php if ($field['field_type'] === 'textarea'): ?>
+                                <textarea class="custom-field" 
+                                          id="<?= $fieldName ?>" 
+                                          name="<?= $fieldName ?>"
+                                          rows="3" placeholder="<?= htmlspecialchars($field['help_text'] ?? '') ?>"
+                                          <?= $required ?>
+                                          <?= $requiredAttr ?>><?= htmlspecialchars($fieldValue) ?></textarea>
+                            
+                            <?php elseif ($field['field_type'] === 'checkbox'): 
+                                $options = json_decode($field['field_options'], true);
+                                $selectedValues = $fieldValue ? json_decode($fieldValue, true) : [];
+                                if (!is_array($selectedValues)) $selectedValues = [];
+                            ?>
+                                <div class="checkbox-group">
+                                    <?php foreach ($options as $option): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input custom-field" 
+                                                   type="checkbox" 
+                                                   name="<?= $fieldName ?>[]" 
+                                                   value="<?= htmlspecialchars($option) ?>"
+                                                   id="<?= $fieldName ?>_<?= md5($option) ?>"
+                                                   <?= in_array($option, $selectedValues) ? 'checked' : '' ?>
+                                                   <?= $requiredAttr ?>>
+                                            <label class="form-check-label" for="<?= $fieldName ?>_<?= md5($option) ?>">
+                                                <?= htmlspecialchars($option) ?>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            
+                            <?php elseif ($field['field_type'] === 'radio'): 
+                                $options = json_decode($field['field_options'], true);
+                            ?>
+                                <div class="radio-group">
+                                    <?php foreach ($options as $option): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input custom-field" 
+                                                   type="radio" 
+                                                   name="<?= $fieldName ?>" 
+                                                   value="<?= htmlspecialchars($option) ?>"
+                                                   id="<?= $fieldName ?>_<?= md5($option) ?>"
+                                                   <?= $fieldValue === $option ? 'checked' : '' ?>
+                                                   <?= $required ?>
+                                                   <?= $requiredAttr ?>>
+                                            <label class="form-check-label" for="<?= $fieldName ?>_<?= md5($option) ?>">
+                                                <?= htmlspecialchars($option) ?>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php elseif ($field['field_type'] === 'tags'): ?>
+                                <?php
+                                    $existingTags = array_filter(array_map('trim', explode(',', $fieldValue)));
+                                ?>
+                                <input type="hidden" 
+                                       id="<?= $fieldName ?>_hidden"
+                                       name="<?= $fieldName ?>"
+                                       value="<?= htmlspecialchars($fieldValue) ?>">
+                                <div class="tags-field-wrapper">
+                                    <div class="tags-pills-row" id="<?= $fieldName ?>_pills">
+                                        <?php foreach ($existingTags as $t): ?>
+                                            <span class="tag-chip"><?= htmlspecialchars($t) ?><button type="button" class="tag-chip-remove" onclick="event.stopPropagation();removeTagChip(this,'<?= $fieldName ?>')" title="Remove"><i class="bi bi-x"></i></button></span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="tags-input-row">
+                                        <input type="text" 
+                                               id="<?= $fieldName ?>_input"
+                                               class="tags-text-input"
+                                               placeholder="Type a tag and press Enter or comma…"
+                                               onkeydown="handleTagKeydown(event,'<?= $fieldName ?>')"
+                                               onclick="event.stopPropagation()"
+                                               autocomplete="off">
+                                        <button type="button" class="tags-add-btn" onclick="event.stopPropagation();addTagFromInput('<?= $fieldName ?>')">Add</button>
+                                    </div>
+                                </div>
+                                <div class="tags-hint">Press <strong>Enter</strong> or <strong>,</strong> to add a tag. Click <strong>×</strong> to remove.</div>
+                            <?php endif; ?>
+                        </div>
+                        <?php
+                                $fieldIndex++;
+                            else:
+                                // Two-column layout for text, number, date, select
+                                $nextField = null;
+                                $nextFieldName = '';
+                                $nextFieldValue = '';
+                                $nextRequired = '';
+                                $nextRequiredAttr = '';
+                                
+                                // Check if there's a next field that can be paired
+                                if ($fieldIndex + 1 < $totalFields) {
+                                    $nextField = $formFields[$fieldIndex + 1];
+                                    if (!in_array($nextField['field_type'], ['textarea', 'checkbox', 'radio', 'tags'])) {
+                                        $nextFieldName = 'field_' . $nextField['id'];
+                                        $nextFieldValue = $customMetadataValues[$nextField['id']] ?? '';
+                                        $nextRequired = $nextField['is_required'] ? 'required' : '';
+                                        $nextRequiredAttr = $nextField['is_required'] ? 'data-required="true"' : '';
+                                    } else {
+                                        $nextField = null; // Can't pair with full-width field
+                                    }
+                                }
+                        ?>
+                        <div class="form-row-2col">
+                            <!-- First Field -->
+                            <div class="form-group">
+                                <label>
+                                    <?= strtoupper(htmlspecialchars($field['field_label'])) ?>
+                                    <?php if ($field['is_required']): ?>
+                                        <span class="text-danger">*</span>
+                                    <?php endif; ?>
+                                </label>
+                                
+                                <?php if ($field['field_type'] === 'text'): ?>
+                                    <input type="text" 
+                                           class="custom-field" 
+                                           id="<?= $fieldName ?>" 
+                                           name="<?= $fieldName ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($field['help_text'] ?? '') ?>"
+                                           <?= $required ?>
+                                           <?= $requiredAttr ?>>
+                                
+                                <?php elseif ($field['field_type'] === 'number'): ?>
+                                    <input type="number" step="any" 
+                                           class="custom-field" 
+                                           id="<?= $fieldName ?>" 
+                                           name="<?= $fieldName ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($field['help_text'] ?? '') ?>"
+                                           <?= $required ?>
+                                           <?= $requiredAttr ?>>
+                                
+                                <?php elseif ($field['field_type'] === 'date'): ?>
+                                    <input type="date" 
+                                           class="custom-field" 
+                                           id="<?= $fieldName ?>" 
+                                           name="<?= $fieldName ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           <?= $required ?>
+                                           <?= $requiredAttr ?>>
+                                
+                                <?php elseif ($field['field_type'] === 'select'): 
+                                    $options = json_decode($field['field_options'], true);
+                                ?>
+                                    <select class="custom-field" 
+                                            id="<?= $fieldName ?>" 
+                                            name="<?= $fieldName ?>"
+                                            <?= $required ?>
+                                            <?= $requiredAttr ?>>
+                                        <option value="">Select an option...</option>
+                                        <?php foreach ($options as $option): ?>
+                                            <option value="<?= htmlspecialchars($option) ?>"
+                                                    <?= $fieldValue === $option ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($option) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endif; ?>
                             </div>
-                            <input type="hidden" name="keywords" id="keywordsHidden"
-                                value="<?= $editMode ? htmlspecialchars($editItem['keywords']) : '' ?>">
-                            <div class="tags-display" id="tagsContainer"></div>
+                            
+                            <!-- Second Field (if exists) -->
+                            <?php if ($nextField): ?>
+                            <div class="form-group">
+                                <label>
+                                    <?= strtoupper(htmlspecialchars($nextField['field_label'])) ?>
+                                    <?php if ($nextField['is_required']): ?>
+                                        <span class="text-danger">*</span>
+                                    <?php endif; ?>
+                                </label>
+                                
+                                <?php if ($nextField['field_type'] === 'text'): ?>
+                                    <input type="text" 
+                                           class="custom-field" 
+                                           id="<?= $nextFieldName ?>" 
+                                           name="<?= $nextFieldName ?>"
+                                           value="<?= htmlspecialchars($nextFieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($nextField['help_text'] ?? '') ?>"
+                                           <?= $nextRequired ?>
+                                           <?= $nextRequiredAttr ?>>
+                                
+                                <?php elseif ($nextField['field_type'] === 'number'): ?>
+                                    <input type="number" step="any" 
+                                           class="custom-field" 
+                                           id="<?= $nextFieldName ?>" 
+                                           name="<?= $nextFieldName ?>"
+                                           value="<?= htmlspecialchars($nextFieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($nextField['help_text'] ?? '') ?>"
+                                           <?= $nextRequired ?>
+                                           <?= $nextRequiredAttr ?>>
+                                
+                                <?php elseif ($nextField['field_type'] === 'date'): ?>
+                                    <input type="date" 
+                                           class="custom-field" 
+                                           id="<?= $nextFieldName ?>" 
+                                           name="<?= $nextFieldName ?>"
+                                           value="<?= htmlspecialchars($nextFieldValue) ?>"
+                                           <?= $nextRequired ?>
+                                           <?= $nextRequiredAttr ?>>
+                                
+                                <?php elseif ($nextField['field_type'] === 'select'): 
+                                    $nextOptions = json_decode($nextField['field_options'], true);
+                                ?>
+                                    <select class="custom-field" 
+                                            id="<?= $nextFieldName ?>" 
+                                            name="<?= $nextFieldName ?>"
+                                            <?= $nextRequired ?>
+                                            <?= $nextRequiredAttr ?>>
+                                        <option value="">Select an option...</option>
+                                        <?php foreach ($nextOptions as $option): ?>
+                                            <option value="<?= htmlspecialchars($option) ?>"
+                                                    <?= $nextFieldValue === $option ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($option) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endif; ?>
+                            </div>
+                            <?php 
+                                $fieldIndex += 2; // Skip both fields
+                            else: 
+                                $fieldIndex++; // Only skip current field
+                            ?>
+                            <div class="form-group"></div> <!-- Empty placeholder -->
+                            <?php endif; ?>
                         </div>
+                        <?php
+                            endif;
+                        endwhile;
+                        ?>
+                        <?php endif; ?>
 
+                        <!-- Legacy Custom Metadata Fields (Fallback) -->
+                        <?php if (!empty($customFields)): ?>
+
+                        <?php 
+                        // Group fields for 2-column layout
+                        $fieldIndex = 0;
+                        $totalFields = count($customFields);
+                        
+                        while ($fieldIndex < $totalFields):
+                            $field = $customFields[$fieldIndex];
+                            $fieldName = 'custom_' . $field['field_name'];
+                            $fieldValue = $customMetadataValues[$field['id']] ?? '';
+                            $required = $field['is_required'] ? 'required' : '';
+                            $requiredAttr = $field['is_required'] ? 'data-required="true"' : '';
+                            
+                            // Check if this field should take full width
+                            $isFullWidth = in_array($field['field_type'], ['textarea', 'checkbox', 'radio', 'tags']);
+                            
+                            if ($isFullWidth):
+                                // Full width field
+                        ?>
                         <div class="form-group-full">
-                            <label>DESCRIPTION</label>
-                            <textarea name="description" id="description" rows="4"
-                                placeholder="Enter a comprehensive description of the archive content..."><?= $editMode ? htmlspecialchars($editItem['description']) : '' ?></textarea>
+                            <label>
+                                <?= strtoupper(htmlspecialchars($field['field_label'])) ?>
+                                <?php if ($field['is_required']): ?>
+                                    <span class="text-danger">*</span>
+                                <?php endif; ?>
+                            </label>
+                            
+                            <?php if ($field['field_type'] === 'textarea'): ?>
+                                <textarea class="custom-field" 
+                                          id="<?= $fieldName ?>" 
+                                          name="<?= $fieldName ?>"
+                                          rows="3" placeholder="<?= htmlspecialchars($field['help_text'] ?? '') ?>"
+                                          <?= $required ?>
+                                          <?= $requiredAttr ?>><?= htmlspecialchars($fieldValue) ?></textarea>
+                            
+                            <?php elseif ($field['field_type'] === 'checkbox'): 
+                                $options = json_decode($field['field_options'], true);
+                                $selectedValues = $fieldValue ? json_decode($fieldValue, true) : [];
+                                if (!is_array($selectedValues)) $selectedValues = [];
+                            ?>
+                                <div class="checkbox-group">
+                                    <?php foreach ($options as $option): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input custom-field" 
+                                                   type="checkbox" 
+                                                   name="<?= $fieldName ?>[]" 
+                                                   value="<?= htmlspecialchars($option) ?>"
+                                                   id="<?= $fieldName ?>_<?= md5($option) ?>"
+                                                   <?= in_array($option, $selectedValues) ? 'checked' : '' ?>
+                                                   <?= $requiredAttr ?>>
+                                            <label class="form-check-label" for="<?= $fieldName ?>_<?= md5($option) ?>">
+                                                <?= htmlspecialchars($option) ?>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            
+                            <?php elseif ($field['field_type'] === 'radio'): 
+                                $options = json_decode($field['field_options'], true);
+                            ?>
+                                <div class="radio-group">
+                                    <?php foreach ($options as $option): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input custom-field" 
+                                                   type="radio" 
+                                                   name="<?= $fieldName ?>" 
+                                                   value="<?= htmlspecialchars($option) ?>"
+                                                   id="<?= $fieldName ?>_<?= md5($option) ?>"
+                                                   <?= $fieldValue === $option ? 'checked' : '' ?>
+                                                   <?= $required ?>
+                                                   <?= $requiredAttr ?>>
+                                            <label class="form-check-label" for="<?= $fieldName ?>_<?= md5($option) ?>">
+                                                <?= htmlspecialchars($option) ?>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php elseif ($field['field_type'] === 'tags'): ?>
+                                <?php
+                                    $existingTags = array_filter(array_map('trim', explode(',', $fieldValue)));
+                                ?>
+                                <input type="hidden" 
+                                       id="<?= $fieldName ?>_hidden"
+                                       name="<?= $fieldName ?>"
+                                       value="<?= htmlspecialchars($fieldValue) ?>">
+                                <div class="tags-field-wrapper" onclick="document.getElementById('<?= $fieldName ?>_input').focus()">
+                                    <div class="tags-pills-row" id="<?= $fieldName ?>_pills">
+                                        <?php foreach ($existingTags as $t): ?>
+                                            <span class="tag-chip"><?= htmlspecialchars($t) ?><button type="button" class="tag-chip-remove" onclick="removeTagChip(this,'<?= $fieldName ?>')" title="Remove"><i class="bi bi-x"></i></button></span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="tags-input-row">
+                                        <input type="text" 
+                                               id="<?= $fieldName ?>_input"
+                                               class="tags-text-input"
+                                               placeholder="Type a tag and press Enter or comma…"
+                                               onkeydown="handleTagKeydown(event,'<?= $fieldName ?>')"
+                                               autocomplete="off">
+                                        <button type="button" class="tags-add-btn" onclick="addTagFromInput('<?= $fieldName ?>')">Add</button>
+                                    </div>
+                                </div>
+                                <div class="tags-hint">Press <strong>Enter</strong> or <strong>,</strong> to add a tag. Click <strong>×</strong> to remove.</div>
+                            <?php endif; ?>
                         </div>
+                        <?php
+                                $fieldIndex++;
+                            else:
+                                // Two-column layout for text, number, date, select
+                                $nextField = null;
+                                $nextFieldName = '';
+                                $nextFieldValue = '';
+                                $nextRequired = '';
+                                $nextRequiredAttr = '';
+                                
+                                // Check if there's a next field that can be paired
+                                if ($fieldIndex + 1 < $totalFields) {
+                                    $nextField = $customFields[$fieldIndex + 1];
+                                    if (!in_array($nextField['field_type'], ['textarea', 'checkbox', 'radio', 'tags'])) {
+                                        $nextFieldName = 'custom_' . $nextField['field_name'];
+                                        $nextFieldValue = $customMetadataValues[$nextField['id']] ?? '';
+                                        $nextRequired = $nextField['is_required'] ? 'required' : '';
+                                        $nextRequiredAttr = $nextField['is_required'] ? 'data-required="true"' : '';
+                                    } else {
+                                        $nextField = null; // Can't pair with full-width field
+                                    }
+                                }
+                        ?>
+                        <div class="form-row-2col">
+                            <!-- First Field -->
+                            <div class="form-group">
+                                <label>
+                                    <?= strtoupper(htmlspecialchars($field['field_label'])) ?>
+                                    <?php if ($field['is_required']): ?>
+                                        <span class="text-danger">*</span>
+                                    <?php endif; ?>
+                                </label>
+                                
+                                <?php if ($field['field_type'] === 'text'): ?>
+                                    <input type="text" 
+                                           class="custom-field" 
+                                           id="<?= $fieldName ?>" 
+                                           name="<?= $fieldName ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($field['help_text'] ?? '') ?>"
+                                           <?= $required ?>
+                                           <?= $requiredAttr ?>>
+                                
+                                <?php elseif ($field['field_type'] === 'number'): ?>
+                                    <input type="number" step="any" 
+                                           class="custom-field" 
+                                           id="<?= $fieldName ?>" 
+                                           name="<?= $fieldName ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($field['help_text'] ?? '') ?>"
+                                           <?= $required ?>
+                                           <?= $requiredAttr ?>>
+                                
+                                <?php elseif ($field['field_type'] === 'date'): ?>
+                                    <input type="date" 
+                                           class="custom-field" 
+                                           id="<?= $fieldName ?>" 
+                                           name="<?= $fieldName ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           <?= $required ?>
+                                           <?= $requiredAttr ?>>
+                                
+                                <?php elseif ($field['field_type'] === 'select'): 
+                                    $options = json_decode($field['field_options'], true);
+                                ?>
+                                    <select class="custom-field" 
+                                            id="<?= $fieldName ?>" 
+                                            name="<?= $fieldName ?>"
+                                            <?= $required ?>
+                                            <?= $requiredAttr ?>>
+                                        <option value="">Select an option...</option>
+                                        <?php foreach ($options as $option): ?>
+                                            <option value="<?= htmlspecialchars($option) ?>"
+                                                    <?= $fieldValue === $option ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($option) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Second Field (if exists) -->
+                            <?php if ($nextField): ?>
+                            <div class="form-group">
+                                <label>
+                                    <?= strtoupper(htmlspecialchars($nextField['field_label'])) ?>
+                                    <?php if ($nextField['is_required']): ?>
+                                        <span class="text-danger">*</span>
+                                    <?php endif; ?>
+                                </label>
+                                
+                                <?php if ($nextField['field_type'] === 'text'): ?>
+                                    <input type="text" 
+                                           class="custom-field" 
+                                           id="<?= $nextFieldName ?>" 
+                                           name="<?= $nextFieldName ?>"
+                                           value="<?= htmlspecialchars($nextFieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($nextField['help_text'] ?? '') ?>"
+                                           <?= $nextRequired ?>
+                                           <?= $nextRequiredAttr ?>>
+                                
+                                <?php elseif ($nextField['field_type'] === 'number'): ?>
+                                    <input type="number" step="any" 
+                                           class="custom-field" 
+                                           id="<?= $nextFieldName ?>" 
+                                           name="<?= $nextFieldName ?>"
+                                           value="<?= htmlspecialchars($nextFieldValue) ?>"
+                                           placeholder="<?= htmlspecialchars($nextField['help_text'] ?? '') ?>"
+                                           <?= $nextRequired ?>
+                                           <?= $nextRequiredAttr ?>>
+                                
+                                <?php elseif ($nextField['field_type'] === 'date'): ?>
+                                    <input type="date" 
+                                           class="custom-field" 
+                                           id="<?= $nextFieldName ?>" 
+                                           name="<?= $nextFieldName ?>"
+                                           value="<?= htmlspecialchars($nextFieldValue) ?>"
+                                           <?= $nextRequired ?>
+                                           <?= $nextRequiredAttr ?>>
+                                
+                                <?php elseif ($nextField['field_type'] === 'select'): 
+                                    $nextOptions = json_decode($nextField['field_options'], true);
+                                ?>
+                                    <select class="custom-field" 
+                                            id="<?= $nextFieldName ?>" 
+                                            name="<?= $nextFieldName ?>"
+                                            <?= $nextRequired ?>
+                                            <?= $nextRequiredAttr ?>>
+                                        <option value="">Select an option...</option>
+                                        <?php foreach ($nextOptions as $option): ?>
+                                            <option value="<?= htmlspecialchars($option) ?>"
+                                                    <?= $nextFieldValue === $option ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($option) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endif; ?>
+                            </div>
+                            <?php 
+                                $fieldIndex += 2; // Skip both fields
+                            else: 
+                                $fieldIndex++; // Only skip current field
+                            ?>
+                            <div class="form-group"></div> <!-- Empty placeholder -->
+                            <?php endif; ?>
+                        </div>
+                        <?php
+                            endif;
+                        endwhile;
+                        ?>
+                        <?php endif; ?>
+                        
+                        <?php endif; ?> <!-- End of empty state conditional -->
                     </div>
 
                     <button type="submit" id="uploadBtn" style="display: none;"></button>
@@ -322,7 +767,7 @@
                         <div class="thumbnail-placeholder" id="thumbnailPlaceholder"
                             <?= ($editMode && !empty($editItem['thumbnail_path'])) ? 'style="display:none;"' : '' ?>>
                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-                                <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#94A3B8"/>
+                                <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#3A9AFF"/>
                             </svg>
                             <p class="thumb-label">UPLOAD THUMBNAIL</p>
                             <p class="thumb-hint">Recommended aspect ratio 16:9 for optimal stitched cover image.</p>
@@ -349,18 +794,28 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Upload Confirmation Modal -->
     <div class="modal fade" id="confirmUploadModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
-                <div class="modal-body text-center p-4">
-                    <h5 class="fw-bold mb-3 text-dark" style="font-size: 24px;">Upload Files?</h5>
-                    <p class="text-muted mb-4" style="font-size: 16px;">Are you sure you want to upload the selected files?</p>
-                    <div id="uploadFileList" class="text-start mb-4" style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 8px; display: none;"></div>
-                    <div class="d-flex justify-content-center gap-3">
-                        <button type="button" class="btn px-5 py-2 rounded-3 fw-bold" style="border: 1px solid #E5E7EB; color: #374151; background: white;" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn px-5 py-2 rounded-3 text-white fw-bold" id="confirmUploadBtn" style="background-color: #4C3939 !important;">Confirm Upload</button>
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist">
+                <div class="modal-header">
+                    <div class="modal-icon icon-info">
+                        <i class="bi bi-cloud-upload"></i>
                     </div>
+                    <h5 class="modal-title">Upload Files?</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Review your files before uploading</p>
+                    <!-- File List -->
+                    <div id="uploadFileList" style="max-height: 200px; overflow-y: auto; background: #F8FAFC; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB; display: none; margin-top: 16px;">
+                        <!-- Files will be injected here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmUploadBtn">
+                        <i class="bi bi-check-circle me-1"></i> Confirm Upload
+                    </button>
                 </div>
             </div>
         </div>
@@ -368,16 +823,22 @@
 
     <!-- Discard Confirmation Modal -->
     <div class="modal fade" id="discardModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
-                <div class="modal-body text-center">
-                    <div class="mb-4"></div>
-                    <h5 class="fw-bold mb-2 text-dark">Discard Changes?</h5>
-                    <p class="text-muted small mb-4">Are you sure you want to discard all changes? This action cannot be undone.</p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <button type="button" class="btn px-4 py-2 rounded-3 border fw-bold text-muted" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn px-4 py-2 rounded-3 text-white fw-bold" style="background-color: #dc3545 !important;" onclick="confirmDiscardAction()" data-bs-dismiss="modal">Discard</button>
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist">
+                <div class="modal-header">
+                    <div class="modal-icon icon-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
                     </div>
+                    <h5 class="modal-title">Discard Changes?</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to discard all changes? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDiscardAction()" data-bs-dismiss="modal">
+                        <i class="bi bi-trash me-1"></i> Discard
+                    </button>
                 </div>
             </div>
         </div>
@@ -385,16 +846,22 @@
 
      <!-- Unsaved Changes Modal -->
     <div class="modal fade" id="unsavedChangesModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
-                <div class="modal-body text-center">
-                    <div class="mb-4"></div>
-                    <h5 class="fw-bold mb-2 text-dark">Unsaved Changes</h5>
-                    <p class="text-muted small mb-4">You have unsaved inputs. If you leave this page, your data will be lost.</p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <button type="button" class="btn px-4 py-2 rounded-3 border fw-bold text-muted" data-bs-dismiss="modal">Stay on Page</button>
-                        <button type="button" class="btn px-4 py-2 rounded-3 text-white fw-bold" style="background-color: #dc3545 !important;" id="confirmLeaveBtn">Leave Page</button>
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist">
+                <div class="modal-header">
+                    <div class="modal-icon icon-warning">
+                        <i class="bi bi-exclamation-circle"></i>
                     </div>
+                    <h5 class="modal-title">Unsaved Changes</h5>
+                </div>
+                <div class="modal-body">
+                    <p>You have unsaved inputs. If you leave this page, your data will be lost.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stay on Page</button>
+                    <button type="button" class="btn btn-danger" id="confirmLeaveBtn">
+                        <i class="bi bi-box-arrow-right me-1"></i> Leave Page
+                    </button>
                 </div>
             </div>
         </div>
@@ -409,8 +876,87 @@
         const APP_URL = "<?= APP_URL ?>";
     </script>
 
-    <script src="<?= APP_URL ?>/assets/js/pages/upload-tags.js?v=<?= time() ?>"></script>
-    <script src="<?= APP_URL ?>/assets/js/pages/upload.js?v=<?= time() ?>"></script>
+    <script src="<?= APP_URL ?>/assets/js/admin_pages/upload-tags.js?v=<?= time() ?>"></script>
+    <script src="<?= APP_URL ?>/assets/js/admin_pages/upload.js?v=<?= time() ?>"></script>
+
+    <!-- Tag Widget JS for custom 'tags' field type -->
+    <script>
+    /**
+     * Tag Chip Widget — used by custom metadata fields of type "tags"
+     * fieldName: the base name of the field (e.g. "field_5" or "custom_keywords")
+     */
+    function getTagsFromHidden(fieldName) {
+        const hidden = document.getElementById(fieldName + '_hidden');
+        if (!hidden || !hidden.value.trim()) return [];
+        return hidden.value.split(',').map(t => t.trim()).filter(Boolean);
+    }
+
+    function syncHiddenFromPills(fieldName) {
+        const pills = document.getElementById(fieldName + '_pills');
+        const hidden = document.getElementById(fieldName + '_hidden');
+        if (!pills || !hidden) return;
+        const chips = Array.from(pills.querySelectorAll('.tag-chip'));
+        // Get text excluding the remove button text
+        const tags = chips.map(chip => {
+            const clone = chip.cloneNode(true);
+            const btn = clone.querySelector('.tag-chip-remove');
+            if (btn) btn.remove();
+            return clone.textContent.trim();
+        }).filter(Boolean);
+        hidden.value = tags.join(', ');
+    }
+
+    function addTagChip(fieldName, tagText) {
+        tagText = tagText.trim();
+        if (!tagText) return;
+
+        // Prevent duplicates (case-insensitive)
+        const existingTags = getTagsFromHidden(fieldName).map(t => t.toLowerCase());
+        if (existingTags.includes(tagText.toLowerCase())) return;
+
+        const pills = document.getElementById(fieldName + '_pills');
+        if (!pills) return;
+
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${escapeHtmlTag(tagText)}<button type="button" class="tag-chip-remove" onclick="removeTagChip(this,'${fieldName}')" title="Remove"><i class="bi bi-x"></i></button>`;
+        pills.appendChild(chip);
+
+        syncHiddenFromPills(fieldName);
+    }
+
+    function removeTagChip(btn, fieldName) {
+        const chip = btn.closest('.tag-chip');
+        if (chip) chip.remove();
+        syncHiddenFromPills(fieldName);
+    }
+
+    function addTagFromInput(fieldName) {
+        const input = document.getElementById(fieldName + '_input');
+        if (!input) return;
+        const rawValue = input.value;
+        // Handle comma-separated batch input
+        rawValue.split(',').forEach(tag => {
+            tag = tag.trim();
+            if (tag) addTagChip(fieldName, tag);
+        });
+        input.value = '';
+        input.focus();
+    }
+
+    function handleTagKeydown(event, fieldName) {
+        if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault();
+            addTagFromInput(fieldName);
+        }
+    }
+
+    function escapeHtmlTag(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+    </script>
 
 </body>
 

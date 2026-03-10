@@ -22,38 +22,68 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- Categories Table
+-- Categories Table (kept for reference data - can be used in custom field options)
 CREATE TABLE IF NOT EXISTS categories (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- Languages Table
+-- Languages Table (kept for reference data - can be used in custom field options)
 CREATE TABLE IF NOT EXISTS languages (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
     code VARCHAR(10) NOT NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- Custom Metadata Fields Table
+-- Stores dynamic metadata field definitions created by admins
+CREATE TABLE IF NOT EXISTS custom_metadata_fields (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    field_name VARCHAR(100) NOT NULL UNIQUE COMMENT 'Internal identifier (e.g., author_name)',
+    field_label VARCHAR(255) NOT NULL COMMENT 'Display label shown to users',
+    field_type ENUM('text', 'textarea', 'number', 'date', 'select', 'checkbox', 'radio') NOT NULL,
+    field_options TEXT DEFAULT NULL COMMENT 'JSON array for select/checkbox/radio options',
+    is_required TINYINT(1) DEFAULT 0 COMMENT '1 = required field, 0 = optional',
+    is_enabled TINYINT(1) DEFAULT 1 COMMENT '1 = active, 0 = disabled/soft-deleted',
+    display_order INT DEFAULT 0 COMMENT 'Sort order for display on forms',
+    validation_rules TEXT DEFAULT NULL COMMENT 'JSON object with validation config (regex, min/max)',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_enabled_order (is_enabled, display_order),
+    INDEX idx_field_name (field_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Form Templates Table
+-- Stores reusable form templates with predefined field configurations
+CREATE TABLE IF NOT EXISTS form_templates (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    template_name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT DEFAULT NULL,
+    field_config TEXT NOT NULL COMMENT 'JSON array of field configurations',
+    is_default TINYINT(1) DEFAULT 0 COMMENT '1 = default template, 0 = custom template',
+    created_by INT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_template_name (template_name),
+    INDEX idx_is_default (is_default)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Newspapers Table
+-- Note: Metadata fields (publication_date, edition, category, language, etc.) 
+-- are now stored dynamically in custom_metadata_fields and custom_metadata_values tables
 CREATE TABLE IF NOT EXISTS newspapers (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
-    publication_date DATE DEFAULT NULL,
-    edition VARCHAR(100) DEFAULT NULL,
-    category_id INT DEFAULT NULL,
-    language_id INT DEFAULT NULL,
-    page_count INT DEFAULT NULL,
-    keywords TEXT DEFAULT NULL,
-    publisher VARCHAR(255) DEFAULT NULL,
-    volume_issue VARCHAR(100) DEFAULT NULL,
-    description TEXT DEFAULT NULL,
     file_path VARCHAR(500) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_type VARCHAR(50) NOT NULL,
     file_size BIGINT NOT NULL,
     thumbnail_path VARCHAR(500) DEFAULT NULL,
+    -- Bulk image gallery support
+    is_bulk_image TINYINT(1) DEFAULT 0,
+    image_paths TEXT DEFAULT NULL,
     -- Conversion tracking for MOBI to EPUB
     conversion_status ENUM(
         'uploaded',
@@ -74,11 +104,25 @@ CREATE TABLE IF NOT EXISTS newspapers (
     deleted_at DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL,
-    FOREIGN KEY (language_id) REFERENCES languages (id) ON DELETE SET NULL,
     FOREIGN KEY (uploaded_by) REFERENCES users (id),
     FOREIGN KEY (deleted_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- Custom Metadata Values Table
+-- Stores user-entered custom metadata values for each file
+CREATE TABLE IF NOT EXISTS custom_metadata_values (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    file_id INT NOT NULL COMMENT 'References newspapers.id',
+    field_id INT DEFAULT NULL COMMENT 'References custom_metadata_fields.id',
+    field_value TEXT DEFAULT NULL COMMENT 'User-entered value for this field',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (file_id) REFERENCES newspapers(id) ON DELETE CASCADE,
+    FOREIGN KEY (field_id) REFERENCES custom_metadata_fields(id) ON DELETE SET NULL,
+    INDEX idx_file_id (file_id),
+    INDEX idx_field_id (field_id),
+    UNIQUE KEY unique_file_field (file_id, field_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Activity Logs Table
 CREATE TABLE IF NOT EXISTS activity_logs (
@@ -95,7 +139,11 @@ CREATE TABLE IF NOT EXISTS activity_logs (
         'permanent_delete',
         'login',
         'logout',
-        'settings_update'
+        'settings_update',
+        'custom_metadata_update',
+        'form_template_create',
+        'form_template_update',
+        'form_template_delete'
     ) NOT NULL,
     target_title VARCHAR(255) DEFAULT NULL,
     details TEXT DEFAULT NULL,
