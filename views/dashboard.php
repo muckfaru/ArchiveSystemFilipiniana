@@ -18,16 +18,18 @@
                     </div>
 
                     <div class="filter-dropdown-container">
-                        <select class="form-select border-0 shadow-none px-4 fw-medium text-dark" name="category"
-                            style="background-color: #F1F5F9; border-radius: 8px; height: 44px; width: auto; min-width: 140px; font-size: 13px; cursor: pointer;"
-                            onchange="document.getElementById('searchFilterForm').submit()">
-                            <option value="">All Categories</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?= $cat['id'] ?>" <?= $categoryFilter == $cat['id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($cat['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="filter-dropdown-wrapper">
+                            <i class="bi bi-grid-3x3-gap filter-dropdown-icon"></i>
+                            <select class="form-select border-0 shadow-none" name="category"
+                                onchange="document.getElementById('searchFilterForm').submit()">
+                                <option value="">All Categories</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?= $cat['id'] ?>" <?= $categoryFilter == $cat['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($cat['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </form>

@@ -363,26 +363,76 @@ body .sidebar-title {
     font-weight: 400;
 }
 
-.filter-dropdown-container select {
-    background-color: #F9FAFB;
-    border: 1.5px solid #E5E7EB;
-    border-radius: 10px;
-    height: 48px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s ease;
+.filter-dropdown-container {
+    position: relative;
 }
 
-.filter-dropdown-container select:hover {
+.filter-dropdown-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #F9FAFB;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    height: 48px;
+    padding-left: 14px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-dropdown-wrapper:hover {
     background-color: #F3F4F6;
     border-color: #D1D5DB;
 }
 
-.filter-dropdown-container select:focus {
+.filter-dropdown-wrapper:focus-within {
     border-color: #3A9AFF;
     box-shadow: 0 0 0 3px rgba(58, 154, 255, 0.1);
+    background-color: #FFFFFF;
+}
+
+.filter-dropdown-icon {
+    font-size: 15px;
+    color: #9CA3AF;
+    flex-shrink: 0;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.filter-dropdown-wrapper:focus-within .filter-dropdown-icon {
+    color: #3A9AFF;
+}
+
+.filter-dropdown-container select {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    height: 100%;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    padding: 0 36px 0 10px;
+    min-width: 130px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%239CA3AF' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.filter-dropdown-container select:hover {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.filter-dropdown-container select:focus {
+    border-color: transparent;
+    box-shadow: none;
+    outline: none;
 }
 
 .top-search-pill .form-control:focus,
@@ -521,6 +571,16 @@ body .sidebar-title {
         margin-top: 10px;
         border-top: 1px solid #E5E7EB;
         border-radius: 0;
+    }
+
+    .filter-dropdown-wrapper {
+        height: 42px;
+        border-radius: 10px;
+    }
+
+    .filter-dropdown-container select {
+        min-width: 110px;
+        font-size: 12px;
     }
     
     .stat-card-value {
