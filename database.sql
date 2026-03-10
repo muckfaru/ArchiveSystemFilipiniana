@@ -144,12 +144,12 @@ CREATE TABLE IF NOT EXISTS newspapers (
 CREATE TABLE IF NOT EXISTS custom_metadata_values (
     id INT PRIMARY KEY AUTO_INCREMENT,
     file_id INT NOT NULL COMMENT 'References newspapers.id',
-    field_id INT DEFAULT NULL COMMENT 'References custom_metadata_fields.id',
+    field_id INT DEFAULT NULL COMMENT 'References form_fields.id',
     field_value TEXT DEFAULT NULL COMMENT 'User-entered value for this field',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (file_id) REFERENCES newspapers(id) ON DELETE CASCADE,
-    FOREIGN KEY (field_id) REFERENCES custom_metadata_fields(id) ON DELETE SET NULL,
+    FOREIGN KEY (field_id) REFERENCES form_fields(id) ON DELETE SET NULL,
     INDEX idx_file_id (file_id),
     INDEX idx_field_id (field_id),
     UNIQUE KEY unique_file_field (file_id, field_id)

@@ -760,6 +760,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         logActivity($currentUser['id'], 'edit', $title, $editId);
+
+        if (isAjaxRequest()) {
+            echo json_encode(['success' => true, 'message' => 'Document updated successfully']);
+            exit;
+        }
         redirect('upload.php?success=edit&edit=' . $editId);
     }
 }
