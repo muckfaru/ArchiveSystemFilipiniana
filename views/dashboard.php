@@ -142,26 +142,30 @@
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($searchResults as $paper): ?>
-                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
-                    <?php $publicationLong = $paper['publication_date'] ? strtoupper(formatPublicationDate($paper['publication_date'], true)) : strtoupper(date('F j, Y', strtotime($paper['created_at']))); ?>
+                    <?php
+                        $meta = $paper['custom_metadata'] ?? [];
+                        $pubDate = getMetadataValueByLabel($meta, ['publication date', 'date published', 'date issued']);
+                        $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
+                        $publicationLong = $pubDate ? strtoupper(formatPublicationDate($pubDate, true)) : strtoupper(date('F j, Y', strtotime($paper['created_at'])));
+                    ?>
                     <div class="col-md-6 col-lg-3">
                         <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                             data-date="<?= htmlspecialchars($publicationShort) ?>"
-                            data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
-                            data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
+                            data-edition="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'edition', 'Standard')) ?>"
+                            data-pages="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['pages', 'page count'], 'N/A')) ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
-                            data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
+                            data-tags="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['keywords', 'tags'])) ?>"
                             data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>"
-                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
-                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
+                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($meta)) ?>"
+                            data-publisher="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'publisher', 'N/A')) ?>"
+                            data-description="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'description')) ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
                             data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
-                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
-                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
+                            data-volume="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['volume', 'issue', 'volume/issue'])) ?>"
+                            data-language="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'language')) ?>">
 
                             <!-- Thumbnail with category badge -->
                             <div class="dashboard-thumb-wrap">
@@ -175,13 +179,21 @@
                                 <?php endif; ?>
 
                                 <!-- Category badge on thumbnail -->
+                                <?php 
+                                    $searchCatVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                                    if ($searchCatVal && strtolower($searchCatVal) !== 'uncategorized'): 
+                                ?>
                                 <span class="dashboard-thumb-badge">
-                                    <?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>
+                                    <?= htmlspecialchars($searchCatVal) ?>
                                 </span>
+                                <?php endif; ?>
                             </div>
 
                             <!-- Card info -->
                             <div class="dashboard-card-info">
+                                <div class="dashboard-card-type-badge">
+                                    <?= strtoupper($paper['file_type'] ?? 'DOCUMENT') ?>
+                                </div>
                                 <div class="dashboard-card-title">
                                     <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
                                 </div>
@@ -252,26 +264,30 @@
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($recentNewspapers as $paper): ?>
-                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
-                    <?php $publicationLong = $paper['publication_date'] ? strtoupper(formatPublicationDate($paper['publication_date'], true)) : strtoupper(date('F j, Y', strtotime($paper['created_at']))); ?>
+                    <?php
+                        $meta = $paper['custom_metadata'] ?? [];
+                        $pubDate = getMetadataValueByLabel($meta, ['publication date', 'date published', 'date issued']);
+                        $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
+                        $publicationLong = $pubDate ? strtoupper(formatPublicationDate($pubDate, true)) : strtoupper(date('F j, Y', strtotime($paper['created_at'])));
+                    ?>
                     <div class="col-md-6 col-lg-3">
                         <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                             data-date="<?= htmlspecialchars($publicationShort) ?>"
-                            data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
-                            data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
+                            data-edition="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'edition', 'Standard')) ?>"
+                            data-pages="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['pages', 'page count'], 'N/A')) ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
-                            data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
+                            data-tags="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['keywords', 'tags'])) ?>"
                             data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>"
-                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
-                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
+                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($meta)) ?>"
+                            data-publisher="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'publisher', 'N/A')) ?>"
+                            data-description="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'description')) ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
                             data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
-                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
-                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
+                            data-volume="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['volume', 'issue', 'volume/issue'])) ?>"
+                            data-language="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'language')) ?>">
 
                             <!-- Thumbnail with category badge -->
                             <div class="dashboard-thumb-wrap">
@@ -289,9 +305,14 @@
                                 <?php endif; ?>
 
                                 <!-- Category badge on thumbnail -->
+                                <?php 
+                                    $categoryVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                                    if ($categoryVal && strtolower($categoryVal) !== 'uncategorized'): 
+                                ?>
                                 <span class="dashboard-thumb-badge">
-                                    <?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>
+                                    <?= htmlspecialchars($categoryVal) ?>
                                 </span>
+                                <?php endif; ?>
 
                                 <!-- NEW badge for recent uploads -->
                                 <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
@@ -304,6 +325,9 @@
 
                             <!-- Card info -->
                             <div class="dashboard-card-info">
+                                <div class="dashboard-card-type-badge">
+                                    <?= strtoupper($paper['file_type'] ?? 'DOCUMENT') ?>
+                                </div>
                                 <div class="dashboard-card-title">
                                     <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
                                 </div>
@@ -376,51 +400,7 @@
 
                         <p class="public-modal-meta-section-title">Document Details</p>
 
-                        <div class="public-modal-meta-row">
-                            <span class="public-modal-meta-label"><i class="bi bi-calendar3"></i> Publication
-                                Date</span>
-                            <span id="metaDate" class="public-modal-meta-value">—</span>
-                        </div>
-
-                        <div class="public-modal-meta-row">
-                            <span class="public-modal-meta-label"><i class="bi bi-building"></i> Publisher</span>
-                            <span id="metaPublisher" class="public-modal-meta-value">—</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowLanguage">
-                            <span class="public-modal-meta-label"><i class="bi bi-translate"></i> Language</span>
-                            <span id="metaLanguage" class="public-modal-meta-value">—</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowPages">
-                            <span class="public-modal-meta-label"><i class="bi bi-book"></i> Pages</span>
-                            <span id="metaPages" class="public-modal-meta-value">—</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowVolume">
-                            <span class="public-modal-meta-label"><i class="bi bi-layers"></i> Volume / Issue</span>
-                            <span id="metaVolume" class="public-modal-meta-value">—</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowEdition">
-                            <span class="public-modal-meta-label"><i class="bi bi-sun"></i> Edition</span>
-                            <span id="metaEdition" class="public-modal-meta-value">—</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowFormat">
-                            <span class="public-modal-meta-label"><i class="bi bi-file-earmark"></i> Format</span>
-                            <span id="metaFormat" class="public-format-badge">PDF</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowUploader">
-                            <span class="public-modal-meta-label"><i class="bi bi-person"></i> Uploaded by</span>
-                            <span id="metaUploader" class="public-modal-meta-value">Admin</span>
-                        </div>
-
-                        <div class="public-modal-meta-row" id="modalRowKeywords">
-                            <span class="public-modal-meta-label"><i class="bi bi-tags"></i> Keywords</span>
-                            <div id="metaTags" class="public-modal-keywords-wrap"></div>
-                        </div>
+                        <!-- Dynamic metadata rows rendered by JS -->
                     </div>
                 </div>
             </div>

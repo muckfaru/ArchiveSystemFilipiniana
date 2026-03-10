@@ -102,31 +102,59 @@ if (!empty($documents)) {
 
     // Attach custom metadata to each document
     foreach ($documents as &$doc) {
-        $doc['custom_metadata'] = $customMetadata[$doc['id']] ?? [];
+        $rawMeta = $customMetadata[$doc['id']] ?? [];
 
-        // Filter metadata for card display
-        $doc['display_metadata'] = [];
+        // Build rich metadata array with field_label and field_value
+        // (needed by getCategoryFromMetadata and getMetadataValueByLabel)
+        $doc['custom_metadata'] = [];
         foreach ($cardFields as $field) {
-            if (isset($doc['custom_metadata'][$field['field_id']])) {
-                $doc['display_metadata'][] = [
-                    'label' => $field['field_label'],
-                    'value' => $doc['custom_metadata'][$field['field_id']]
+            if (isset($rawMeta[$field['field_id']])) {
+                $doc['custom_metadata'][] = [
+                    'field_id' => $field['field_id'],
+                    'field_label' => $field['field_label'],
+                    'field_value' => $rawMeta[$field['field_id']],
+                    'field_type' => $field['field_type'] ?? 'text'
+                ];
+            }
+        }
+        // Also include modal-only fields that weren't in card fields
+        $cardFieldIds = array_column($cardFields, 'field_id');
+        foreach ($modalFields as $field) {
+            if (isset($rawMeta[$field['field_id']]) && !in_array($field['field_id'], $cardFieldIds)) {
+                $doc['custom_metadata'][] = [
+                    'field_id' => $field['field_id'],
+                    'field_label' => $field['field_label'],
+                    'field_value' => $rawMeta[$field['field_id']],
+                    'field_type' => $field['field_type'] ?? 'text'
                 ];
             }
         }
 
-        // Filter metadata for modal display
-        $doc['modal_metadata'] = [];
-        foreach ($modalFields as $field) {
-            if (isset($doc['custom_metadata'][$field['field_id']])) {
-                // Convert field label to snake_case for icon mapping
-                $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $field['field_label']));
-                $doc['modal_metadata'][] = [
+        // Filter metadata for card display
+        $doc['display_metadata'] = [];
+        foreach ($cardFields as $field) {
+            if (isset($rawMeta[$field['field_id']])) {
+                $doc['display_metadata'][] = [
                     'label' => $field['field_label'],
-                    'value' => $doc['custom_metadata'][$field['field_id']],
-                    'field_name' => $fieldName
+                    'value' => $rawMeta[$field['field_id']]
                 ];
             }
+        }
+
+        // Filter metadata for modal display – include ALL visible fields
+        // so the modal always shows configured rows (with "—" for empty)
+        $doc['modal_metadata'] = [];
+        foreach ($modalFields as $field) {
+            // Skip the Title field – already shown separately in the modal header
+            if (strtolower(trim($field['field_label'])) === 'title') continue;
+
+            $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $field['field_label']));
+            $doc['modal_metadata'][] = [
+                'label'      => $field['field_label'],
+                'value'      => $rawMeta[$field['field_id']] ?? '',
+                'field_name' => $fieldName,
+                'field_type' => $field['field_type'] ?? 'text'
+            ];
         }
     }
 }

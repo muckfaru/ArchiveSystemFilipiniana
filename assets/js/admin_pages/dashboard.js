@@ -94,8 +94,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const categoryEl = document.getElementById('previewCategory');
             if (categoryEl) {
-                categoryEl.textContent = (category || 'UNCATEGORIZED').toUpperCase();
-                categoryEl.className = 'newspaper-category mb-0 ' + (category ? category.toLowerCase() : '');
+                if (category && category.toLowerCase() !== 'uncategorized') {
+                    categoryEl.textContent = category.toUpperCase();
+                    categoryEl.className = 'newspaper-category mb-0 ' + category.toLowerCase();
+                    categoryEl.style.display = '';
+                } else {
+                    categoryEl.style.display = 'none';
+                }
             }
 
             // Update description
@@ -217,11 +222,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Render each metadata field
         metadata.forEach(meta => {
-            // Skip empty fields
-            if (!meta.field_value || meta.field_value.trim() === '') {
-                return;
-            }
-            
             // Skip Title field (already shown as modal heading)
             if (meta.field_label && meta.field_label.toLowerCase() === 'title') {
                 return;
@@ -230,15 +230,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const row = document.createElement('div');
             row.className = 'public-modal-meta-row';
 
-            // Determine icon based on field name
+            // Determine icon based on field name/label
             let icon = 'bi-info-circle';
-            if (meta.field_name === 'publication_date') icon = 'bi-calendar3';
-            else if (meta.field_name === 'publisher') icon = 'bi-building';
-            else if (meta.field_name === 'language') icon = 'bi-translate';
-            else if (meta.field_name === 'page_count') icon = 'bi-book';
-            else if (meta.field_name === 'volume_issue') icon = 'bi-layers';
-            else if (meta.field_name === 'edition') icon = 'bi-sun';
-            else if (meta.field_name === 'category') icon = 'bi-tag';
+            const fieldNameLower = (meta.field_name || '').toLowerCase();
+            const fieldLabelLower = (meta.field_label || '').toLowerCase();
+            if (fieldNameLower === 'publication_date' || fieldLabelLower === 'date published') icon = 'bi-calendar3';
+            else if (fieldNameLower === 'publisher' || fieldLabelLower === 'publisher') icon = 'bi-building';
+            else if (fieldNameLower === 'language' || fieldLabelLower === 'language') icon = 'bi-translate';
+            else if (fieldNameLower === 'page_count' || fieldLabelLower === 'pages') icon = 'bi-book';
+            else if (fieldNameLower === 'volume_issue' || fieldLabelLower === 'volume') icon = 'bi-layers';
+            else if (fieldNameLower === 'edition' || fieldLabelLower === 'edition') icon = 'bi-sun';
+            else if (fieldNameLower === 'category' || fieldLabelLower === 'category') icon = 'bi-tag';
+            else if (fieldLabelLower === 'tags' || fieldLabelLower === 'keywords') icon = 'bi-tags';
+            else if (fieldLabelLower === 'description') icon = 'bi-file-text';
+            else if (fieldLabelLower === 'author') icon = 'bi-person';
 
             // Format value based on field type
             let displayValue = meta.field_value;
@@ -248,6 +253,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     const date = new Date(meta.field_value);
                     if (!isNaN(date.getTime())) {
                         displayValue = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    }
+                }
+            } else if (meta.field_type === 'tags') {
+                // Handle comma-separated tags
+                if (meta.field_value && meta.field_value.trim() !== '') {
+                    const tags = meta.field_value.split(',').map(t => t.trim()).filter(Boolean);
+                    if (tags.length > 0) {
+                        const tagsHtml = tags.map(v =>
+                            `<span class="public-modal-keyword-pill">${escapeHtml(v)}</span>`
+                        ).join(' ');
+                        row.innerHTML = `
+                            <span class="public-modal-meta-label"><i class="bi ${icon}"></i> ${escapeHtml(meta.field_label)}</span>
+                            <div class="public-modal-keywords-wrap">${tagsHtml}</div>
+                        `;
+                        lastInserted.after(row);
+                        lastInserted = row;
+                        return;
                     }
                 }
             } else if (meta.field_type === 'checkbox') {

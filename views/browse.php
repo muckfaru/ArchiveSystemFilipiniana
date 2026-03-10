@@ -187,8 +187,11 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <?php foreach ($languages as $lang): ?>
                                 <?php 
                                 $isActive = in_array($lang['id'], $languageFilter);
-                                // Count documents for this language
-                                $langCountSql = "SELECT COUNT(*) FROM newspapers WHERE deleted_at IS NULL AND language_id = ?";
+                                // Count documents for this language from custom metadata
+                                $langCountSql = "SELECT COUNT(DISTINCT cmv.file_id) FROM custom_metadata_values cmv
+                                    INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+                                    INNER JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
+                                    WHERE cmf.field_label = 'Language' AND cmv.field_value = ?";
                                 $langCountStmt = $pdo->prepare($langCountSql);
                                 $langCountStmt->execute([$lang['id']]);
                                 $langCount = $langCountStmt->fetchColumn();
@@ -356,7 +359,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <?php
                         $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
                         $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
-                        $publicationLabel = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], true) : '';
+                        $ml = $paper['metadata_by_label'] ?? [];
+                        $pubDateVal = $ml['publication date'] ?? $ml['date published'] ?? $ml['date issued'] ?? '';
+                        $publicationLabel = $pubDateVal ? formatPublicationDate($pubDateVal, true) : '';
                         // Prepare modal metadata as JSON for data attribute
                         $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
                         ?>
@@ -365,16 +370,16 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                             data-modal-metadata="<?= $modalMetaJson ?>"
                             data-date="<?= htmlspecialchars($publicationLabel) ?>"
-                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? '') ?>"
-                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
+                            data-publisher="<?= htmlspecialchars($ml['publisher'] ?? '') ?>"
+                            data-description="<?= htmlspecialchars($ml['description'] ?? '') ?>"
                             data-category="<?= htmlspecialchars($catName) ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-page-count="<?= $paper['page_count'] ?? '' ?>"
-                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
-                            data-edition="<?= htmlspecialchars($paper['edition'] ?? '') ?>"
-                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>"
-                            data-keywords="<?= htmlspecialchars($paper['keywords'] ?? '') ?>">
+                            data-page-count="<?= htmlspecialchars($ml['pages'] ?? $ml['page count'] ?? '') ?>"
+                            data-volume="<?= htmlspecialchars($ml['volume'] ?? $ml['volume/issue'] ?? $ml['issue'] ?? '') ?>"
+                            data-edition="<?= htmlspecialchars($ml['edition'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($ml['language'] ?? '') ?>"
+                            data-keywords="<?= htmlspecialchars($ml['keywords'] ?? $ml['tags'] ?? '') ?>">
 
                             <!-- Thumbnail -->
                             <div class="public-thumb-wrap">
@@ -391,9 +396,11 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <!-- Card body -->
                             <div class="public-file-info">
                                 <!-- Category badge ABOVE title -->
-                                <span class="public-file-category-top <?= htmlspecialchars($catClass) ?>">
-                                    <?= htmlspecialchars($catName) ?>
-                                </span>
+                                <?php if ($catName !== 'Uncategorized'): ?>
+                                    <span class="public-file-category-top <?= htmlspecialchars($catClass) ?>">
+                                        <?= htmlspecialchars($catName) ?>
+                                    </span>
+                                <?php endif; ?>
 
                                 <!-- Title -->
                                 <div class="public-file-title">
@@ -401,64 +408,67 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                 </div>
 
                                 <!-- Description -->
-                                <?php if (!empty($paper['description'])): ?>
+                                <?php $descVal = $ml['description'] ?? ''; ?>
+                                <?php if (!empty($descVal)): ?>
                                     <div class="public-file-description">
-                                        <?= highlightSearch($paper['description'], $searchQuery) ?>
+                                        <?= highlightSearch($descVal, $searchQuery) ?>
                                     </div>
                                 <?php endif; ?>
 
                                 <!-- Metadata with Icons (Below Description) -->
                                 <div class="browse-list-metadata">
-                                    <?php if ($paper['publication_date']): ?>
+                                    <?php if (!empty($pubDateVal)): ?>
                                         <div class="browse-meta-item" data-label="Date:">
                                             <span>
                                                 <i class="bi bi-calendar3"></i>
-                                                <?= date('M d, Y', strtotime($paper['publication_date'])) ?>
+                                                <?= htmlspecialchars(formatPublicationDate($pubDateVal, true)) ?>
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                     
-                                    <?php if (!empty($paper['publisher'])): ?>
+                                    <?php if (!empty($ml['publisher'])): ?>
                                         <div class="browse-meta-item" data-label="Publisher:">
                                             <span>
                                                 <i class="bi bi-building"></i>
-                                                <?= htmlspecialchars($paper['publisher']) ?>
+                                                <?= htmlspecialchars($ml['publisher']) ?>
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                     
-                                    <?php if (!empty($paper['language_name'])): ?>
+                                    <?php if (!empty($ml['language'])): ?>
                                         <div class="browse-meta-item" data-label="Language:">
                                             <span>
                                                 <i class="bi bi-translate"></i>
-                                                <?= htmlspecialchars($paper['language_name']) ?>
+                                                <?= htmlspecialchars($ml['language']) ?>
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                     
-                                    <?php if (!empty($paper['page_count'])): ?>
+                                    <?php $pageCount = $ml['pages'] ?? $ml['page count'] ?? ''; ?>
+                                    <?php if (!empty($pageCount)): ?>
                                         <div class="browse-meta-item" data-label="Pages:">
                                             <span>
                                                 <i class="bi bi-file-earmark-text"></i>
-                                                <?= $paper['page_count'] ?> Pages
+                                                <?= htmlspecialchars($pageCount) ?> Pages
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                     
-                                    <?php if (!empty($paper['edition'])): ?>
+                                    <?php if (!empty($ml['edition'])): ?>
                                         <div class="browse-meta-item" data-label="Edition:">
                                             <span>
                                                 <i class="bi bi-sun"></i>
-                                                <?= htmlspecialchars($paper['edition']) ?>
+                                                <?= htmlspecialchars($ml['edition']) ?>
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                     
-                                    <?php if (!empty($paper['volume_issue'])): ?>
+                                    <?php $volVal = $ml['volume'] ?? $ml['volume/issue'] ?? $ml['issue'] ?? ''; ?>
+                                    <?php if (!empty($volVal)): ?>
                                         <div class="browse-meta-item" data-label="Volume:">
                                             <span>
                                                 <i class="bi bi-layers"></i>
-                                                <?= htmlspecialchars($paper['volume_issue']) ?>
+                                                <?= htmlspecialchars($volVal) ?>
                                             </span>
                                         </div>
                                     <?php endif; ?>
@@ -552,49 +562,14 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                     <i class="bi bi-x-lg"></i>
                 </button>
 
-                <span id="publicModalCategory" class="public-modal-category-badge">CATEGORY</span>
+                <!-- Title -->
                 <h2 id="publicModalTitle" class="public-modal-title">File Title</h2>
 
-                <div id="publicModalDescriptionWrap" class="public-modal-description-wrap" style="display: none;">
-                    <p id="publicModalDescription" class="public-modal-description"></p>
-                </div>
-
+                <!-- Section label -->
                 <p class="public-modal-meta-section-title">Document Details</p>
 
-                <div class="public-modal-meta-row">
-                    <span class="public-modal-meta-label"><i class="bi bi-calendar3"></i> Publication Date</span>
-                    <span id="publicModalDate" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row">
-                    <span class="public-modal-meta-label"><i class="bi bi-building"></i> Publisher</span>
-                    <span id="publicModalPublisher" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowLanguage">
-                    <span class="public-modal-meta-label"><i class="bi bi-translate"></i> Language</span>
-                    <span id="publicModalLanguage" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowPages">
-                    <span class="public-modal-meta-label"><i class="bi bi-book"></i> Pages</span>
-                    <span id="publicModalPages" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowVolume">
-                    <span class="public-modal-meta-label"><i class="bi bi-layers"></i> Volume / Issue</span>
-                    <span id="publicModalVolume" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowEdition">
-                    <span class="public-modal-meta-label"><i class="bi bi-sun"></i> Edition</span>
-                    <span id="publicModalEdition" class="public-modal-meta-value">—</span>
-                </div>
-
-                <div class="public-modal-meta-row" id="modalRowKeywords">
-                    <span class="public-modal-meta-label"><i class="bi bi-tags"></i> Keywords</span>
-                    <div id="publicModalKeywords" class="public-modal-keywords-wrap"></div>
-                </div>
+                <!-- Dynamic metadata rows container -->
+                <div id="publicModalMetadata"></div>
             </div>
         </div>
     </div>

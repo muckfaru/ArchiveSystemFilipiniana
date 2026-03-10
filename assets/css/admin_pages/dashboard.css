@@ -660,6 +660,22 @@ body .sidebar-title {
     font-family: 'Poppins', sans-serif;
 }
 
+/* File type badge (e.g. PDF, MOBI, EPUB) */
+.dashboard-card-type-badge {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #6B7280;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    background: #F3F4F6;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-family: 'Poppins', sans-serif;
+    width: fit-content;
+}
+
 .dashboard-card-title {
     font-size: 15px;
     font-weight: 700;
@@ -680,6 +696,33 @@ body .sidebar-title {
     line-height: 1.6;
     margin-bottom: 8px;
     font-family: 'Poppins', sans-serif;
+}
+
+/* Card metadata rows (matches Live Preview style) */
+.dashboard-card-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    padding: 3px 0;
+    line-height: 1.4;
+    font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-card-meta-label {
+    font-weight: 600;
+    color: #6B7280;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.dashboard-card-meta-value {
+    color: #374151;
+    text-align: right;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Admin-specific: Action buttons overlay (REMOVED - actions now only in preview modal) */

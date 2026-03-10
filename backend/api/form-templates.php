@@ -229,7 +229,12 @@ function deleteFormTemplate($pdo, $currentUser, $input) {
         }
         
         // Check if form has associated values
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM custom_metadata_values WHERE form_id = ?");
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as count 
+            FROM custom_metadata_values cmv
+            INNER JOIN form_fields ff ON cmv.field_id = ff.id
+            WHERE ff.form_id = ?
+        ");
         $stmt->execute([$formId]);
         $count = $stmt->fetch()['count'];
         

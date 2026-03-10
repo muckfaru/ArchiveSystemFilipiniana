@@ -1782,10 +1782,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 allRequiredFieldsFilled = true;
             } else {
                 customFields.forEach(field => {
-                    // Skip hidden fields or fields that are not visible
-                    if (field.offsetParent === null) {
+                    // Skip fields that are not visible, but always validate type="hidden" inputs
+                    // (e.g. tags fields use a hidden input to store their value)
+                    if (field.type !== 'hidden' && field.offsetParent === null) {
                         console.log('⏭️ Skipping hidden field:', field.name);
-                        return; // Field is hidden, skip validation
+                        return; // Field is not visible, skip validation
                     }
                     
                     if (field.type === 'checkbox') {

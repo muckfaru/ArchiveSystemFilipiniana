@@ -51,8 +51,10 @@ if ($categoryFilter) {
 }
 
 if ($searchQuery) {
-    $whereClause .= " AND (n.title LIKE ? OR n.keywords LIKE ? OR n.description LIKE ?)";
-    $params[] = "%$searchQuery%";
+    $whereClause .= " AND (n.title LIKE ? OR EXISTS (
+        SELECT 1 FROM custom_metadata_values cmv3
+        WHERE cmv3.file_id = n.id AND cmv3.field_value LIKE ?
+    ))";
     $params[] = "%$searchQuery%";
     $params[] = "%$searchQuery%";
 }
@@ -87,7 +89,7 @@ $totalPages = ceil($totalResults / $limit);
 
 // Sort order
 if ($sortBy === 'oldest') {
-    $orderBy = 'n.publication_date ASC';
+    $orderBy = 'n.created_at ASC';
 } elseif ($sortBy === 'a-z') {
     $orderBy = 'n.title ASC';
 } elseif ($sortBy === 'z-a') {
@@ -116,15 +118,19 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         // Get custom metadata for this row
         $customMeta = getFileMetadataForDisplay($pdo, $row['id'], 'card');
         $category = getCategoryFromMetadata($customMeta);
+        $pubDate = getMetadataValueByLabel($customMeta, ['Publication Date', 'Date']);
+        $edition = getMetadataValueByLabel($customMeta, ['Edition']);
+        $pageCount = getMetadataValueByLabel($customMeta, ['Page Count', 'Pages']);
+        $keywords = getMetadataValueByLabel($customMeta, ['Keywords', 'Tags']);
         
         fputcsv($output, [
             $row['title'],
             $category,
-            $row['publication_date'] ? date('Y-m-d', strtotime($row['publication_date'])) : 'N/A',
-            $row['edition'],
-            $row['page_count'],
+            $pubDate ? date('Y-m-d', strtotime($pubDate)) : 'N/A',
+            $edition,
+            $pageCount,
             $row['file_type'],
-            $row['keywords']
+            $keywords
         ]);
     }
 
@@ -152,7 +158,14 @@ if (!empty($documents)) {
     $fileIds = array_column($documents, 'id');
     foreach ($documents as &$doc) {
         $doc['custom_metadata'] = getFileMetadataForDisplay($pdo, $doc['id'], 'card');
+        // Build label-indexed lookup for easy access in views
+        $ml = [];
+        foreach ($doc['custom_metadata'] as $m) {
+            $ml[strtolower(trim($m['field_label'] ?? ''))] = $m['field_value'] ?? '';
+        }
+        $doc['metadata_by_label'] = $ml;
     }
+    unset($doc);
 }
 
 // --- Display Output ---
@@ -358,7 +371,11 @@ include __DIR__ . '/../views/layouts/header.php';
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($documents as $paper): ?>
-                    <?php $publicationShort = $paper['publication_date'] ? formatPublicationDate($paper['publication_date'], false) : 'N/A'; ?>
+                    <?php
+                        $ml = $paper['metadata_by_label'] ?? [];
+                        $pubDate = $ml['publication date'] ?? $ml['publication_date'] ?? $ml['date'] ?? '';
+                        $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
+                    ?>
                     <!-- Newspaper Card Component identical to dashboard -->
                     <div class="col-md-6 col-lg-3">
                         <div class="newspaper-card" style="cursor: pointer;" data-bs-toggle="modal"
@@ -366,19 +383,19 @@ include __DIR__ . '/../views/layouts/header.php';
                             data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                             data-date="<?= htmlspecialchars($publicationShort) ?>"
-                            data-edition="<?= htmlspecialchars($paper['edition'] ?? 'Standard') ?>"
-                            data-pages="<?= $paper['page_count'] ?? 'N/A' ?>"
+                            data-edition="<?= htmlspecialchars($ml['edition'] ?? 'Standard') ?>"
+                            data-pages="<?= $ml['page count'] ?? $ml['pages'] ?? $ml['page_count'] ?? 'N/A' ?>"
                             data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
                             data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
-                            data-tags="<?= htmlspecialchars($paper['keywords'] ?? '') ?>"
+                            data-tags="<?= htmlspecialchars($ml['keywords'] ?? $ml['tags'] ?? '') ?>"
                             data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
                             data-category="<?= htmlspecialchars(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>"
-                            data-publisher="<?= htmlspecialchars($paper['publisher'] ?? 'N/A') ?>"
-                            data-description="<?= htmlspecialchars($paper['description'] ?? '') ?>"
+                            data-publisher="<?= htmlspecialchars($ml['publisher'] ?? 'N/A') ?>"
+                            data-description="<?= htmlspecialchars($ml['description'] ?? '') ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
                             data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
-                            data-volume="<?= htmlspecialchars($paper['volume_issue'] ?? '') ?>"
-                            data-language="<?= htmlspecialchars($paper['language_name'] ?? '') ?>">
+                            data-volume="<?= htmlspecialchars($ml['volume/issue'] ?? $ml['volume_issue'] ?? $ml['volume'] ?? '') ?>"
+                            data-language="<?= htmlspecialchars($ml['language'] ?? '') ?>">
 
                             <?php if ($paper['thumbnail_path']): ?>
                                 <div class="position-relative">
@@ -404,7 +421,7 @@ include __DIR__ . '/../views/layouts/header.php';
                                     <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
                                 </h6>
                                 <div class="newspaper-date mt-auto text-muted" style="font-size: 12px; font-weight: 500;">
-                                    <?= $paper['publication_date'] ? date('d F Y', strtotime($paper['publication_date'])) : date('d F Y', strtotime($paper['created_at'])) ?>
+                                    <?= $pubDate ? date('d F Y', strtotime($pubDate)) : date('d F Y', strtotime($paper['created_at'])) ?>
                                 </div>
                             </div>
                         </div>

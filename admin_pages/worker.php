@@ -148,23 +148,13 @@ function processBulkImageJob($job, $items)
 
     // Insert into newspapers
     $stmt = $pdo->prepare("INSERT INTO newspapers (
-        title, publication_date, edition, category_id, language_id, 
-        page_count, keywords, publisher, volume_issue, description,
+        title,
         file_path, file_name, file_type, file_size, thumbnail_path, 
         uploaded_by, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
 
     $stmt->execute([
         $metadata['title'],
-        $metadata['publication_date'] ?: null,
-        $metadata['edition'],
-        $metadata['category_id'] ?: null,
-        $metadata['language_id'] ?: null,
-        $metadata['page_count'] ?: 0,
-        $metadata['keywords'],
-        $metadata['publisher'],
-        $metadata['volume_issue'],
-        $metadata['description'],
         'uploads/newspapers/' . $zipFilename,
         $zipFilename,
         'cbz',
@@ -215,23 +205,13 @@ function processBulkDocumentJob($job, $items)
             // For now assume no thumbnail or standard generation (future)
 
             $stmt = $pdo->prepare("INSERT INTO newspapers (
-                title, publication_date, edition, category_id, language_id, 
-                page_count, keywords, publisher, volume_issue, description,
+                title,
                 file_path, file_name, file_type, file_size, thumbnail_path, 
                 uploaded_by, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
 
             $stmt->execute([
                 $meta['title'],
-                $meta['publication_date'] ?: null,
-                $meta['edition'],
-                $meta['category_id'] ?: null,
-                $meta['language_id'] ?: null,
-                $meta['page_count'] ?: 0,
-                $meta['keywords'],
-                $meta['publisher'],
-                $meta['volume_issue'],
-                $meta['description'],
                 'uploads/newspapers/' . $newFilename,
                 $newFilename,
                 strtolower($ext),

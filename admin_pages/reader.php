@@ -18,10 +18,8 @@ if (!$fileId) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT n.*, c.name AS category_name, l.name AS language_name
+    SELECT n.*
     FROM newspapers n
-    LEFT JOIN categories c ON n.category_id = c.id
-    LEFT JOIN languages l ON n.language_id = l.id
     WHERE n.id = ? AND n.deleted_at IS NULL
 ");
 $stmt->execute([$fileId]);
@@ -954,50 +952,57 @@ $formatLabel = match (true) {
         </button>
         <h4>File Details</h4>
         <?php
-        $metaRows = [
-            ['bi-bookmark', 'Category', $file['category_name'] ?? '—'],
-            ['bi-calendar3', 'Published', $file['publication_date'] ? date('F j, Y', strtotime($file['publication_date'])) : '—'],
-            ['bi-building', 'Publisher', $file['publisher'] ?? '—'],
-            ['bi-translate', 'Language', $file['language_name'] ?? '—'],
-            ['bi-file-earmark', 'Format', $formatLabel],
-            ['bi-book', 'Pages', $file['page_count'] ? number_format($file['page_count']) : '—'],
-            ['bi-layers', 'Volume/Issue', $file['volume_issue'] ?? '—'],
-            ['bi-sun', 'Edition', $file['edition'] ?? '—'],
+        // Build metadata rows from custom metadata
+        $metaIconMap = [
+            'category' => 'bi-bookmark',
+            'publication date' => 'bi-calendar3', 'date published' => 'bi-calendar3', 'date issued' => 'bi-calendar3', 'published' => 'bi-calendar3',
+            'publisher' => 'bi-building',
+            'language' => 'bi-translate',
+            'pages' => 'bi-book', 'page count' => 'bi-book',
+            'volume' => 'bi-layers', 'issue' => 'bi-layers', 'volume/issue' => 'bi-layers',
+            'edition' => 'bi-sun',
+            'keywords' => 'bi-tag', 'tags' => 'bi-tag',
+            'description' => 'bi-text-paragraph',
         ];
+
+        // Always show Format
+        $metaRows = [['bi-file-earmark', 'Format', $formatLabel]];
+
+        if (!empty($customMetadata)):
+            foreach ($customMetadata as $meta):
+                if (empty($meta['field_value'])) continue;
+                $labelLower = strtolower(trim($meta['field_label']));
+                $icon = $metaIconMap[$labelLower] ?? 'bi-info-circle';
+                $val = $meta['field_value'];
+                // Format date fields
+                if ($meta['field_type'] === 'date' && !empty($val)) {
+                    $ts = strtotime($val);
+                    $val = $ts ? date('F j, Y', $ts) : $val;
+                }
+                // Format checkbox fields (JSON arrays)
+                if ($meta['field_type'] === 'checkbox') {
+                    $decoded = json_decode($val, true);
+                    if (is_array($decoded)) $val = implode(', ', $decoded);
+                }
+                // Format tags fields
+                if ($meta['field_type'] === 'tags') {
+                    $val = implode(', ', array_filter(array_map('trim', explode(',', $val))));
+                }
+                $metaRows[] = [$icon, $meta['field_label'], $val];
+            endforeach;
+        endif;
+
         foreach ($metaRows as [$icon, $label, $val]):
-            if (!$val || ($val === '—' && in_array($label, ['Volume/Issue', 'Edition', 'Language'])))
-                continue; ?>
+            if (!$val) continue; ?>
             <div class="info-row">
                 <span class="info-label"><i class="bi <?= $icon ?> me-1"></i>
-                    <?= $label ?>
+                    <?= htmlspecialchars($label) ?>
                 </span>
                 <span class="info-val">
                     <?= htmlspecialchars($val) ?>
                 </span>
             </div>
         <?php endforeach; ?>
-        <?php if (!empty($file['keywords'])): ?>
-            <div class="info-row">
-                <span class="info-label"><i class="bi bi-tag me-1"></i>Keywords</span>
-                <span class="info-val">
-                    <?= htmlspecialchars($file['keywords']) ?>
-                </span>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Custom Metadata -->
-        <?php if (!empty($customMetadata)): ?>
-            <?php foreach ($customMetadata as $meta): ?>
-                <?php if (!empty($meta['field_value'])): ?>
-                    <div class="info-row">
-                        <span class="info-label"><i class="bi bi-info-circle me-1"></i><?= htmlspecialchars($meta['field_label']) ?></span>
-                        <span class="info-val">
-                            <?= htmlspecialchars(formatCustomMetadataValue($meta['field_type'], $meta['field_value'])) ?>
-                        </span>
-                    </div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        <?php endif; ?>
         
         <!-- Reading Analytics (Admin Only) -->
         <?php if (isset($currentUser)): ?>
@@ -1024,13 +1029,6 @@ $formatLabel = match (true) {
             <div class="info-row">
                 <span class="info-label">This Year</span>
                 <span class="info-val"><?= $analytics['yearly'] ?> reads</span>
-            </div>
-        <?php endif; ?>
-        
-        <?php if (!empty($file['description'])): ?>
-            <div
-                style="margin-top:14px; font-size:13px; line-height:1.7; color:var(--muted); word-break:break-word; overflow-wrap:anywhere; white-space:normal;">
-                <?= htmlspecialchars($file['description']) ?>
             </div>
         <?php endif; ?>
     </div>

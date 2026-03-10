@@ -326,6 +326,16 @@ const FormLibrary = {
                         });
                     }
                     break;
+                case 'tags':
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;">';
+                    ['Filipiniana', 'History', 'Manila'].forEach(tag => {
+                        html += `<span style="display:inline-flex;align-items:center;gap:4px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;">${tag} <span style="opacity:.6;">×</span></span>`;
+                    });
+                    html += '</div>';
+                    html += '<div style="border:1px solid #E5E7EB;border-radius:8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;margin-top:4px;">';
+                    html += '<input type="text" placeholder="Type a tag & press Enter" style="border:none;outline:none;flex:1;font-size:13px;" disabled>';
+                    html += '<button style="background:#3A9AFF;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;" disabled>Add</button></div>';
+                    break;
             }
             
             html += '</div>';

@@ -30,6 +30,22 @@
         sampleValues[m.field_id] = { label: m.field_label, value: m.field_value, type: m.field_type };
     });
 
+    // Placeholder values for preview when no real data exists
+    const placeholderValues = {
+        'title': 'Sample Document Title',
+        'publisher': 'Sample Publisher',
+        'category': 'General',
+        'date published': 'Jan 1, 2025',
+        'publication date': 'Jan 1, 2025',
+        'tags': 'history, archive, filipiniana',
+        'description': 'A brief description of the document...',
+        'language': 'Filipino',
+        'edition': 'First Edition',
+        'volume': 'Vol. 1',
+        'pages': '24',
+        'page count': '24',
+    };
+
     // ── DOM refs ─────────────────────────────────────────────────────────
     const tabs = document.querySelectorAll('[data-tab]');
     const fieldRows = document.querySelectorAll('.md-field-row');
@@ -113,7 +129,8 @@
         // Show all visible fields (removed slice limit)
         visible.forEach(f => {
             const s = sampleValues[f.id];
-            const v = s ? formatValue(f.field_type, s.value) : '—';
+            const placeholder = placeholderValues[f.field_label.toLowerCase()] || 'Sample value';
+            const v = s ? formatValue(f.field_type, s.value) : placeholder;
             html += `<div class="md-preview-meta-row">
                 <span class="md-preview-meta-label">${esc(f.field_label)}</span>
                 <span class="md-preview-meta-value">${esc(v)}</span>
@@ -134,7 +151,8 @@
         let html = '';
         visible.forEach(f => {
             const s = sampleValues[f.id];
-            const v = s ? formatValue(f.field_type, s.value) : '—';
+            const placeholder = placeholderValues[f.field_label.toLowerCase()] || 'Sample value';
+            const v = s ? formatValue(f.field_type, s.value) : placeholder;
             html += `<div class="md-modal-field-row">
                 <span class="md-modal-field-label">${esc(f.field_label)}</span>
                 <span class="md-modal-field-value">${esc(v)}</span>

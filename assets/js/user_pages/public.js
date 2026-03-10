@@ -13,37 +13,27 @@
     const modalNoImg = document.getElementById('publicModalNoImg');
     const readBtn = document.getElementById('publicModalReadBtn');
 
-    // metadata
+    // Dynamic metadata container
     const elTitle = document.getElementById('publicModalTitle');
-    const elCategory = document.getElementById('publicModalCategory');
-    const elDescription = document.getElementById('publicModalDescription');
-    const elDescriptionWrap = document.getElementById('publicModalDescriptionWrap');
-    const elDate = document.getElementById('publicModalDate');
-    const elPublisher = document.getElementById('publicModalPublisher');
-    const elLanguage = document.getElementById('publicModalLanguage');
-    const elPages = document.getElementById('publicModalPages');
-    const elVolume = document.getElementById('publicModalVolume');
-    const elEdition = document.getElementById('publicModalEdition');
-    const elKeywords = document.getElementById('publicModalKeywords');
-    
-    // Modal rows
-    const rowLanguage = document.getElementById('modalRowLanguage');
-    const rowPages = document.getElementById('modalRowPages');
-    const rowVolume = document.getElementById('modalRowVolume');
-    const rowEdition = document.getElementById('modalRowEdition');
-    const rowKeywords = document.getElementById('modalRowKeywords');
+    const metadataContainer = document.getElementById('publicModalMetadata');
 
     // Field icon mapping
     const fieldIcons = {
+        'date_published': 'bi-calendar3',
         'publication_date': 'bi-calendar3',
         'publisher': 'bi-building',
         'category': 'bi-tag',
         'language': 'bi-translate',
         'description': 'bi-file-text',
         'page_count': 'bi-book',
+        'pages': 'bi-book',
         'volume_issue': 'bi-layers',
+        'volume': 'bi-layers',
         'edition': 'bi-sun',
-        'keywords': 'bi-tags'
+        'keywords': 'bi-tags',
+        'tags': 'bi-tags',
+        'author': 'bi-person',
+        'subject': 'bi-journal-text'
     };
 
     // ── Open modal ────────────────────────────────────────────────────────────
@@ -53,80 +43,54 @@
         // Title
         if (elTitle) elTitle.textContent = d.title || '—';
 
-        // Category
-        if (elCategory) {
-            const catName = d.category || 'Uncategorized';
-            const catClass = 'public-cat-' + catName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-            elCategory.textContent = catName;
-            elCategory.className = 'public-modal-category-badge public-file-category ' + catClass;
-        }
+        // Build dynamic metadata rows from data-modal-metadata JSON
+        if (metadataContainer) {
+            metadataContainer.innerHTML = '';
 
-        // Description
-        if (elDescription && elDescriptionWrap) {
-            if (d.description && d.description.trim()) {
-                elDescription.textContent = d.description;
-                elDescriptionWrap.style.display = '';
-            } else {
-                elDescriptionWrap.style.display = 'none';
+            let modalMeta = [];
+            try {
+                modalMeta = JSON.parse(d.modalMetadata || '[]');
+            } catch (e) {
+                modalMeta = [];
             }
-        }
 
-        // Date
-        if (elDate) elDate.textContent = d.date || '—';
-
-        // Publisher
-        if (elPublisher) elPublisher.textContent = d.publisher || '—';
-
-        // Language
-        if (elLanguage && rowLanguage) {
-            if (d.language && d.language.trim()) {
-                elLanguage.textContent = d.language;
-                rowLanguage.style.display = '';
+            if (modalMeta.length === 0) {
+                metadataContainer.innerHTML = '<p style="color:#888; font-size:13px;">No metadata available.</p>';
             } else {
-                rowLanguage.style.display = 'none';
-            }
-        }
+                modalMeta.forEach(function (field) {
+                    const label = field.label || '';
+                    const value = field.value || '';
+                    const fieldName = field.field_name || '';
+                    const fieldType = field.field_type || 'text';
 
-        // Pages
-        if (elPages && rowPages) {
-            if (d.pageCount && d.pageCount.trim()) {
-                elPages.textContent = d.pageCount + ' pages';
-                rowPages.style.display = '';
-            } else {
-                rowPages.style.display = 'none';
-            }
-        }
+                    // Pick icon
+                    const iconClass = fieldIcons[fieldName] || 'bi-info-circle';
 
-        // Volume/Issue
-        if (elVolume && rowVolume) {
-            if (d.volume && d.volume.trim()) {
-                elVolume.textContent = d.volume;
-                rowVolume.style.display = '';
-            } else {
-                rowVolume.style.display = 'none';
-            }
-        }
+                    // Format display value
+                    let displayHtml = '';
+                    if (!value || !value.toString().trim()) {
+                        displayHtml = '<span style="color:#999;">—</span>';
+                    } else if (fieldType === 'tags' || fieldName === 'tags' || fieldName === 'keywords') {
+                        // Render as pills
+                        const tags = value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+                        displayHtml = tags.map(function (t) {
+                            return '<span class="public-modal-keyword-pill">' + escapeHtml(t) + '</span>';
+                        }).join(' ');
+                    } else if (fieldType === 'date' || fieldName === 'date_published' || fieldName === 'publication_date') {
+                        displayHtml = escapeHtml(formatDate(value));
+                    } else if (fieldType === 'textarea' || fieldName === 'description') {
+                        displayHtml = '<span style="white-space:pre-wrap;">' + escapeHtml(value) + '</span>';
+                    } else {
+                        displayHtml = escapeHtml(value);
+                    }
 
-        // Edition
-        if (elEdition && rowEdition) {
-            if (d.edition && d.edition.trim()) {
-                elEdition.textContent = d.edition;
-                rowEdition.style.display = '';
-            } else {
-                rowEdition.style.display = 'none';
-            }
-        }
-
-        // Keywords
-        if (elKeywords && rowKeywords) {
-            if (d.keywords && d.keywords.trim()) {
-                const keywords = d.keywords.split(',').map(k => k.trim()).filter(Boolean);
-                elKeywords.innerHTML = keywords.map(k => 
-                    `<span class="public-modal-keyword-pill">${escapeHtml(k)}</span>`
-                ).join('');
-                rowKeywords.style.display = '';
-            } else {
-                rowKeywords.style.display = 'none';
+                    const row = document.createElement('div');
+                    row.className = 'public-modal-meta-row';
+                    row.innerHTML =
+                        '<span class="public-modal-meta-label"><i class="bi ' + iconClass + '"></i> ' + escapeHtml(label) + '</span>' +
+                        '<span class="public-modal-meta-value">' + displayHtml + '</span>';
+                    metadataContainer.appendChild(row);
+                });
             }
         }
 
@@ -140,12 +104,21 @@
             modalNoImg.style.display = '';
         }
 
-        // Read Now link  → user reader (public access, no login required)
+        // Read Now link → user reader (public access, no login required)
         readBtn.href = APP_URL + '/user_pages/reader.php?id=' + encodeURIComponent(d.id);
 
         // Show backdrop
         backdrop.classList.add('active');
         document.body.style.overflow = 'hidden';
+    }
+
+    // Helper: format a date string nicely
+    function formatDate(val) {
+        if (!val) return '—';
+        var d = new Date(val);
+        if (isNaN(d.getTime())) return val; // return as-is if not parseable
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
     }
 
     // Helper function to escape HTML

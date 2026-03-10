@@ -157,13 +157,14 @@ function countArchives()
 function countIssues()
 {
     global $pdo;
-    // Try to get page_count from custom metadata
+    // Try to get page_count from custom metadata (field could be in custom_metadata_fields or form_fields)
     $stmt = $pdo->query("
         SELECT COALESCE(SUM(CAST(cmv.field_value AS UNSIGNED)), 0) as total 
         FROM custom_metadata_values cmv
-        INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
         INNER JOIN newspapers n ON cmv.file_id = n.id
-        WHERE cmf.field_name = 'page_count' 
+        WHERE (cmf.field_name = 'page_count' OR LOWER(COALESCE(cmf.field_label, ff.field_label)) IN ('page count', 'pages'))
         AND n.deleted_at IS NULL
         AND cmv.field_value REGEXP '^[0-9]+$'
     ");
@@ -181,9 +182,10 @@ function getYearsCovered()
             MIN(CAST(LEFT(cmv.field_value, 4) AS UNSIGNED)) as min_year, 
             MAX(CAST(LEFT(cmv.field_value, 4) AS UNSIGNED)) as max_year 
         FROM custom_metadata_values cmv
-        INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
         INNER JOIN newspapers n ON cmv.file_id = n.id
-        WHERE cmf.field_name = 'publication_date' 
+        WHERE (cmf.field_name = 'publication_date' OR LOWER(COALESCE(cmf.field_label, ff.field_label)) IN ('publication date', 'date published', 'date'))
         AND n.deleted_at IS NULL 
         AND cmv.field_value REGEXP '^[0-9]{4}-(0[1-9]|1[0-2])(-([0-2][0-9]|3[0-1]))?$'
     ");
@@ -227,9 +229,10 @@ function countCategories()
     $stmt = $pdo->query("
         SELECT COUNT(DISTINCT cmv.field_value) as total 
         FROM custom_metadata_values cmv
-        INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
         INNER JOIN newspapers n ON cmv.file_id = n.id
-        WHERE cmf.field_name = 'category' 
+        WHERE (cmf.field_name = 'category' OR LOWER(COALESCE(cmf.field_label, ff.field_label)) IN ('category', 'categories'))
         AND n.deleted_at IS NULL
         AND cmv.field_value IS NOT NULL 
         AND cmv.field_value != ''
@@ -385,9 +388,13 @@ function getCustomMetadataValues($fileId)
 {
     global $pdo;
     $stmt = $pdo->prepare("
-        SELECT cmv.field_id, cmv.field_value, cmf.field_name, cmf.field_label, cmf.field_type
+        SELECT cmv.field_id, cmv.field_value, 
+               COALESCE(cmf.field_name, ff.field_label) as field_name, 
+               COALESCE(cmf.field_label, ff.field_label) as field_label, 
+               COALESCE(cmf.field_type, ff.field_type) as field_type
         FROM custom_metadata_values cmv
-        INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
         WHERE cmv.file_id = ?
     ");
     $stmt->execute([$fileId]);
@@ -421,13 +428,16 @@ function getCustomMetadataValuesForFiles($fileIds)
 
     $placeholders = implode(',', array_fill(0, count($fileIds), '?'));
 
+    // Try custom_metadata_fields first, then fall back to form_fields
     $stmt = $pdo->prepare("
         SELECT cmv.file_id, cmv.field_id, cmv.field_value, 
-               cmf.field_label, cmf.field_type
+               COALESCE(cmf.field_label, ff.field_label) as field_label, 
+               COALESCE(cmf.field_type, ff.field_type) as field_type
         FROM custom_metadata_values cmv
-        INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
         WHERE cmv.file_id IN ($placeholders)
-        ORDER BY cmf.display_order ASC
+        ORDER BY COALESCE(cmf.display_order, ff.display_order) ASC
     ");
     $stmt->execute($fileIds);
 
@@ -727,56 +737,68 @@ function getDisplayConfig($pdo, $context = 'both')
         $tableExists = false;
     }
 
-    if (!$tableExists) {
-        // Fallback to all active custom metadata fields if no config table yet
+    $result = [];
+
+    if ($tableExists) {
+        // Primary query: custom_metadata_fields with display config
         $query = "
             SELECT 
                 cmf.id as field_id,
                 cmf.field_label as field_name,
                 cmf.field_label,
                 cmf.field_type,
-                1 as show_on_card,
-                1 as show_in_modal,
+                COALESCE(mdc.show_on_card, 1) as show_on_card,
+                COALESCE(mdc.show_in_modal, 1) as show_in_modal,
                 cmf.display_order as card_display_order,
                 cmf.display_order as modal_display_order
             FROM custom_metadata_fields cmf
+            LEFT JOIN metadata_display_config mdc ON cmf.id = mdc.form_field_id
             WHERE cmf.is_enabled = 1
-            ORDER BY cmf.display_order ASC
         ";
+
+        if ($context === 'card') {
+            $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY cmf.display_order ASC";
+        } elseif ($context === 'modal') {
+            $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY cmf.display_order ASC";
+        } else {
+            $query .= " ORDER BY cmf.display_order ASC";
+        }
+
         $stmt = $pdo->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $cache[$cacheKey] = $result;
-        return $result;
     }
 
-    $query = "
-        SELECT 
-            cmf.id as field_id,
-            cmf.field_label as field_name,
-            cmf.field_label,
-            cmf.field_type,
-            COALESCE(mdc.show_on_card, 1) as show_on_card,
-            COALESCE(mdc.show_in_modal, 1) as show_in_modal,
-            cmf.display_order as card_display_order,
-            cmf.display_order as modal_display_order
-        FROM custom_metadata_fields cmf
-        LEFT JOIN metadata_display_config mdc ON cmf.id = mdc.form_field_id
-        WHERE cmf.is_enabled = 1
-    ";
+    // If no results from custom_metadata_fields, fall back to form_fields
+    // JOIN with metadata_display_config to respect toggle settings
+    if (empty($result)) {
+        $query = "
+            SELECT 
+                ff.id as field_id,
+                ff.field_label as field_name,
+                ff.field_label,
+                ff.field_type,
+                COALESCE(mdc.show_on_card, 1) as show_on_card,
+                COALESCE(mdc.show_in_modal, 1) as show_in_modal,
+                ff.display_order as card_display_order,
+                ff.display_order as modal_display_order
+            FROM form_fields ff
+            INNER JOIN form_templates ft ON ff.form_id = ft.id
+            LEFT JOIN metadata_display_config mdc ON ff.id = mdc.form_field_id
+        ";
 
-    // Apply context filtering
-    if ($context === 'card') {
-        $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY cmf.display_order ASC";
-    } elseif ($context === 'modal') {
-        $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY cmf.display_order ASC";
-    } else {
-        $query .= " ORDER BY cmf.display_order ASC";
+        if ($context === 'card') {
+            $query .= " WHERE COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ff.display_order ASC";
+        } elseif ($context === 'modal') {
+            $query .= " WHERE COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ff.display_order ASC";
+        } else {
+            $query .= " ORDER BY ff.display_order ASC";
+        }
+
+        $stmt = $pdo->query($query);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    $stmt = $pdo->query($query);
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $cache[$cacheKey] = $result;
-
     return $result;
 }
 
@@ -820,12 +842,10 @@ function getFileMetadataForDisplay($pdo, $fileId, $context)
     $stmt->execute($params);
     $values = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-    // Fetch core newspaper details to auto-fill matching labels
+    // Fetch core newspaper details for auto-fill (title, file_name)
     $coreStmt = $pdo->prepare("
-        SELECT n.*, c.name as category_name, l.name as language_name 
+        SELECT n.title, n.file_name
         FROM newspapers n 
-        LEFT JOIN categories c ON n.category_id = c.id
-        LEFT JOIN languages l ON n.language_id = l.id
         WHERE n.id = ?
     ");
     $coreStmt->execute([$fileId]);
@@ -839,33 +859,10 @@ function getFileMetadataForDisplay($pdo, $fileId, $context)
 
         $val = isset($values[$fieldId]) ? $values[$fieldId] : '';
 
-        // Auto-fill core data if the custom metadata value is empty
+        // Auto-fill title from core newspaper data if custom metadata value is empty
         if (empty($val) && !empty($coreData)) {
             if ($label === 'title') {
-                $val = !empty($coreData['title']) ? $coreData['title'] : $coreData['file_name'];
-            } elseif ($label === 'publisher') {
-                $val = $coreData['publisher'];
-            } elseif ($label === 'publication date' || $label === 'date published') {
-                $val = $coreData['publication_date'];
-            } elseif ($label === 'category') {
-                $val = $coreData['category_name'];
-            } elseif ($label === 'language') {
-                $val = $coreData['language_name'];
-            } elseif ($label === 'edition') {
-                $val = $coreData['edition'];
-            } elseif ($label === 'pages' || $label === 'page count') {
-                $val = $coreData['page_count'];
-            } elseif ($label === 'volume' || $label === 'issue' || $label === 'volume/issue') {
-                $val = $coreData['volume_issue'];
-            } elseif ($label === 'description') {
-                $val = $coreData['description'];
-            } elseif ($label === 'keywords' || $label === 'tags') {
-                // If it's a checkbox field expecting JSON, encode it
-                if ($field['field_type'] === 'checkbox') {
-                    $val = json_encode(array_map('trim', explode(',', $coreData['keywords'])));
-                } else {
-                    $val = $coreData['keywords'];
-                }
+                $val = !empty($coreData['title']) ? $coreData['title'] : ($coreData['file_name'] ?? '');
             }
         }
 
@@ -938,7 +935,7 @@ function validateDisplayConfig($config)
 function renderCardMetadata($customMetadata)
 {
     if (empty($customMetadata)) {
-        return '<div class="text-muted small">No metadata configured for display</div>';
+        return '';
     }
 
     $html = '';
@@ -952,57 +949,37 @@ function renderCardMetadata($customMetadata)
             continue;
         }
 
-        $displayVal = empty($val) ? '<span class="text-muted fst-italic">N/A</span>' : htmlspecialchars($val);
+        // Format the display value based on field type
+        $displayVal = '—'; // default dash for empty
 
-        // Special handling for publication_date
-        if ($meta['field_name'] === 'publication_date') {
-            $html .= '<div class="dashboard-card-date">';
-            $html .= empty($val) ? '<span class="text-muted fst-italic">N/A</span>' : strtoupper(formatPublicationDate($val, true));
-            $html .= '</div>';
-        }
-        // Special handling for publisher
-        elseif ($meta['field_name'] === 'publisher') {
-            $html .= '<div class="dashboard-card-publisher">';
-            $html .= $displayVal;
-            $html .= '</div>';
-        }
-        // Special handling for checkbox fields (tags)
-        elseif ($meta['field_type'] === 'checkbox') {
-            $values = json_decode($meta['field_value'], true);
-            if (is_array($values) && !empty($values)) {
-                $html .= '<div class="dashboard-card-tags">';
-                foreach (array_slice($values, 0, 3) as $value) {
-                    $html .= '<span class="badge">' . htmlspecialchars($value) . '</span>';
+        if (!empty($val)) {
+            if ($meta['field_type'] === 'date') {
+                $displayVal = htmlspecialchars(formatPublicationDate($val, true));
+            } elseif ($meta['field_type'] === 'checkbox') {
+                $values = json_decode($val, true);
+                if (is_array($values) && !empty($values)) {
+                    $displayVal = htmlspecialchars(implode(', ', array_slice($values, 0, 3)));
+                    if (count($values) > 3) {
+                        $displayVal .= ' +' . (count($values) - 3);
+                    }
                 }
-                if (count($values) > 3) {
-                    $html .= '<span class="badge">+' . (count($values) - 3) . '</span>';
+            } elseif ($meta['field_type'] === 'tags') {
+                $tagArr = array_filter(array_map('trim', explode(',', $val)));
+                if (!empty($tagArr)) {
+                    $displayVal = htmlspecialchars(implode(', ', array_slice($tagArr, 0, 3)));
+                    if (count($tagArr) > 3) {
+                        $displayVal .= ' +' . (count($tagArr) - 3);
+                    }
                 }
-                $html .= '</div>';
+            } else {
+                $displayVal = htmlspecialchars($val);
             }
         }
-        // Special handling for tags fields (comma-separated string)
-        elseif ($meta['field_type'] === 'tags') {
-            if (empty($val))
-                continue; // skip empty tags
-            $tagArr = array_filter(array_map('trim', explode(',', $meta['field_value'])));
-            if (!empty($tagArr)) {
-                $html .= '<div class="dashboard-card-tags">';
-                foreach (array_slice($tagArr, 0, 4) as $tag) {
-                    $html .= '<span class="badge">' . htmlspecialchars($tag) . '</span>';
-                }
-                if (count($tagArr) > 4) {
-                    $html .= '<span class="badge">+' . (count($tagArr) - 4) . '</span>';
-                }
-                $html .= '</div>';
-            }
-        }
-        // Generic metadata display
-        else {
-            $html .= '<div class="dashboard-card-meta-item">';
-            $html .= '<span class="meta-label">' . htmlspecialchars($meta['field_label']) . ':</span> ';
-            $html .= '<span class="meta-value">' . $displayVal . '</span>';
-            $html .= '</div>';
-        }
+
+        $html .= '<div class="dashboard-card-meta-row">';
+        $html .= '<span class="dashboard-card-meta-label">' . htmlspecialchars($meta['field_label']) . '</span>';
+        $html .= '<span class="dashboard-card-meta-value">' . $displayVal . '</span>';
+        $html .= '</div>';
     }
 
     return $html;
@@ -1028,4 +1005,36 @@ function getCategoryFromMetadata($customMetadata)
     }
 
     return 'Uncategorized';
+}
+
+/**
+ * Extract a metadata value by label from custom metadata array
+ * 
+ * @param array $customMetadata Array of metadata from getFileMetadataForDisplay
+ * @param string|array $labels Label(s) to search for (case-insensitive)
+ * @param string $default Default value if not found
+ * @return string The metadata value or default
+ */
+function getMetadataValueByLabel($customMetadata, $labels, $default = '')
+{
+    if (empty($customMetadata)) {
+        return $default;
+    }
+
+    if (!is_array($labels)) {
+        $labels = [$labels];
+    }
+
+    $labels = array_map(function ($l) {
+        return strtolower(trim($l));
+    }, $labels);
+
+    foreach ($customMetadata as $meta) {
+        $fieldLabel = strtolower(trim($meta['field_label'] ?? ''));
+        if (in_array($fieldLabel, $labels) && !empty($meta['field_value'])) {
+            return $meta['field_value'];
+        }
+    }
+
+    return $default;
 }

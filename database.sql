@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS custom_metadata_fields (
     id INT PRIMARY KEY AUTO_INCREMENT,
     field_name VARCHAR(100) NOT NULL UNIQUE COMMENT 'Internal identifier (e.g., author_name)',
     field_label VARCHAR(255) NOT NULL COMMENT 'Display label shown to users',
-    field_type ENUM('text', 'textarea', 'number', 'date', 'select', 'checkbox', 'radio') NOT NULL,
+    field_type ENUM('text', 'textarea', 'number', 'date', 'select', 'checkbox', 'radio', 'tags') NOT NULL,
     field_options TEXT DEFAULT NULL COMMENT 'JSON array for select/checkbox/radio options',
     is_required TINYINT(1) DEFAULT 0 COMMENT '1 = required field, 0 = optional',
     is_enabled TINYINT(1) DEFAULT 1 COMMENT '1 = active, 0 = disabled/soft-deleted',
@@ -58,17 +58,48 @@ CREATE TABLE IF NOT EXISTS custom_metadata_fields (
 -- Stores reusable form templates with predefined field configurations
 CREATE TABLE IF NOT EXISTS form_templates (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    template_name VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
     description TEXT DEFAULT NULL,
-    field_config TEXT NOT NULL COMMENT 'JSON array of field configurations',
-    is_default TINYINT(1) DEFAULT 0 COMMENT '1 = default template, 0 = custom template',
-    created_by INT DEFAULT NULL,
+    status ENUM('draft', 'active', 'archived') DEFAULT 'draft',
+    is_active TINYINT(1) DEFAULT 0 COMMENT '1 = currently active template, 0 = inactive',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_template_name (template_name),
-    INDEX idx_is_default (is_default)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    INDEX idx_status (status),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Stores form template definitions';
+
+-- Form Fields Table
+-- Stores fields within form templates
+CREATE TABLE IF NOT EXISTS form_fields (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    form_id INT NOT NULL COMMENT 'References form_templates.id',
+    field_label VARCHAR(255) NOT NULL COMMENT 'Display label shown to users',
+    field_type ENUM('text', 'textarea', 'number', 'date', 'select', 'checkbox', 'radio', 'tags') NOT NULL,
+    field_options TEXT DEFAULT NULL COMMENT 'JSON array for select/checkbox/radio options',
+    is_required TINYINT(1) DEFAULT 0 COMMENT '1 = required field, 0 = optional',
+    display_order INT DEFAULT 0 COMMENT 'Sort order for display on forms',
+    help_text TEXT DEFAULT NULL COMMENT 'Optional help text displayed near field',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (form_id) REFERENCES form_templates(id) ON DELETE CASCADE,
+    INDEX idx_form_order (form_id, display_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Stores fields within form templates';
+
+-- Metadata Display Configuration Table
+-- Controls which fields appear on cards vs modals
+CREATE TABLE IF NOT EXISTS metadata_display_config (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    form_field_id INT NOT NULL COMMENT 'References form_fields.id',
+    show_on_card TINYINT(1) DEFAULT 1 COMMENT '1 = show on file cards, 0 = hide',
+    show_in_modal TINYINT(1) DEFAULT 1 COMMENT '1 = show in detail modal, 0 = hide',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_form_field (form_field_id),
+    FOREIGN KEY (form_field_id) REFERENCES form_fields(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Controls metadata field visibility in UI';
 
 -- Newspapers Table
 -- Note: Metadata fields (publication_date, edition, category, language, etc.) 
@@ -119,6 +150,19 @@ CREATE TABLE IF NOT EXISTS custom_metadata_values (
     INDEX idx_field_id (field_id),
     UNIQUE KEY unique_file_field (file_id, field_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Newspaper Views Table
+-- Stores newspaper view records for analytics
+CREATE TABLE IF NOT EXISTS newspaper_views (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    newspaper_id INT NOT NULL COMMENT 'References newspapers.id',
+    ip_address VARCHAR(45) NOT NULL COMMENT 'IP address of viewer (IPv4 or IPv6)',
+    view_date DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when view occurred',
+    INDEX idx_newspaper_date (newspaper_id, view_date),
+    INDEX idx_view_date (view_date),
+    FOREIGN KEY (newspaper_id) REFERENCES newspapers(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Stores newspaper view records for analytics';
 
 -- Activity Logs Table
 CREATE TABLE IF NOT EXISTS activity_logs (

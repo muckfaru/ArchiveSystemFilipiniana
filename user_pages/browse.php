@@ -206,19 +206,40 @@ if (!empty($documents)) {
 
     // Attach custom metadata to each document
     foreach ($documents as &$doc) {
-        $doc['custom_metadata'] = $customMetadataByFile[$doc['id']] ?? [];
+        $rawMeta = $customMetadataByFile[$doc['id']] ?? [];
         
-        // Filter metadata for modal display
-        $doc['modal_metadata'] = [];
+        // Build rich metadata array with field_label and field_value
+        // (needed by getCategoryFromMetadata and getMetadataValueByLabel)
+        $doc['custom_metadata'] = [];
         foreach ($modalFields as $field) {
-            if (isset($doc['custom_metadata'][$field['field_id']])) {
-                // Convert field label to snake_case for icon mapping
-                $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $field['field_label']));
-                $doc['modal_metadata'][] = [
-                    'label' => $field['field_label'],
-                    'value' => $doc['custom_metadata'][$field['field_id']],
-                    'field_name' => $fieldName
+            if (isset($rawMeta[$field['field_id']])) {
+                $doc['custom_metadata'][] = [
+                    'field_id' => $field['field_id'],
+                    'field_label' => $field['field_label'],
+                    'field_value' => $rawMeta[$field['field_id']],
+                    'field_type' => $field['field_type'] ?? 'text'
                 ];
+            }
+        }
+
+        // Filter metadata for modal display – include ALL visible fields
+        $doc['modal_metadata'] = [];
+        // Build label-indexed lookup for easy access in view
+        $doc['metadata_by_label'] = [];
+        foreach ($modalFields as $field) {
+            // Skip the Title field – already shown separately in the modal header
+            if (strtolower(trim($field['field_label'])) === 'title') continue;
+
+            $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $field['field_label']));
+            $val = $rawMeta[$field['field_id']] ?? '';
+            $doc['modal_metadata'][] = [
+                'label'      => $field['field_label'],
+                'value'      => $val,
+                'field_name' => $fieldName,
+                'field_type' => $field['field_type'] ?? 'text'
+            ];
+            if ($val !== '') {
+                $doc['metadata_by_label'][strtolower(trim($field['field_label']))] = $val;
             }
         }
     }

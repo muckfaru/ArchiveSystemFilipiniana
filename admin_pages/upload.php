@@ -79,7 +79,7 @@ if ($editMode) {
         $customMetadataValues[$value['field_id']] = $value['field_value'];
     }
 
-    // Auto-fill core data if the custom metadata value is empty
+    // Auto-fill title from core data if the custom metadata value is empty
     $fieldsToCheck = !empty($formFields) ? $formFields : $customFields;
     foreach ($fieldsToCheck as $field) {
         $fieldId = (isset($field['id']) && $field['id']) ? $field['id'] : null;
@@ -103,38 +103,6 @@ if ($editMode) {
                     $coreTitle = ucwords(trim($coreTitle));
                 }
                 $customMetadataValues[$fieldId] = $coreTitle;
-            } elseif ($label === 'publisher') {
-                $customMetadataValues[$fieldId] = $editItem['publisher'] ?? '';
-            } elseif ($label === 'publication date' || $label === 'date published') {
-                $customMetadataValues[$fieldId] = $editItem['publication_date'] ?? '';
-            } elseif ($label === 'category' && !empty($editItem['category_id'])) {
-                // Fetch category name
-                $catStmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
-                $catStmt->execute([$editItem['category_id']]);
-                if ($cat = $catStmt->fetch()) {
-                    $customMetadataValues[$fieldId] = $cat['name'];
-                }
-            } elseif ($label === 'language' && !empty($editItem['language_id'])) {
-                // Fetch language name
-                $langStmt = $pdo->prepare("SELECT name FROM languages WHERE id = ?");
-                $langStmt->execute([$editItem['language_id']]);
-                if ($lang = $langStmt->fetch()) {
-                    $customMetadataValues[$fieldId] = $lang['name'];
-                }
-            } elseif ($label === 'edition') {
-                $customMetadataValues[$fieldId] = $editItem['edition'] ?? '';
-            } elseif ($label === 'pages' || $label === 'page count') {
-                $customMetadataValues[$fieldId] = $editItem['page_count'] ?? '';
-            } elseif ($label === 'volume' || $label === 'issue' || $label === 'volume/issue') {
-                $customMetadataValues[$fieldId] = $editItem['volume_issue'] ?? '';
-            } elseif ($label === 'description') {
-                $customMetadataValues[$fieldId] = $editItem['description'] ?? '';
-            } elseif ($label === 'keywords' || $label === 'tags') {
-                if ($field['field_type'] === 'checkbox') {
-                    $customMetadataValues[$fieldId] = json_encode(array_map('trim', explode(',', $editItem['keywords'] ?? '')));
-                } else {
-                    $customMetadataValues[$fieldId] = $editItem['keywords'] ?? '';
-                }
             }
         }
     }
@@ -484,8 +452,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ignore_user_abort(true); // Continue processing even if client disconnects
             session_write_close(); // Prevent session locking during long process
 
-            // Get form data
-            $title = sanitize($_POST['title']);
+            // Get form data — $title already extracted from custom fields above
+            // Keep as-is; don't overwrite from $_POST['title'] which doesn't exist
 
             $fileCount = count($_FILES['files']['name']);
 
@@ -639,7 +607,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Edit Action
     if ($action === 'edit') {
         $editId = intval($_POST['edit_id']);
-        $title = sanitize($_POST['title']);
+        // $title was already extracted from custom fields (field_17) above
+        // Fallback to empty if somehow still not set
+        if (empty($title)) {
+            $title = '';
+        }
 
         $thumbnailPath = $_POST['existing_thumbnail'] ?? null;
         if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {

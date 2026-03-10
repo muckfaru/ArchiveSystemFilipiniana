@@ -315,7 +315,9 @@
                                 <input type="hidden" 
                                        id="<?= $fieldName ?>_hidden"
                                        name="<?= $fieldName ?>"
-                                       value="<?= htmlspecialchars($fieldValue) ?>">
+                                       class="custom-field"
+                                       value="<?= htmlspecialchars($fieldValue) ?>"
+                                       <?= $requiredAttr ?>>
                                 <div class="tags-field-wrapper">
                                     <div class="tags-pills-row" id="<?= $fieldName ?>_pills">
                                         <?php foreach ($existingTags as $t): ?>
@@ -574,7 +576,9 @@
                                 <input type="hidden" 
                                        id="<?= $fieldName ?>_hidden"
                                        name="<?= $fieldName ?>"
-                                       value="<?= htmlspecialchars($fieldValue) ?>">
+                                       class="custom-field"
+                                       value="<?= htmlspecialchars($fieldValue) ?>"
+                                       <?= $requiredAttr ?>>
                                 <div class="tags-field-wrapper" onclick="document.getElementById('<?= $fieldName ?>_input').focus()">
                                     <div class="tags-pills-row" id="<?= $fieldName ?>_pills">
                                         <?php foreach ($existingTags as $t): ?>
@@ -904,6 +908,9 @@
             return clone.textContent.trim();
         }).filter(Boolean);
         hidden.value = tags.join(', ');
+        // Dispatch input event so dirty detection and updateButtons() are triggered
+        hidden.dispatchEvent(new Event('input', { bubbles: true }));
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     function addTagChip(fieldName, tagText) {

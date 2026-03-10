@@ -141,6 +141,7 @@
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+                            data-category="<?= htmlspecialchars($catName) ?>"
                             data-modal-metadata="<?= $modalMetaJson ?>">
 
                             <!-- Thumbnail -->
@@ -152,6 +153,10 @@
                                     <div class="public-file-thumbnail-placeholder">
                                         <i class="bi bi-newspaper"></i>
                                     </div>
+                                <?php endif; ?>
+                                <!-- Category Badge (only show if a category is assigned) -->
+                                <?php if ($catName !== 'Uncategorized'): ?>
+                                    <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
                                 <?php endif; ?>
                             </div>
 

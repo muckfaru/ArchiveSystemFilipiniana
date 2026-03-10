@@ -246,14 +246,14 @@ mark.pub-hl {
 
 /* ==================== File Grid ==================== */
 .public-grid-container {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 10px 40px 60px;
 }
 
 .public-grid-container .row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
@@ -970,7 +970,7 @@ mark.pub-hl {
     }
 
     .public-grid-container .row {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 14px;
     }
 
@@ -2900,7 +2900,7 @@ button.public-admin-login-btn {
 /* Modern Grid Layout */
 .public-grid-container .row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 18px;
 }
 
@@ -3059,7 +3059,7 @@ button.public-admin-login-btn {
     }
 
     .public-grid-container .row {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 14px;
     }
 }
