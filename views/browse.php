@@ -157,8 +157,8 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <?php $isActive = in_array($cat['id'], $categoryFilter); ?>
                             <li class="browse-category-item-redesign">
                                 <label class="browse-checkbox-label">
-                                    <input type="checkbox" name="category[]" value="<?= $cat['id'] ?>" <?= $isActive ? 'checked' : '' ?> 
-                                        onchange="toggleCategoryFilter(<?= $cat['id'] ?>, this.checked)">
+                                    <input type="checkbox" name="category[]" value="<?= htmlspecialchars($cat['id']) ?>" <?= $isActive ? 'checked' : '' ?> 
+                                        onchange="toggleCategoryFilter('<?= addslashes($cat['id']) ?>', this.checked)">
                                     <span><?= htmlspecialchars($cat['name']) ?></span>
                                     <span class="browse-count-badge"><?= number_format($cat['count']) ?></span>
                                 </label>
@@ -207,7 +207,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                 $isActive = in_array($lang['id'], $languageFilter);
                                 // Count documents for this language from custom metadata
                                 $langCountSql = "SELECT COUNT(DISTINCT cmv.file_id) FROM custom_metadata_values cmv
-                                    INNER JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
+                                    INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
                                     INNER JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
                                     WHERE cmf.field_label = 'Language' AND cmv.field_value = ?";
                                 $langCountStmt = $pdo->prepare($langCountSql);
@@ -216,8 +216,8 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                 ?>
                                 <li class="browse-category-item-redesign">
                                     <label class="browse-checkbox-label">
-                                        <input type="checkbox" name="language[]" value="<?= $lang['id'] ?>" <?= $isActive ? 'checked' : '' ?>
-                                            onchange="toggleLanguageFilter(<?= $lang['id'] ?>, this.checked)">
+                                        <input type="checkbox" name="language[]" value="<?= htmlspecialchars($lang['id']) ?>" <?= $isActive ? 'checked' : '' ?>
+                                            onchange="toggleLanguageFilter('<?= addslashes($lang['id']) ?>', this.checked)">
                                         <span><?= htmlspecialchars($lang['name']) ?></span>
                                         <span class="browse-count-badge"><?= number_format($langCount) ?></span>
                                     </label>
