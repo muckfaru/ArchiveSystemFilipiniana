@@ -277,13 +277,14 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
     $filters = [];
 
     // Helper function to build URL params
-    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType) {
+    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null, $overrideSearch = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType) {
+        $useSearch = ($overrideSearch !== null) ? $overrideSearch : $searchQuery;
         $useDateFrom = ($overrideDateFrom !== null) ? $overrideDateFrom : $dateFrom;
         $useDateTo = ($overrideDateTo !== null) ? $overrideDateTo : $dateTo;
         $usePubType = ($overridePubType !== null) ? $overridePubType : $publicationType;
         $params = [];
-        if ($searchQuery)
-            $params[] = 'q=' . urlencode($searchQuery);
+        if ($useSearch)
+            $params[] = 'q=' . urlencode($useSearch);
         foreach ($cats as $c)
             $params[] = 'category[]=' . urlencode($c);
         foreach ($langs as $l)
@@ -300,6 +301,17 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
             $params[] = 'publication_type=' . urlencode($usePubType);
         return '?' . implode('&', $params);
     };
+
+    // Search keyword
+    if ($searchQuery !== '') {
+        $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter, null, null, null, '');
+        $filters[] = '<span class="filter-tag filter-search">
+            <i class="bi bi-search me-1"></i>"' . htmlspecialchars($searchQuery) . '"
+            <a href="' . $removeUrl . '" class="filter-remove" title="Remove search">
+                <i class="bi bi-x"></i>
+            </a>
+        </span>';
+    }
 
     // Publication Type
     if ($publicationType !== '') {

@@ -1050,6 +1050,45 @@ document.addEventListener('DOMContentLoaded', function () {
         handleFiles(files);
     }
 
+    // ── Title prefill from filename (fallback) ────────────────────────────────
+    /**
+     * If the title field is still empty after metadata extraction,
+     * fill it with the cleaned-up filename (without extension).
+     * Replaces underscores/dashes with spaces and title-cases.
+     *
+     * @param {string} filename - The original file name (with extension)
+     */
+    function prefillTitleFromFilename(filename) {
+        // Build the field map to find the title field
+        const fieldMap = {};
+        document.querySelectorAll('.form-group label, .form-group-full label').forEach(lbl => {
+            const input = lbl.closest('.form-group, .form-group-full')?.querySelector('input, textarea, select');
+            if (input && input.id) {
+                const label = lbl.textContent.replace(/\*/g, '').trim().toLowerCase();
+                fieldMap[label] = input.id;
+            }
+        });
+        const titleFieldId = fieldMap['title'] || 'title';
+        const titleEl = document.getElementById(titleFieldId);
+
+        if (titleEl && !titleEl.value.trim()) {
+            // Remove extension
+            const baseName = filename.replace(/\.[^.]+$/, '');
+            // Replace underscores and dashes with spaces, then title-case
+            const cleanName = baseName
+                .replace(/[_]/g, ' ')
+                .replace(/[-]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            if (cleanName) {
+                titleEl.value = cleanName;
+                titleEl.dispatchEvent(new Event('input', { bubbles: true }));
+                console.log('📝 Title pre-filled from filename:', cleanName);
+            }
+        }
+    }
+
     // ── EPUB / MOBI metadata prefill ──────────────────────────────────────────
     /**
      * Sends the file to the PHP extract_meta API and auto-fills any empty
@@ -1308,8 +1347,13 @@ document.addEventListener('DOMContentLoaded', function () {
             activeFileIndex = -1; // Single mode has no index
             updateButtons();
 
-            // Auto-fill metadata from EPUB/MOBI
-            extractAndPrefillMeta(file, null);
+            // Auto-fill metadata from EPUB/MOBI/PDF (async)
+            // Then fallback to filename if title is still empty
+            extractAndPrefillMeta(file, null).then(() => {
+                prefillTitleFromFilename(file.name);
+            }).catch(() => {
+                prefillTitleFromFilename(file.name);
+            });
 
             // Auto-Preview if Image
             if (file.type.startsWith('image/')) {
@@ -1367,12 +1411,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 bulkFiles.push(fileObj);
                 addedCount++;
 
-                // Auto-fill metadata from EPUB/MOBI for each bulk doc file
+                // Auto-fill metadata from EPUB/MOBI/PDF for each bulk doc file
                 const bulkIdx = bulkFiles.length - 1;
                 const bExt = file.name.split('.').pop().toLowerCase();
-                if (['epub', 'mobi'].includes(bExt)) {
+                if (['epub', 'mobi', 'pdf'].includes(bExt)) {
                     // Run after UI updates (async, non-blocking)
-                    setTimeout(() => extractAndPrefillMeta(file, bulkIdx), 50);
+                    const capturedIdx = bulkIdx;
+                    const capturedName = file.name;
+                    setTimeout(() => {
+                        extractAndPrefillMeta(file, capturedIdx).then(() => {
+                            // Fallback: fill title from filename if still empty
+                            if (bulkFiles[capturedIdx] && !bulkFiles[capturedIdx].metadata.title) {
+                                const baseName = capturedName.replace(/\.[^.]+$/, '');
+                                const cleanName = baseName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+                                if (cleanName) {
+                                    bulkFiles[capturedIdx].metadata.title = cleanName;
+                                    if (activeFileIndex === capturedIdx) {
+                                        prefillTitleFromFilename(capturedName);
+                                    }
+                                    if (typeof renderTabs === 'function') renderTabs();
+                                    if (typeof updateBulkControls === 'function') updateBulkControls();
+                                }
+                            }
+                        }).catch(() => {
+                            // Extraction failed — use filename as title
+                            if (bulkFiles[capturedIdx] && !bulkFiles[capturedIdx].metadata.title) {
+                                const baseName = capturedName.replace(/\.[^.]+$/, '');
+                                const cleanName = baseName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+                                if (cleanName) {
+                                    bulkFiles[capturedIdx].metadata.title = cleanName;
+                                    if (activeFileIndex === capturedIdx) {
+                                        prefillTitleFromFilename(capturedName);
+                                    }
+                                    if (typeof renderTabs === 'function') renderTabs();
+                                    if (typeof updateBulkControls === 'function') updateBulkControls();
+                                }
+                            }
+                        });
+                    }, 50);
+                } else {
+                    // Non-extractable file types: use filename as title directly
+                    const baseName = file.name.replace(/\.[^.]+$/, '');
+                    const cleanName = baseName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+                    if (cleanName) {
+                        bulkFiles[bulkIdx].metadata.title = cleanName;
+                    }
                 }
             }
         });

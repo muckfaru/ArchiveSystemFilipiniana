@@ -97,6 +97,34 @@
     </div>
 <?php endif; ?>
 
+<?php if (!empty($topReads)): ?>
+    <!-- Most Read List -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Most Read</h5>
+                    <small class="text-muted">Top <?= count($topReads) ?> by unique viewers</small>
+                </div>
+                <div class="list-group list-group-flush">
+                    <?php foreach ($topReads as $idx => $tr): ?>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong><?= htmlspecialchars($tr['title']) ?></strong>
+                                <div class="text-muted small">#<?= $idx + 1 ?></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold"><?= number_format($tr['view_count']) ?></div>
+                                <div class="text-muted small">unique views</div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
 <!-- Search Results (if any) -->
 <?php if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo): ?>
     <div class="mb-4">
@@ -167,7 +195,8 @@
                             data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
                             data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
                             data-volume="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['volume', 'issue', 'volume/issue'])) ?>"
-                            data-language="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'language')) ?>">
+                            data-language="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'language')) ?>"
+                            data-views="<?= intval($paper['view_count'] ?? 0) ?>">
 
                             <!-- Thumbnail with category badge -->
                             <div class="dashboard-thumb-wrap">
@@ -203,6 +232,7 @@
 
                                 <!-- INTEGRATION: Display custom metadata using display configuration -->
                                 <?= renderCardMetadata($paper['custom_metadata'] ?? []) ?>
+                                <div class="dashboard-card-views text-muted small mt-2">Views: <?= number_format($paper['view_count'] ?? 0) ?></div>
                             </div>
 
                             <!-- Admin action buttons (shown on hover) -->

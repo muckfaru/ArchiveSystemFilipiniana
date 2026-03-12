@@ -140,7 +140,8 @@ if ($ext === 'mobi') {
     if ($fp) {
         // PalmDB header: first 32 bytes = name (null-padded ASCII)
         $palmName = rtrim(fread($fp, 32), "\0");
-        $meta['title'] = $palmName ?: '';
+        // Don't use PalmDB name as title — it's often an internal ID, not readable
+        $palmTitle = $palmName ?: '';
 
         // Skip rest of PalmDB header (78 bytes total before record list)
         // Record 0 offset is at byte 78; we need to read 2-byte numRecords first.
@@ -168,11 +169,27 @@ if ($ext === 'mobi') {
 
         $headerLen = unpack('N', fread($fp, 4))[1];
 
+        // Read Full Name offset and length from MOBI header
+        // Full Name offset is at MOBI header offset 84, length at offset 88
+        // (relative to start of MOBI header = rec0Offset + 16)
+        $mobiHeaderStart = $rec0Offset + 16;
+        $fullNameTitle = '';
+        if ($headerLen >= 92) {
+            fseek($fp, $mobiHeaderStart + 4 + 4 + 84); // skip 'MOBI' + headerLen + 84 bytes
+            $fullNameOffset = unpack('N', fread($fp, 4))[1];
+            $fullNameLength = unpack('N', fread($fp, 4))[1];
+            if ($fullNameLength > 0 && $fullNameLength < 1000) {
+                fseek($fp, $rec0Offset + $fullNameOffset);
+                $fullNameTitle = trim(fread($fp, $fullNameLength));
+            }
+        }
+
         // Skip to EXTH flag offset (offset 16 from MOBI id, i.e. rec0_offset + 16 (palmdoc) + 4 (id) + 4 (len) + 8 = 32)
         // EXTH flag is at MOBI header offset 128 (from start of MOBI section)
         fseek($fp, $rec0Offset + 16 + 128);
         $exthFlag = unpack('N', fread($fp, 4))[1];
 
+        $exthTitle = '';
         if ($exthFlag & 0x40) {
             // EXTH block present: positioned right after the MOBI header
             fseek($fp, $rec0Offset + 16 + $headerLen);
@@ -211,6 +228,10 @@ if ($ext === 'mobi') {
                                 $meta['publication_date'] = $m[1] . '-01-01';
                             }
                             break;
+                        case 503:
+                            // Updated Title — most reliable title source
+                            $exthTitle = trim($recData);
+                            break;
                         case 524:
                             $meta['language'] = trim($recData);
                             break;
@@ -220,6 +241,26 @@ if ($ext === 'mobi') {
         }
 
         fclose($fp);
+
+        // Title priority: EXTH 503 > Full Name from MOBI header > filename
+        // Avoid PalmDB name — it's usually an internal numeric ID
+        $bestTitle = '';
+        if (!empty($exthTitle) && !preg_match('/^\d+$/', $exthTitle)) {
+            $bestTitle = $exthTitle;
+        } elseif (!empty($fullNameTitle) && !preg_match('/^\d+$/', $fullNameTitle)) {
+            $bestTitle = $fullNameTitle;
+        } elseif (!empty($palmTitle) && !preg_match('/^\d+$/', $palmTitle)) {
+            $bestTitle = $palmTitle;
+        }
+
+        // If all internal titles are empty or numeric IDs, use filename
+        if (empty($bestTitle)) {
+            $baseName = pathinfo($origName, PATHINFO_FILENAME);
+            $cleanName = str_replace(['_', '-'], ' ', $baseName);
+            $bestTitle = ucwords(trim($cleanName));
+        }
+
+        $meta['title'] = $bestTitle;
     }
 }
 
@@ -308,6 +349,14 @@ if (in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'], true)) {
 // ── Post-process ─────────────────────────────────────────────────────────────
 // If publisher is empty but creator is set, use creator as a fallback hint
 // (creator is the author, not the publisher — keep them separate, just return both)
+
+// Universal title fallback: if title is empty or looks like a numeric/hex ID, use filename
+$titleVal = trim($meta['title']);
+if (empty($titleVal) || preg_match('/^\d{10,}$/', $titleVal) || preg_match('/^[0-9a-f]{8,}$/i', $titleVal)) {
+    $baseName = pathinfo($origName, PATHINFO_FILENAME);
+    $cleanName = str_replace(['_', '-'], ' ', $baseName);
+    $meta['title'] = ucwords(trim($cleanName));
+}
 
 // Sanitize: strip HTML tags from description
 $meta['description'] = strip_tags($meta['description']);

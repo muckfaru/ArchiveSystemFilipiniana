@@ -244,6 +244,169 @@ mark.pub-hl {
     background: #1F7AE0;
 }
 
+/* ==================== Search Wrapper (contains bar + dropdown) ==================== */
+.public-search-wrapper {
+    position: relative;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+/* ── Clear (X) Button ── */
+.public-search-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #9CA3AF;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-size: 13px;
+    margin-right: 4px;
+}
+.public-search-clear:hover {
+    color: #374151;
+    background: #F3F4F6;
+}
+
+/* ── Advanced Search Panel ── */
+.public-adv-search-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    z-index: 1000;
+    overflow: hidden;
+    animation: advSlideDown 0.2s ease-out;
+}
+.public-adv-search-panel.active {
+    display: block;
+}
+@keyframes advSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.public-adv-search-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #F3F4F6;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.public-adv-search-header i {
+    font-size: 14px;
+    color: var(--primary-color);
+}
+
+.public-adv-search-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.public-adv-row {
+    display: flex;
+    gap: 12px;
+}
+.public-adv-row .public-adv-field {
+    flex: 1;
+}
+
+.public-adv-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.public-adv-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #374151;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'Inter', 'Poppins', sans-serif;
+    background: #FAFAFA;
+}
+.public-adv-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(58, 154, 255, 0.1);
+    background: #fff;
+}
+.public-adv-input::placeholder {
+    color: #C0C4CC;
+}
+
+.public-adv-search-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid #F3F4F6;
+    background: #FAFBFC;
+}
+
+.public-adv-reset-btn {
+    padding: 8px 18px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: #6B7280;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', 'Poppins', sans-serif;
+}
+.public-adv-reset-btn:hover {
+    background: #F3F4F6;
+    border-color: #D1D5DB;
+}
+
+.public-adv-apply-btn {
+    padding: 8px 22px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary-color);
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Inter', 'Poppins', sans-serif;
+}
+.public-adv-apply-btn:hover {
+    background: #1F7AE0;
+}
+
+@media (max-width: 575.98px) {
+    .public-adv-row {
+        flex-direction: column;
+        gap: 14px;
+    }
+}
+
 /* ==================== File Grid ==================== */
 .public-grid-container {
     max-width: 1200px;
@@ -1993,7 +2156,7 @@ button.public-admin-login-btn {
 .browse-file-card-compact .public-file-description {
     font-size: 11.5px;
     margin-bottom: 10px;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 2;  
 }
 
 .browse-file-card-compact .pub-thumb-badge {
@@ -2777,6 +2940,13 @@ button.public-admin-login-btn {
     border: 1px solid #E1BEE7;
 }
 
+/* Search keyword filter tag */
+.filter-search {
+    background: #FFF3E0;
+    color: #E65100;
+    border: 1px solid #FFE0B2;
+}
+
 .clear-filters-btn {
     display: inline-flex;
     align-items: center;
@@ -3281,7 +3451,7 @@ button.public-admin-login-btn {
 
 /* ── Shelf Section ── */
 .catalog-shelf {
-    margin-bottom: 40px;
+    margin-bottom: 48px;
 }
 
 .catalog-shelf-header {
@@ -3289,7 +3459,7 @@ button.public-admin-login-btn {
     align-items: center;
     justify-content: space-between;
     padding: 0 48px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .catalog-shelf-title-wrap {
@@ -3362,9 +3532,12 @@ button.public-admin-login-btn {
 }
 
 .catalog-shelf-track {
-    display: flex;
-    gap: 18px;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 20px;
     overflow-x: auto;
+    overflow-y: hidden;
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
@@ -3400,7 +3573,7 @@ button.public-admin-login-btn {
     pointer-events: none;
 }
 
-.catalog-shelf-track-wrap:hover .catalog-scroll-arrow {
+.catalog-shelf-track-wrap:hover .catalog-scroll-arrow:not(.hidden) {
     opacity: 1;
     pointer-events: auto;
 }
@@ -3427,8 +3600,13 @@ button.public-admin-login-btn {
 }
 
 /* ── Catalog Card ── */
-.catalog-card {
-    flex: 0 0 180px;
+/* Override .public-file-card defaults when used inside catalog shelf */
+.catalog-card.public-file-card {
+    flex: 0 0 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    width: 200px !important;
+    height: auto !important;
     scroll-snap-align: start;
     background: #fff;
     border-radius: 12px;
@@ -3436,12 +3614,12 @@ button.public-admin-login-btn {
     cursor: pointer;
     transition: transform 0.22s ease, box-shadow 0.22s ease;
     border: 1px solid #E8EDF2;
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
-.catalog-card:hover {
+.catalog-card.public-file-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
@@ -3477,6 +3655,13 @@ button.public-admin-login-btn {
     font-size: 44px;
 }
 
+/* Badge inside catalog card */
+.catalog-card .pub-thumb-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+}
+
 .catalog-card-info {
     padding: 10px 12px 12px;
     display: flex;
@@ -3485,7 +3670,7 @@ button.public-admin-login-btn {
 }
 
 .catalog-card-title {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
     color: #0F172A;
     line-height: 1.35;
@@ -3514,6 +3699,12 @@ button.public-admin-login-btn {
     }
     .catalog-scroll-arrow.catalog-scroll-left { left: 2px; }
     .catalog-scroll-arrow.catalog-scroll-right { right: 2px; }
+    .catalog-card.public-file-card {
+        flex: 0 0 180px !important;
+        min-width: 180px !important;
+        max-width: 180px !important;
+        width: 180px !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -3526,8 +3717,11 @@ button.public-admin-login-btn {
     .catalog-shelf-title {
         font-size: 18px;
     }
-    .catalog-card {
-        flex: 0 0 150px;
+    .catalog-card.public-file-card {
+        flex: 0 0 160px !important;
+        min-width: 160px !important;
+        max-width: 160px !important;
+        width: 160px !important;
     }
     .catalog-scroll-arrow {
         width: 34px;
@@ -3548,8 +3742,11 @@ button.public-admin-login-btn {
     .catalog-shelf-track-wrap {
         padding: 0 14px;
     }
-    .catalog-card {
-        flex: 0 0 135px;
+    .catalog-card.public-file-card {
+        flex: 0 0 140px !important;
+        min-width: 140px !important;
+        max-width: 140px !important;
+        width: 140px !important;
     }
     .catalog-shelf-title {
         font-size: 16px;
@@ -3558,7 +3755,7 @@ button.public-admin-login-btn {
         margin-bottom: 30px;
     }
     /* Always show arrows on mobile (no hover) */
-    .catalog-shelf-track-wrap .catalog-scroll-arrow {
+    .catalog-shelf-track-wrap .catalog-scroll-arrow:not(.hidden) {
         opacity: 1;
         pointer-events: auto;
     }

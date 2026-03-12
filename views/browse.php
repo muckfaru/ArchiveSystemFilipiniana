@@ -369,7 +369,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <?= $filterTag ?>
                         <?php endforeach; ?>
                     </div>
-                    <a href="<?= APP_URL ?>/user_pages/browse.php<?= $searchQuery ? '?q=' . urlencode($searchQuery) : '' ?>" class="clear-filters-btn">
+                    <a href="<?= APP_URL ?>/user_pages/browse.php" class="clear-filters-btn">
                         <i class="bi bi-x-circle me-1"></i>Clear All Filters
                     </a>
                 </div>

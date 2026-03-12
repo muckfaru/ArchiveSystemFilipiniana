@@ -1,7 +1,12 @@
 <?php
 /**
- * Database Configuration
+ * Database Configuration (TEMPLATE)
  * Archive System - Quezon City Public Library
+ * 
+ * SETUP INSTRUCTIONS:
+ * 1. Copy this file to config.php: copy config.example.php config.php
+ * 2. Update the values below to match your local environment
+ * 3. NEVER commit config.php to Git (it's in .gitignore)
  */
 
 // Database credentials
@@ -11,6 +16,7 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 
 // Application Constants
+// Update APP_URL to match your local XAMPP path
 define('APP_NAME', 'Quezon City Public Library - Archive System');
 define('APP_URL', 'http://localhost/qcpl/ArchiveSystemFilipiniana');
 define('APP_VERSION', '1.0.0');
@@ -21,10 +27,14 @@ define('MAX_UPLOAD_SIZE', 100 * 1024 * 1024); // 100MB
 define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png', 'tiff', 'tif']);
 
 // Calibre ebook-convert path (for MOBI to EPUB conversion)
-// Update this path to match your Calibre installation
-// Default Windows path: C:\Program Files\Calibre2\ebook-convert.exe
-// Default Mac path: /Applications/calibre.app/Contents/MacOS/ebook-convert
-define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
+// Update this path to match your Calibre installation, or leave empty if not installed
+// Windows examples:
+//   C:\Program Files\Calibre2\ebook-convert.exe
+//   C:\xampp\htdocs\CalibrePortable\Calibre\ebook-convert.exe
+// Mac: /Applications/calibre.app/Contents/MacOS/ebook-convert
+// Linux: /usr/bin/ebook-convert
+// Leave empty string '' if Calibre is not installed (MOBI files will offer download instead)
+define('CALIBRE_CONVERT_PATH', '');
 
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:
@@ -32,9 +42,9 @@ define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebo
 // 2. Generate an App Password at https://myaccount.google.com/apppasswords
 // 3. Replace the values below with your Gmail and App Password
 define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 465);  // Changed from 587 to 465 (SSL)
-define('SMTP_USERNAME', 'archivesystemfilipiniana@gmail.com');  // Replace with your Gmail
-define('SMTP_PASSWORD', 'folx ljgj qnub zjxn');      // Replace with your App Password
+define('SMTP_PORT', 465);
+define('SMTP_USERNAME', '');  // Your Gmail address
+define('SMTP_PASSWORD', '');  // Your Gmail App Password
 define('SMTP_FROM_NAME', 'Archive System Filipiniana');
 
 // Session settings
@@ -60,6 +70,3 @@ try {
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Set timezone
-date_default_timezone_set('Asia/Manila');

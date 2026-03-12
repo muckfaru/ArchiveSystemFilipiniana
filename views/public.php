@@ -17,7 +17,7 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Public Page CSS -->
-    <link href="<?= APP_URL ?>/assets/css/user_pages/public.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/user_pages/public.css?v=<?= time() ?>" rel="stylesheet">
 
     <script>const APP_URL = "<?= APP_URL ?>";</script>
 </head>
@@ -62,18 +62,55 @@
         </p>
 
         <!-- Search Bar -->
-        <form method="GET" action="" id="publicSearchForm">
-            <?php if ($categoryFilter): ?>
-                <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
-            <?php endif; ?>
-            <div class="public-search-bar">
-                <i class="bi bi-search"></i>
-                <input type="text" class="public-search-input" id="publicSearchInput" name="q"
-                    placeholder="Search newspapers, publishers, categories, or dates..."
-                    value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
-                <button type="submit" class="public-search-btn">Search</button>
+        <div class="public-search-wrapper">
+            <form method="GET" action="" id="publicSearchForm">
+                <?php if ($categoryFilter): ?>
+                    <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
+                <?php endif; ?>
+                <div class="public-search-bar">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="public-search-input" id="publicSearchInput" name="q"
+                        placeholder="Search newspapers, publishers, categories, or dates..."
+                        value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
+                    <?php if ($searchQuery): ?>
+                        <button type="button" class="public-search-clear" id="publicSearchClear" title="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    <?php endif; ?>
+                    <button type="submit" class="public-search-btn">Search</button>
+                </div>
+            </form>
+
+            <!-- Advanced Search Dropdown -->
+            <div class="public-adv-search-panel" id="advSearchPanel">
+                <div class="public-adv-search-header">
+                    <i class="bi bi-sliders2"></i>
+                    <span>Advanced Search</span>
+                </div>
+                <div class="public-adv-search-body">
+                    <div class="public-adv-field">
+                        <label for="advKeyword">Keyword</label>
+                        <input type="text" id="advKeyword" class="public-adv-input" placeholder="Enter keyword..." autocomplete="off">
+                    </div>
+                    <div class="public-adv-row">
+                        <div class="public-adv-field">
+                            <label for="advDateFrom">Date From</label>
+                            <input type="text" id="advDateFrom" class="public-adv-input" placeholder="mm/dd/yyyy" maxlength="10" autocomplete="off">
+                        </div>
+                        <div class="public-adv-field">
+                            <label for="advDateTo">Date To</label>
+                            <input type="text" id="advDateTo" class="public-adv-input" placeholder="mm/dd/yyyy" maxlength="10" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                <div class="public-adv-search-footer">
+                    <button type="button" class="public-adv-reset-btn" id="advResetBtn">Reset</button>
+                    <button type="button" class="public-adv-apply-btn" id="advApplyBtn">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                </div>
             </div>
-        </form>
+        </div>
     </section>
 
     <!-- ==================== SEARCH ACTIVE FILTER BAR ==================== -->

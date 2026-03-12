@@ -16,9 +16,10 @@ $totalCategories = countCategories();
 
 // Get total views from newspaper_views table
 try {
-    $stmt = $pdo->query("SELECT SUM(view_count) as total FROM newspaper_views");
+    // newspaper_views stores one row per view. Use COUNT(*) to get total views.
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM newspaper_views");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $totalViews = $result['total'] ?? 0;
+    $totalViews = intval($result['total'] ?? 0);
 } catch (PDOException $e) {
     error_log("Failed to get total views: " . $e->getMessage());
     $totalViews = 0;
@@ -55,6 +56,18 @@ if (!empty($recentNewspapers)) {
         $newspaper['custom_metadata'] = getFileMetadataForDisplay($pdo, $newspaper['id'], 'card');
     }
 }
+
+// Analytics: attach view counts for recent items and fetch top reads
+require_once __DIR__ . '/../backend/core/analytics.php';
+$topReads = [];
+if (!empty($recentNewspapers)) {
+    foreach ($recentNewspapers as &$n) {
+        $n['view_count'] = getTotalViews($pdo, $n['id']);
+    }
+    unset($n);
+}
+// Get overall top reads (top 10)
+$topReads = getTopReadNewspapers($pdo);
 
 // Get search
 $searchQuery = $_GET['q'] ?? '';

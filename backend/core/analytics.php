@@ -287,3 +287,26 @@ function getTopReadNewspapers($pdo): array {
         return [];
     }
 }
+
+
+/**
+ * Get total unique views for a newspaper across all time
+ *
+ * @param PDO $pdo
+ * @param int $newspaperId
+ * @return int
+ */
+function getTotalViews($pdo, $newspaperId): int {
+    try {
+        $newspaperId = intval($newspaperId);
+        if ($newspaperId <= 0) return 0;
+
+        $stmt = $pdo->prepare("SELECT COUNT(DISTINCT ip_address) as cnt FROM newspaper_views WHERE newspaper_id = ?");
+        $stmt->execute([$newspaperId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? intval($row['cnt']) : 0;
+    } catch (PDOException $e) {
+        error_log("Analytics getTotalViews failed: " . $e->getMessage());
+        return 0;
+    }
+}

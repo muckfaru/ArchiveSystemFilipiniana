@@ -183,18 +183,139 @@
 
     // ── Live search (debounced) ───────────────────────────────────────────────
     const searchInput = document.getElementById('publicSearchInput');
-    if (searchInput) {
-        let debounceTimer;
-        searchInput.addEventListener('input', function () {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const form = document.getElementById('publicSearchForm');
-                if (this.value.length === 0 || this.value.length >= 2) {
-                    form && form.submit();
-                }
-            }, 600);
+    const advPanel = document.getElementById('advSearchPanel');
+    const advKeyword = document.getElementById('advKeyword');
+    const advDateFrom = document.getElementById('advDateFrom');
+    const advDateTo = document.getElementById('advDateTo');
+    const advApplyBtn = document.getElementById('advApplyBtn');
+    const advResetBtn = document.getElementById('advResetBtn');
+    const clearBtn = document.getElementById('publicSearchClear');
+
+    // ── Clear (X) button ──────────────────────────────────────────────────────
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = APP_URL + '/user_pages/public.php';
         });
     }
+
+    // ── Show advanced search on focus / click ─────────────────────────────────
+    function showAdvPanel() {
+        if (!advPanel) return;
+        advPanel.classList.add('active');
+        // Sync keyword from main input
+        if (advKeyword && searchInput) {
+            advKeyword.value = searchInput.value;
+        }
+    }
+
+    function hideAdvPanel() {
+        if (!advPanel) return;
+        advPanel.classList.remove('active');
+    }
+
+    if (searchInput) {
+        // Show advanced panel on focus
+        searchInput.addEventListener('focus', showAdvPanel);
+
+        // Show on click too (in case already focused)
+        searchInput.addEventListener('click', showAdvPanel);
+
+        // Sync typing from main input to adv keyword
+        searchInput.addEventListener('input', function () {
+            if (advKeyword) advKeyword.value = this.value;
+        });
+
+        // Prevent form submit when adv panel is open — use adv search instead
+        const form = document.getElementById('publicSearchForm');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (advPanel && advPanel.classList.contains('active')) {
+                    e.preventDefault();
+                    doAdvancedSearch();
+                }
+            });
+        }
+    }
+
+    // Close adv panel on outside click
+    document.addEventListener('click', function (e) {
+        if (!advPanel || !advPanel.classList.contains('active')) return;
+        const wrapper = document.querySelector('.public-search-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            hideAdvPanel();
+        }
+    });
+
+    // ── Date input auto-format (mm/dd/yyyy) ───────────────────────────────────
+    function autoFormatDate(input) {
+        if (!input) return;
+        input.addEventListener('input', function (e) {
+            let v = this.value.replace(/[^\d]/g, '');
+            if (v.length > 8) v = v.slice(0, 8);
+            let formatted = '';
+            if (v.length > 4) {
+                formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+            } else if (v.length > 2) {
+                formatted = v.slice(0, 2) + '/' + v.slice(2);
+            } else {
+                formatted = v;
+            }
+            this.value = formatted;
+        });
+    }
+    autoFormatDate(advDateFrom);
+    autoFormatDate(advDateTo);
+
+    // ── Convert mm/dd/yyyy → YYYY-MM-DD for query string ──────────────────────
+    function toIsoDate(mmddyyyy) {
+        if (!mmddyyyy) return '';
+        var parts = mmddyyyy.split('/');
+        if (parts.length !== 3) return '';
+        var mm = parts[0].padStart(2, '0');
+        var dd = parts[1].padStart(2, '0');
+        var yyyy = parts[2];
+        if (yyyy.length !== 4) return '';
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
+    // ── Apply advanced search → navigate to browse.php ────────────────────────
+    function doAdvancedSearch() {
+        var params = [];
+        var kw = (advKeyword ? advKeyword.value.trim() : '') || (searchInput ? searchInput.value.trim() : '');
+        if (kw) params.push('q=' + encodeURIComponent(kw));
+        var df = advDateFrom ? toIsoDate(advDateFrom.value.trim()) : '';
+        var dt = advDateTo ? toIsoDate(advDateTo.value.trim()) : '';
+        if (df) params.push('date_from=' + encodeURIComponent(df));
+        if (dt) params.push('date_to=' + encodeURIComponent(dt));
+
+        window.location.href = APP_URL + '/user_pages/browse.php' + (params.length ? '?' + params.join('&') : '');
+    }
+
+    if (advApplyBtn) {
+        advApplyBtn.addEventListener('click', doAdvancedSearch);
+    }
+
+    // ── Reset advanced search fields ──────────────────────────────────────────
+    if (advResetBtn) {
+        advResetBtn.addEventListener('click', function () {
+            if (advKeyword) advKeyword.value = '';
+            if (advDateFrom) advDateFrom.value = '';
+            if (advDateTo) advDateTo.value = '';
+            if (searchInput) searchInput.value = '';
+        });
+    }
+
+    // ── Enter key in advanced fields triggers search ──────────────────────────
+    [advKeyword, advDateFrom, advDateTo].forEach(function (el) {
+        if (!el) return;
+        el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doAdvancedSearch();
+            }
+        });
+    });
 
     // ── Live update polling (reflects admin upload/delete) ────────────────────
     // Read the initial archive count embedded by PHP in the grid/catalog container.
