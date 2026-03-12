@@ -267,12 +267,14 @@
                                           <?= $requiredAttr ?>><?= htmlspecialchars($fieldValue) ?></textarea>
                             
                             <?php elseif ($field['field_type'] === 'checkbox'): 
-                                $options = json_decode($field['field_options'], true);
+                                $options = is_array(json_decode($field['field_options'], true)) ? json_decode($field['field_options'], true) : [];
                                 $selectedValues = $fieldValue ? json_decode($fieldValue, true) : [];
                                 if (!is_array($selectedValues)) $selectedValues = [];
                             ?>
                                 <div class="checkbox-group">
-                                    <?php foreach ($options as $option): ?>
+                                    <?php if (empty($options)): ?>
+                                        <p class="text-muted small">No options defined for this field.</p>
+                                    <?php else: foreach ($options as $option): ?>
                                         <div class="form-check">
                                             <input class="form-check-input custom-field" 
                                                    type="checkbox" 
@@ -285,14 +287,16 @@
                                                 <?= htmlspecialchars($option) ?>
                                             </label>
                                         </div>
-                                    <?php endforeach; ?>
+                                    <?php endforeach; endif; ?>
                                 </div>
                             
                             <?php elseif ($field['field_type'] === 'radio'): 
-                                $options = json_decode($field['field_options'], true);
+                                $options = is_array(json_decode($field['field_options'], true)) ? json_decode($field['field_options'], true) : [];
                             ?>
                                 <div class="radio-group">
-                                    <?php foreach ($options as $option): ?>
+                                    <?php if (empty($options)): ?>
+                                        <p class="text-muted small">No options defined for this field.</p>
+                                    <?php else: foreach ($options as $option): ?>
                                         <div class="form-check">
                                             <input class="form-check-input custom-field" 
                                                    type="radio" 
@@ -306,7 +310,7 @@
                                                 <?= htmlspecialchars($option) ?>
                                             </label>
                                         </div>
-                                    <?php endforeach; ?>
+                                    <?php endforeach; endif; ?>
                                 </div>
                             <?php elseif ($field['field_type'] === 'tags'): ?>
                                 <?php
@@ -401,7 +405,7 @@
                                            <?= $requiredAttr ?>>
                                 
                                 <?php elseif ($field['field_type'] === 'select'): 
-                                    $options = json_decode($field['field_options'], true);
+                                    $options = is_array(json_decode($field['field_options'], true)) ? json_decode($field['field_options'], true) : [];
                                 ?>
                                     <select class="custom-field" 
                                             id="<?= $fieldName ?>" 
@@ -459,7 +463,7 @@
                                            <?= $nextRequiredAttr ?>>
                                 
                                 <?php elseif ($nextField['field_type'] === 'select'): 
-                                    $nextOptions = json_decode($nextField['field_options'], true);
+                                    $nextOptions = is_array(json_decode($nextField['field_options'], true)) ? json_decode($nextField['field_options'], true) : [];
                                 ?>
                                     <select class="custom-field" 
                                             id="<?= $nextFieldName ?>" 
@@ -528,12 +532,14 @@
                                           <?= $requiredAttr ?>><?= htmlspecialchars($fieldValue) ?></textarea>
                             
                             <?php elseif ($field['field_type'] === 'checkbox'): 
-                                $options = json_decode($field['field_options'], true);
+                                $options = is_array(json_decode($field['field_options'], true)) ? json_decode($field['field_options'], true) : [];
                                 $selectedValues = $fieldValue ? json_decode($fieldValue, true) : [];
                                 if (!is_array($selectedValues)) $selectedValues = [];
                             ?>
                                 <div class="checkbox-group">
-                                    <?php foreach ($options as $option): ?>
+                                    <?php if (empty($options)): ?>
+                                        <p class="text-muted small">No options defined for this field.</p>
+                                    <?php else: foreach ($options as $option): ?>
                                         <div class="form-check">
                                             <input class="form-check-input custom-field" 
                                                    type="checkbox" 
@@ -546,14 +552,16 @@
                                                 <?= htmlspecialchars($option) ?>
                                             </label>
                                         </div>
-                                    <?php endforeach; ?>
+                                    <?php endforeach; endif; ?>
                                 </div>
                             
                             <?php elseif ($field['field_type'] === 'radio'): 
-                                $options = json_decode($field['field_options'], true);
+                                $options = is_array(json_decode($field['field_options'], true)) ? json_decode($field['field_options'], true) : [];
                             ?>
                                 <div class="radio-group">
-                                    <?php foreach ($options as $option): ?>
+                                    <?php if (empty($options)): ?>
+                                        <p class="text-muted small">No options defined for this field.</p>
+                                    <?php else: foreach ($options as $option): ?>
                                         <div class="form-check">
                                             <input class="form-check-input custom-field" 
                                                    type="radio" 
@@ -567,7 +575,7 @@
                                                 <?= htmlspecialchars($option) ?>
                                             </label>
                                         </div>
-                                    <?php endforeach; ?>
+                                    <?php endforeach; endif; ?>
                                 </div>
                             <?php elseif ($field['field_type'] === 'tags'): ?>
                                 <?php
@@ -661,7 +669,7 @@
                                            <?= $requiredAttr ?>>
                                 
                                 <?php elseif ($field['field_type'] === 'select'): 
-                                    $options = json_decode($field['field_options'], true);
+                                    $options = is_array(json_decode($field['field_options'], true)) ? json_decode($field['field_options'], true) : [];
                                 ?>
                                     <select class="custom-field" 
                                             id="<?= $fieldName ?>" 
@@ -719,7 +727,7 @@
                                            <?= $nextRequiredAttr ?>>
                                 
                                 <?php elseif ($nextField['field_type'] === 'select'): 
-                                    $nextOptions = json_decode($nextField['field_options'], true);
+                                    $nextOptions = is_array(json_decode($nextField['field_options'], true)) ? json_decode($nextField['field_options'], true) : [];
                                 ?>
                                     <select class="custom-field" 
                                             id="<?= $nextFieldName ?>" 
