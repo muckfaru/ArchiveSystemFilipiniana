@@ -152,19 +152,17 @@ function countArchives()
 }
 
 /**
- * Count total issues (pages) - now from custom metadata
+ * Count total issues (pages) - from custom metadata
  */
 function countIssues()
 {
     global $pdo;
-    // Try to get page_count from custom metadata (field could be in custom_metadata_fields or form_fields)
     $stmt = $pdo->query("
         SELECT COALESCE(SUM(CAST(cmv.field_value AS UNSIGNED)), 0) as total 
         FROM custom_metadata_values cmv
-        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
-        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
         INNER JOIN newspapers n ON cmv.file_id = n.id
-        WHERE (cmf.field_name = 'page_count' OR LOWER(COALESCE(cmf.field_label, ff.field_label)) IN ('page count', 'pages'))
+        WHERE LOWER(ff.field_label) IN ('page count', 'pages')
         AND n.deleted_at IS NULL
         AND cmv.field_value REGEXP '^[0-9]+$'
     ");
@@ -172,7 +170,7 @@ function countIssues()
 }
 
 /**
- * Get years covered - now from custom metadata
+ * Get years covered - from custom metadata
  */
 function getYearsCovered()
 {
@@ -182,10 +180,9 @@ function getYearsCovered()
             MIN(CAST(LEFT(cmv.field_value, 4) AS UNSIGNED)) as min_year, 
             MAX(CAST(LEFT(cmv.field_value, 4) AS UNSIGNED)) as max_year 
         FROM custom_metadata_values cmv
-        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
-        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
         INNER JOIN newspapers n ON cmv.file_id = n.id
-        WHERE (cmf.field_name = 'publication_date' OR LOWER(COALESCE(cmf.field_label, ff.field_label)) IN ('publication date', 'date published', 'date'))
+        WHERE LOWER(ff.field_label) IN ('publication date', 'date published', 'date')
         AND n.deleted_at IS NULL 
         AND cmv.field_value REGEXP '^[0-9]{4}-(0[1-9]|1[0-2])(-([0-2][0-9]|3[0-1]))?$'
     ");
@@ -397,37 +394,6 @@ function getAlert()
 // ==================== Custom Metadata Helper Functions ====================
 
 /**
- * Get all enabled custom metadata fields
- * 
- * @return array Array of custom field definitions ordered by display_order
- */
-function getEnabledCustomFields()
-{
-    global $pdo;
-    $stmt = $pdo->query("
-        SELECT * FROM custom_metadata_fields 
-        WHERE is_enabled = 1 
-        ORDER BY display_order ASC, created_at ASC
-    ");
-    return $stmt->fetchAll();
-}
-
-/**
- * Get all custom metadata fields (including disabled)
- * 
- * @return array Array of all custom field definitions
- */
-function getAllCustomFields()
-{
-    global $pdo;
-    $stmt = $pdo->query("
-        SELECT * FROM custom_metadata_fields 
-        ORDER BY display_order ASC, created_at ASC
-    ");
-    return $stmt->fetchAll();
-}
-
-/**
  * Get custom metadata values for a specific file
  * 
  * @param int $fileId The file ID (newspapers.id)
@@ -438,12 +404,10 @@ function getCustomMetadataValues($fileId)
     global $pdo;
     $stmt = $pdo->prepare("
         SELECT cmv.field_id, cmv.field_value, 
-               COALESCE(cmf.field_name, ff.field_label) as field_name, 
-               COALESCE(cmf.field_label, ff.field_label) as field_label, 
-               COALESCE(cmf.field_type, ff.field_type) as field_type
+               ff.field_label as field_label, 
+               ff.field_type  as field_type
         FROM custom_metadata_values cmv
-        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
-        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
         WHERE cmv.file_id = ?
     ");
     $stmt->execute([$fileId]);
@@ -451,9 +415,9 @@ function getCustomMetadataValues($fileId)
     $values = [];
     while ($row = $stmt->fetch()) {
         $values[$row['field_id']] = [
-            'field_name' => $row['field_name'],
+            'field_name'  => $row['field_label'],
             'field_label' => $row['field_label'],
-            'field_type' => $row['field_type'],
+            'field_type'  => $row['field_type'],
             'field_value' => $row['field_value']
         ];
     }
@@ -477,16 +441,14 @@ function getCustomMetadataValuesForFiles($fileIds)
 
     $placeholders = implode(',', array_fill(0, count($fileIds), '?'));
 
-    // Try custom_metadata_fields first, then fall back to form_fields
     $stmt = $pdo->prepare("
         SELECT cmv.file_id, cmv.field_id, cmv.field_value, 
-               COALESCE(cmf.field_label, ff.field_label) as field_label, 
-               COALESCE(cmf.field_type, ff.field_type) as field_type
+               ff.field_label as field_label, 
+               ff.field_type  as field_type
         FROM custom_metadata_values cmv
-        LEFT JOIN custom_metadata_fields cmf ON cmv.field_id = cmf.id
-        LEFT JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
         WHERE cmv.file_id IN ($placeholders)
-        ORDER BY COALESCE(cmf.display_order, ff.display_order) ASC
+        ORDER BY ff.display_order ASC
     ");
     $stmt->execute($fileIds);
 
@@ -540,7 +502,7 @@ function saveCustomMetadataValues($fileId, $values, $pdo = null)
 /**
  * Validate custom field value
  * 
- * @param array $field Field definition from custom_metadata_fields
+ * @param array $field Field definition from form_fields
  * @param mixed $value The value to validate
  * @return array ['valid' => bool, 'error' => string|null]
  */
@@ -789,36 +751,35 @@ function getDisplayConfig($pdo, $context = 'both')
     $result = [];
 
     if ($tableExists) {
-        // Primary query: custom_metadata_fields with display config
+        // Query form_fields with metadata_display_config
         $query = "
             SELECT 
-                cmf.id as field_id,
-                cmf.field_label as field_name,
-                cmf.field_label,
-                cmf.field_type,
+                ff.id as field_id,
+                ff.field_label as field_name,
+                ff.field_label,
+                ff.field_type,
                 COALESCE(mdc.show_on_card, 1) as show_on_card,
                 COALESCE(mdc.show_in_modal, 1) as show_in_modal,
-                cmf.display_order as card_display_order,
-                cmf.display_order as modal_display_order
-            FROM custom_metadata_fields cmf
-            LEFT JOIN metadata_display_config mdc ON cmf.id = mdc.form_field_id
-            WHERE cmf.is_enabled = 1
+                ff.display_order as card_display_order,
+                ff.display_order as modal_display_order
+            FROM form_fields ff
+            INNER JOIN form_templates ft ON ff.form_id = ft.id AND ft.is_active = 1
+            LEFT JOIN metadata_display_config mdc ON ff.id = mdc.form_field_id
         ";
 
         if ($context === 'card') {
-            $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY cmf.display_order ASC";
+            $query .= " WHERE COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ff.display_order ASC";
         } elseif ($context === 'modal') {
-            $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY cmf.display_order ASC";
+            $query .= " WHERE COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ff.display_order ASC";
         } else {
-            $query .= " ORDER BY cmf.display_order ASC";
+            $query .= " ORDER BY ff.display_order ASC";
         }
 
         $stmt = $pdo->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // If no results from custom_metadata_fields, fall back to form_fields
-    // JOIN with metadata_display_config to respect toggle settings
+    // Fallback: form_fields without active template constraint
     if (empty($result)) {
         $query = "
             SELECT 

@@ -20,7 +20,6 @@ $languages = getLanguages();
 // Get active form template and its fields (with fallback if tables don't exist)
 $activeForm = null;
 $formFields = [];
-$customFields = [];
 
 try {
     $stmt = $pdo->query("SELECT * FROM form_templates WHERE is_active = 1");
@@ -40,16 +39,6 @@ try {
     // Tables don't exist yet - fall back to legacy custom fields
     $activeForm = null;
     $formFields = [];
-}
-
-// Keep backward compatibility: also load old custom fields if no active form
-if (empty($formFields)) {
-    $stmt = $pdo->query("
-        SELECT * FROM custom_metadata_fields 
-        WHERE is_enabled = 1 
-        ORDER BY display_order ASC
-    ");
-    $customFields = $stmt->fetchAll();
 }
 
 // Check if editing
@@ -80,7 +69,7 @@ if ($editMode) {
     }
 
     // Auto-fill title from core data if the custom metadata value is empty
-    $fieldsToCheck = !empty($formFields) ? $formFields : $customFields;
+    $fieldsToCheck = $formFields;
     foreach ($fieldsToCheck as $field) {
         $fieldId = (isset($field['id']) && $field['id']) ? $field['id'] : null;
         if (!$fieldId)
@@ -162,13 +151,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'upload' || $action === 'edit') {
         $title = sanitize($_POST['title'] ?? '');
 
-        // Validate custom required fields (form templates or legacy custom fields)
-        $fieldsToValidate = !empty($formFields) ? $formFields : $customFields;
+        // Validate custom required fields (form templates)
+        $fieldsToValidate = $formFields;
 
         // Auto-extract core fields from custom fields if standard inputs are missing
         if (!empty($fieldsToValidate)) {
             foreach ($fieldsToValidate as $field) {
-                $fieldKey = !empty($formFields) ? 'field_' . $field['id'] : 'custom_' . $field['field_name'];
+                $fieldKey = 'field_' . $field['id'];
                 $fieldValue = $_POST[$fieldKey] ?? null;
 
                 if ($fieldValue !== null && $fieldValue !== '') {
@@ -184,16 +173,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Validate custom required fields (form templates or legacy custom fields)
-        $fieldsToValidate = !empty($formFields) ? $formFields : $customFields;
+        // Validate custom required fields (form templates)
+        $fieldsToValidate = $formFields;
         $customFieldErrors = [];
 
         // Only validate if there are actually fields to validate
         if (!empty($fieldsToValidate)) {
             foreach ($fieldsToValidate as $field) {
                 if ($field['is_required']) {
-                    // For form fields, use field ID; for legacy custom fields, use field_name
-                    $fieldKey = !empty($formFields) ? 'field_' . $field['id'] : 'custom_' . $field['field_name'];
+                    // For form fields, use field ID
+                    $fieldKey = 'field_' . $field['id'];
                     $fieldValue = $_POST[$fieldKey] ?? null;
 
                     if ($field['field_type'] === 'checkbox') {
@@ -350,8 +339,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ) {
                         $newId = $pdo->lastInsertId();
 
-                        // Insert custom metadata values (form templates or legacy custom fields)
-                        $fieldsToSave = !empty($formFields) ? $formFields : $customFields;
+                        // Insert custom metadata values (form templates)
+                        $fieldsToSave = $formFields;
 
                         if (!empty($fieldsToSave)) {
                             $metaStmt = $pdo->prepare("
@@ -360,8 +349,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ");
 
                             foreach ($fieldsToSave as $field) {
-                                // For form fields, use field ID; for legacy custom fields, use field_name
-                                $fieldKey = !empty($formFields) ? 'field_' . $field['id'] : 'custom_' . $field['field_name'];
+                                $fieldKey = 'field_' . $field['id'];
                                 $fieldValue = null;
 
                                 if (isset($_POST[$fieldKey])) {
@@ -549,14 +537,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $newId = $pdo->lastInsertId();
 
                     // Insert custom metadata values
-                    if (!empty($customFields)) {
+                    if (!empty($formFields)) {
                         $metaStmt = $pdo->prepare("
                             INSERT INTO custom_metadata_values (file_id, field_id, field_value)
                             VALUES (?, ?, ?)
                         ");
 
-                        foreach ($customFields as $field) {
-                            // Use field ID for form template fields
+                        foreach ($formFields as $field) {
                             $fieldKey = 'field_' . $field['id'];
                             $fieldValue = null;
 
@@ -706,10 +693,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Update custom metadata values
-        $fieldsToSave = !empty($formFields) ? $formFields : $customFields;
+        $fieldsToSave = $formFields;
         if (!empty($fieldsToSave)) {
             foreach ($fieldsToSave as $field) {
-                $fieldKey = !empty($formFields) ? 'field_' . $field['id'] : 'custom_' . $field['field_name'];
+                $fieldKey = 'field_' . $field['id'];
                 $fieldValue = null;
 
                 if (isset($_POST[$fieldKey])) {

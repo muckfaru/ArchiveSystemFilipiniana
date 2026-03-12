@@ -36,24 +36,6 @@ CREATE TABLE IF NOT EXISTS languages (
     code VARCHAR(10) NOT NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- Custom Metadata Fields Table
--- Stores dynamic metadata field definitions created by admins
-CREATE TABLE IF NOT EXISTS custom_metadata_fields (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    field_name VARCHAR(100) NOT NULL UNIQUE COMMENT 'Internal identifier (e.g., author_name)',
-    field_label VARCHAR(255) NOT NULL COMMENT 'Display label shown to users',
-    field_type ENUM('text', 'textarea', 'number', 'date', 'select', 'checkbox', 'radio', 'tags') NOT NULL,
-    field_options TEXT DEFAULT NULL COMMENT 'JSON array for select/checkbox/radio options',
-    is_required TINYINT(1) DEFAULT 0 COMMENT '1 = required field, 0 = optional',
-    is_enabled TINYINT(1) DEFAULT 1 COMMENT '1 = active, 0 = disabled/soft-deleted',
-    display_order INT DEFAULT 0 COMMENT 'Sort order for display on forms',
-    validation_rules TEXT DEFAULT NULL COMMENT 'JSON object with validation config (regex, min/max)',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_enabled_order (is_enabled, display_order),
-    INDEX idx_field_name (field_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Form Templates Table
 -- Stores reusable form templates with predefined field configurations
 CREATE TABLE IF NOT EXISTS form_templates (
@@ -103,7 +85,7 @@ COMMENT='Controls metadata field visibility in UI';
 
 -- Newspapers Table
 -- Note: Metadata fields (publication_date, edition, category, language, etc.) 
--- are now stored dynamically in custom_metadata_fields and custom_metadata_values tables
+-- are now stored dynamically in form_fields and custom_metadata_values tables
 CREATE TABLE IF NOT EXISTS newspapers (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
