@@ -23,6 +23,7 @@ $editionFilter = array_filter($editionFilter, fn($e) => $e !== '' && $e !== 'all
 $dateFrom = trim($_GET['date_from'] ?? '');
 $dateTo = trim($_GET['date_to'] ?? '');
 $sortFilter = $_GET['sort'] ?? 'newest';
+$publicationType = trim($_GET['publication_type'] ?? '');
 
 // Convert year-only input to full date for SQL comparison
 $dateFromSql = $dateFrom;
@@ -121,6 +122,17 @@ if (!empty($editionFilter)) {
         AND cmv2.field_value IN ($placeholders)
     )";
     $params = array_merge($params, $editionFilter);
+}
+
+if ($publicationType !== '') {
+    $whereClause .= " AND EXISTS (
+        SELECT 1 FROM custom_metadata_values cmv2
+        INNER JOIN form_fields cmf2 ON cmv2.field_id = cmf2.id
+        WHERE cmv2.file_id = n.id 
+        AND cmf2.field_label = 'Publication Type' 
+        AND cmv2.field_value = ?
+    )";
+    $params[] = $publicationType;
 }
 
 if ($searchQuery) {
@@ -260,14 +272,15 @@ if (!empty($documents)) {
 }
 
 // --- Generate Filter Display Label with Remove Buttons ---
-function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categories, $languages, $searchQuery, $sortFilter)
+function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categories, $languages, $searchQuery, $sortFilter, $publicationType = '')
 {
     $filters = [];
 
     // Helper function to build URL params
-    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter) {
+    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType) {
         $useDateFrom = ($overrideDateFrom !== null) ? $overrideDateFrom : $dateFrom;
         $useDateTo = ($overrideDateTo !== null) ? $overrideDateTo : $dateTo;
+        $usePubType = ($overridePubType !== null) ? $overridePubType : $publicationType;
         $params = [];
         if ($searchQuery)
             $params[] = 'q=' . urlencode($searchQuery);
@@ -283,8 +296,21 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
             $params[] = 'date_to=' . urlencode($useDateTo);
         if ($sortFilter)
             $params[] = 'sort=' . urlencode($sortFilter);
+        if ($usePubType)
+            $params[] = 'publication_type=' . urlencode($usePubType);
         return '?' . implode('&', $params);
     };
+
+    // Publication Type
+    if ($publicationType !== '') {
+        $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter, null, null, '');
+        $filters[] = '<span class="filter-tag filter-pubtype">
+            <i class="bi bi-journal-richtext me-1"></i>' . htmlspecialchars($publicationType) . '
+            <a href="' . $removeUrl . '" class="filter-remove" title="Remove filter">
+                <i class="bi bi-x"></i>
+            </a>
+        </span>';
+    }
 
     // Categories (multiple)
     if (!empty($categoryFilter)) {
@@ -368,8 +394,8 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
     return $filters;
 }
 
-$activeFilters = generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categoriesWithCounts, $languages, $searchQuery, $sortFilter);
-$hasActiveFilters = !empty($activeFilters);
+$activeFilters = generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categoriesWithCounts, $languages, $searchQuery, $sortFilter, $publicationType);
+$hasActiveFilters = !empty($activeFilters) || ($publicationType !== '');
 
 // Helper function to format numbers
 function formatNumberShortcut($n)

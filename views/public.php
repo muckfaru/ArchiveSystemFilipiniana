@@ -77,7 +77,7 @@
     </section>
 
     <!-- ==================== SEARCH ACTIVE FILTER BAR ==================== -->
-    <?php if ($searchQuery || $categoryFilter): ?>
+    <?php if ($isSearchMode && ($searchQuery || $categoryFilter)): ?>
         <div class="public-grid-container" style="padding-bottom: 0;">
             <div class="d-flex align-items-center justify-content-between mb-3 px-1">
                 <span class="text-muted" style="font-size: 13px;">
@@ -101,7 +101,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- ==================== FILE GRID ==================== -->
+    <!-- ==================== FILE GRID / CATALOG ==================== -->
     <?php
     // Helper: highlight search term in a string safely
     function pubHighlight(string $text, string $q): string
@@ -113,140 +113,233 @@
         return preg_replace('/(' . $safeQ . ')/iu', '<mark class="pub-hl">$1</mark>', $safe);
     }
     ?>
-    <div class="public-grid-container" data-total="<?= (int) $totalResults ?>">
-        <?php if (empty($documents)): ?>
-            <div class="public-empty-state">
-                <i class="bi bi-search"></i>
-                <h5>No Results Found</h5>
-                <p style="font-size: 14px;">We couldn't find any documents matching your criteria.</p>
-                <a href="<?= APP_URL ?>/user_pages/public.php" class="public-read-btn"
-                    style="width: auto; display: inline-flex; margin-top: 16px; padding: 10px 24px;">
-                    Browse All
-                </a>
-            </div>
-        <?php else: ?>
-            <div class="row g-4">
-                <?php foreach ($documents as $paper): ?>
-                    <?php
-                    $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
-                    $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
-                    ?>
-                    <div class="col-6 col-md-3">
-                        <?php 
-                        // Prepare modal metadata as JSON for data attribute
-                        $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
-                        ?>
-                        <div class="public-file-card" 
-                            data-id="<?= $paper['id'] ?>"
-                            data-title="<?= htmlspecialchars($paper['title']) ?>"
-                            data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-category="<?= htmlspecialchars($catName) ?>"
-                            data-modal-metadata="<?= $modalMetaJson ?>">
 
-                            <!-- Thumbnail -->
-                            <div class="public-thumb-wrap">
-                                <?php if ($paper['thumbnail_path']): ?>
-                                    <img src="<?= APP_URL ?>/<?= htmlspecialchars($paper['thumbnail_path']) ?>"
-                                        class="public-file-thumbnail" alt="<?= htmlspecialchars($paper['title']) ?>" loading="lazy">
-                                <?php else: ?>
-                                    <div class="public-file-thumbnail-placeholder">
-                                        <i class="bi bi-newspaper"></i>
-                                    </div>
-                                <?php endif; ?>
-                                <!-- Category Badge (only show if a category is assigned) -->
-                                <?php if ($catName !== 'Uncategorized'): ?>
-                                    <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Card body -->
-                            <div class="public-file-info">
-                                <!-- Title -->
-                                <div class="public-file-title">
-                                    <?= pubHighlight($paper['title'], $searchQuery) ?>
-                                </div>
-
-                                <!-- Display only publication date -->
-                                <?php if (!empty($paper['display_metadata'])): ?>
-                                    <?php foreach ($paper['display_metadata'] as $meta): ?>
-                                        <?php 
-                                        // Only show publication date on card
-                                        $label = strtolower(trim($meta['label']));
-                                        if ($label === 'publication date' || $label === 'date published' || $label === 'date'): 
-                                        ?>
-                                            <div class="public-file-date">
-                                                <?= pubHighlight($meta['value'], $searchQuery) ?>
-                                            </div>
-                                        <?php 
-                                            break; // Only show first date found
-                                        endif; 
-                                        ?>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- ==================== PAGINATION ==================== -->
-            <?php if ($totalPages > 1): ?>
-                <?php
-                function buildPublicPageUrl($p, $q, $cat)
-                {
-                    $params = ['page' => $p];
-                    if ($q)
-                        $params['q'] = $q;
-                    if ($cat)
-                        $params['category'] = $cat;
-                    return '?' . http_build_query($params);
-                }
-                ?>
-                <div class="public-pagination">
-                    <!-- Prev arrow -->
-                    <a href="<?= buildPublicPageUrl(max(1, $currentPage - 1), $searchQuery, $categoryFilter) ?>"
-                        class="public-page-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
-
-                    <?php
-                    $startPage = max(1, $currentPage - 1);
-                    $endPage = min($totalPages, $currentPage + 1);
-
-                    if ($startPage > 1): ?>
-                        <a href="<?= buildPublicPageUrl(1, $searchQuery, $categoryFilter) ?>" class="public-page-btn">1</a>
-                        <?php if ($startPage > 2): ?>
-                            <span class="public-page-ellipsis">...</span>
-                        <?php endif; ?>
-                    <?php endif; ?>
-
-                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                        <a href="<?= buildPublicPageUrl($i, $searchQuery, $categoryFilter) ?>"
-                            class="public-page-btn <?= $i === $currentPage ? 'active' : '' ?>">
-                            <?= $i ?>
-                        </a>
-                    <?php endfor; ?>
-
-                    <?php if ($endPage < $totalPages): ?>
-                        <?php if ($endPage < $totalPages - 1): ?>
-                            <span class="public-page-ellipsis">...</span>
-                        <?php endif; ?>
-                        <a href="<?= buildPublicPageUrl($totalPages, $searchQuery, $categoryFilter) ?>" class="public-page-btn">
-                            <?= $totalPages ?>
-                        </a>
-                    <?php endif; ?>
-
-                    <!-- Next arrow -->
-                    <a href="<?= buildPublicPageUrl(min($totalPages, $currentPage + 1), $searchQuery, $categoryFilter) ?>"
-                        class="public-page-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                        <i class="bi bi-chevron-right"></i>
+    <?php if ($isSearchMode): ?>
+        <!-- ── SEARCH RESULTS: flat grid with pagination (same as before) ── -->
+        <div class="public-grid-container" data-total="<?= (int) $totalResults ?>">
+            <?php if (empty($documents)): ?>
+                <div class="public-empty-state">
+                    <i class="bi bi-search"></i>
+                    <h5>No Results Found</h5>
+                    <p style="font-size: 14px;">We couldn't find any documents matching your criteria.</p>
+                    <a href="<?= APP_URL ?>/user_pages/public.php" class="public-read-btn"
+                        style="width: auto; display: inline-flex; margin-top: 16px; padding: 10px 24px;">
+                        Browse All
                     </a>
                 </div>
-            <?php endif; ?>
+            <?php else: ?>
+                <div class="row g-4">
+                    <?php foreach ($documents as $paper): ?>
+                        <?php
+                        $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                        $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
+                        ?>
+                        <div class="col-6 col-md-3">
+                            <?php 
+                            $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
+                            ?>
+                            <div class="public-file-card" 
+                                data-id="<?= $paper['id'] ?>"
+                                data-title="<?= htmlspecialchars($paper['title']) ?>"
+                                data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+                                data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+                                data-category="<?= htmlspecialchars($catName) ?>"
+                                data-modal-metadata="<?= $modalMetaJson ?>">
 
-        <?php endif; ?>
-    </div>
+                                <div class="public-thumb-wrap">
+                                    <?php if ($paper['thumbnail_path']): ?>
+                                        <img src="<?= APP_URL ?>/<?= htmlspecialchars($paper['thumbnail_path']) ?>"
+                                            class="public-file-thumbnail" alt="<?= htmlspecialchars($paper['title']) ?>" loading="lazy">
+                                    <?php else: ?>
+                                        <div class="public-file-thumbnail-placeholder">
+                                            <i class="bi bi-newspaper"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($catName !== 'Uncategorized'): ?>
+                                        <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="public-file-info">
+                                    <div class="public-file-title">
+                                        <?= pubHighlight($paper['title'], $searchQuery) ?>
+                                    </div>
+                                    <?php if (!empty($paper['display_metadata'])): ?>
+                                        <?php foreach ($paper['display_metadata'] as $meta): ?>
+                                            <?php 
+                                            $label = strtolower(trim($meta['label']));
+                                            if ($label === 'publication date' || $label === 'date published' || $label === 'date'): 
+                                            ?>
+                                                <div class="public-file-date">
+                                                    <?= pubHighlight($meta['value'], $searchQuery) ?>
+                                                </div>
+                                            <?php 
+                                                break;
+                                            endif; 
+                                            ?>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Pagination -->
+                <?php if ($totalPages > 1): ?>
+                    <?php
+                    function buildPublicPageUrl($p, $q, $cat)
+                    {
+                        $params = ['page' => $p];
+                        if ($q) $params['q'] = $q;
+                        if ($cat) $params['category'] = $cat;
+                        return '?' . http_build_query($params);
+                    }
+                    ?>
+                    <div class="public-pagination">
+                        <a href="<?= buildPublicPageUrl(max(1, $currentPage - 1), $searchQuery, $categoryFilter) ?>"
+                            class="public-page-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                        <?php
+                        $startPage = max(1, $currentPage - 1);
+                        $endPage = min($totalPages, $currentPage + 1);
+                        if ($startPage > 1): ?>
+                            <a href="<?= buildPublicPageUrl(1, $searchQuery, $categoryFilter) ?>" class="public-page-btn">1</a>
+                            <?php if ($startPage > 2): ?>
+                                <span class="public-page-ellipsis">...</span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                            <a href="<?= buildPublicPageUrl($i, $searchQuery, $categoryFilter) ?>"
+                                class="public-page-btn <?= $i === $currentPage ? 'active' : '' ?>">
+                                <?= $i ?>
+                            </a>
+                        <?php endfor; ?>
+                        <?php if ($endPage < $totalPages): ?>
+                            <?php if ($endPage < $totalPages - 1): ?>
+                                <span class="public-page-ellipsis">...</span>
+                            <?php endif; ?>
+                            <a href="<?= buildPublicPageUrl($totalPages, $searchQuery, $categoryFilter) ?>" class="public-page-btn">
+                                <?= $totalPages ?>
+                            </a>
+                        <?php endif; ?>
+                        <a href="<?= buildPublicPageUrl(min($totalPages, $currentPage + 1), $searchQuery, $categoryFilter) ?>"
+                            class="public-page-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+    <?php else: ?>
+        <!-- ══════════════ CATALOG SHELVES (PressReader-style) ══════════════ -->
+        <div class="catalog-container" data-total="<?= array_sum(array_column($catalogShelves, 'total')) ?>">
+            <?php if (empty($catalogShelves)): ?>
+                <div class="public-grid-container">
+                    <div class="public-empty-state">
+                        <i class="bi bi-journal-richtext"></i>
+                        <h5>No Archives Yet</h5>
+                        <p style="font-size: 14px;">There are no documents in the archive at this time.</p>
+                    </div>
+                </div>
+            <?php else: ?>
+                <?php foreach ($catalogShelves as $shelf): ?>
+                    <section class="catalog-shelf">
+                        <!-- Shelf Header -->
+                        <div class="catalog-shelf-header">
+                            <div class="catalog-shelf-title-wrap">
+                                <?php
+                                $shelfIcon = 'bi-collection';
+                                $typeLower = strtolower($shelf['type']);
+                                if (strpos($typeLower, 'newspaper') !== false) $shelfIcon = 'bi-newspaper';
+                                elseif (strpos($typeLower, 'magazine') !== false) $shelfIcon = 'bi-journal-richtext';
+                                elseif (strpos($typeLower, 'book') !== false) $shelfIcon = 'bi-book';
+                                elseif (strpos($typeLower, 'journal') !== false) $shelfIcon = 'bi-journal-text';
+                                elseif ($shelf['type'] === 'All Archives') $shelfIcon = 'bi-archive';
+                                ?>
+                                <i class="bi <?= $shelfIcon ?> catalog-shelf-icon"></i>
+                                <h2 class="catalog-shelf-title"><?= htmlspecialchars($shelf['type']) ?>s</h2>
+                                <span class="catalog-shelf-count"><?= number_format($shelf['total']) ?></span>
+                            </div>
+                            <?php if ($shelf['type'] !== 'All Archives'): ?>
+                                <a href="<?= APP_URL ?>/user_pages/browse.php?publication_type=<?= urlencode($shelf['type']) ?>" class="catalog-see-all">
+                                    See All <i class="bi bi-arrow-right"></i>
+                                </a>
+                            <?php else: ?>
+                                <a href="<?= APP_URL ?>/user_pages/browse.php" class="catalog-see-all">
+                                    Browse All <i class="bi bi-arrow-right"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Shelf Scroll Track -->
+                        <div class="catalog-shelf-track-wrap">
+                            <button class="catalog-scroll-arrow catalog-scroll-left" aria-label="Scroll left">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <div class="catalog-shelf-track">
+                                <?php foreach ($shelf['docs'] as $paper): ?>
+                                    <?php
+                                    $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                                    $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
+                                    $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
+                                    
+                                    // Extract publication date
+                                    $pubDate = '';
+                                    if (!empty($paper['display_metadata'])) {
+                                        foreach ($paper['display_metadata'] as $meta) {
+                                            $metaLabel = strtolower(trim($meta['label']));
+                                            if ($metaLabel === 'publication date' || $metaLabel === 'date published' || $metaLabel === 'date') {
+                                                $pubDate = $meta['value'];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    ?>
+                                    <div class="catalog-card public-file-card"
+                                        data-id="<?= $paper['id'] ?>"
+                                        data-title="<?= htmlspecialchars($paper['title']) ?>"
+                                        data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+                                        data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+                                        data-category="<?= htmlspecialchars($catName) ?>"
+                                        data-modal-metadata="<?= $modalMetaJson ?>">
+
+                                        <!-- Thumbnail -->
+                                        <div class="catalog-card-thumb">
+                                            <?php if ($paper['thumbnail_path']): ?>
+                                                <img src="<?= APP_URL ?>/<?= htmlspecialchars($paper['thumbnail_path']) ?>"
+                                                    alt="<?= htmlspecialchars($paper['title']) ?>" loading="lazy">
+                                            <?php else: ?>
+                                                <div class="catalog-card-thumb-placeholder">
+                                                    <i class="bi bi-newspaper"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if ($catName !== 'Uncategorized'): ?>
+                                                <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Card Info -->
+                                        <div class="catalog-card-info">
+                                            <div class="catalog-card-title"><?= htmlspecialchars($paper['title']) ?></div>
+                                            <?php if ($pubDate): ?>
+                                                <div class="catalog-card-date"><?= htmlspecialchars($pubDate) ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button class="catalog-scroll-arrow catalog-scroll-right" aria-label="Scroll right">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </section>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
 
 

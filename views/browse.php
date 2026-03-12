@@ -1,6 +1,6 @@
 <?php
 // Helper function to build URL with filter arrays
-function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, $dateTo, $sort) {
+function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, $dateTo, $sort, $pubType = '') {
     $params = [];
     if ($search) $params[] = 'q=' . urlencode($search);
     foreach ($categories as $cat) {
@@ -15,6 +15,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     if ($dateFrom) $params[] = 'date_from=' . urlencode($dateFrom);
     if ($dateTo) $params[] = 'date_to=' . urlencode($dateTo);
     if ($sort) $params[] = 'sort=' . urlencode($sort);
+    if ($pubType) $params[] = 'publication_type=' . urlencode($pubType);
     return '?' . implode('&', $params);
 }
 ?>
@@ -128,7 +129,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         <aside class="browse-sidebar-redesign">
             <div class="browse-sidebar-header">
                 <h3 class="browse-sidebar-title">Filters</h3>
-                <?php if ($searchQuery || $categoryFilter || $languageFilter || $editionFilter || $dateFrom || $dateTo): ?>
+                <?php if ($searchQuery || $categoryFilter || $languageFilter || $editionFilter || $dateFrom || $dateTo || $publicationType): ?>
                     <a href="<?= APP_URL ?>/user_pages/browse.php" class="browse-clear-all">
                         <i class="bi bi-x-circle"></i>
                         Clear all
@@ -148,7 +149,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <li class="browse-category-item-redesign">
                             <label class="browse-checkbox-label">
                                 <input type="checkbox" name="category" <?= empty($categoryFilter) ? 'checked' : '' ?> 
-                                    onchange="if(this.checked) window.location.href='<?= buildFilterUrl([], $searchQuery, $languageFilter, $editionFilter, $dateFrom, $dateTo, $sortFilter) ?>'">
+                                    onchange="if(this.checked) window.location.href='<?= buildFilterUrl([], $searchQuery, $languageFilter, $editionFilter, $dateFrom, $dateTo, $sortFilter, $publicationType) ?>'">
                                 <span>All Categories</span>
                                 <span class="browse-count-badge"><?= number_format($totalCollectionsCount) ?></span>
                             </label>
@@ -247,6 +248,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
                         <?php endforeach; ?>
                         <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
+                        <?php if ($publicationType): ?>
+                            <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+                        <?php endif; ?>
                         
                         <div class="browse-date-inputs">
                             <div class="browse-date-input-group">
@@ -291,6 +295,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
                     <?php endforeach; ?>
                     <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
+                    <?php if ($publicationType): ?>
+                        <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+                    <?php endif; ?>
                     <div class="browse-search-input-wrap">
                         <i class="bi bi-search"></i>
                         <input type="text" class="browse-search-input-redesign" name="q"
@@ -305,6 +312,8 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                 <div class="browse-results-count-redesign">
                     <?php if ($searchQuery): ?>
                         Showing results for "<strong><?= htmlspecialchars($searchQuery) ?></strong>"
+                    <?php elseif ($publicationType): ?>
+                        Showing <?= number_format($totalResults) ?> <?= htmlspecialchars($publicationType) ?><?= $totalResults !== 1 ? 's' : '' ?>
                     <?php else: ?>
                         Showing <?= number_format($totalResults) ?> newspapers
                     <?php endif; ?>
@@ -323,6 +332,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <?php foreach ($editionFilter as $ed): ?>
                             <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
                         <?php endforeach; ?>
+                        <?php if ($publicationType): ?>
+                            <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+                        <?php endif; ?>
                         
                         <label for="sortSelect">Sort by:</label>
                         <select class="browse-sort-select-redesign" name="sort" id="sortSelect" onchange="this.form.submit()">
@@ -729,6 +741,8 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
             if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
             params.set('sort', '<?= addslashes($sortFilter) ?>');
+            const pubType = '<?= addslashes($publicationType) ?>';
+            if (pubType) params.set('publication_type', pubType);
             
             window.location.href = '?' + params.toString();
         }

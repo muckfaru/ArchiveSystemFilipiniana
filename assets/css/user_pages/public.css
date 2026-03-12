@@ -2770,6 +2770,13 @@ button.public-admin-login-btn {
     border: 1px solid #F8BBD0;
 }
 
+/* Publication Type filter tag */
+.filter-pubtype {
+    background: #F3E5F5;
+    color: #7B1FA2;
+    border: 1px solid #E1BEE7;
+}
+
 .clear-filters-btn {
     display: inline-flex;
     align-items: center;
@@ -3259,5 +3266,300 @@ button.public-admin-login-btn {
     .vision-text {
         font-size: 18px;
         padding: 24px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CATALOG SHELVES – PressReader-style horizontal scroll rows
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.catalog-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 10px 0 60px;
+}
+
+/* ── Shelf Section ── */
+.catalog-shelf {
+    margin-bottom: 40px;
+}
+
+.catalog-shelf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    margin-bottom: 18px;
+}
+
+.catalog-shelf-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.catalog-shelf-icon {
+    font-size: 22px;
+    color: var(--primary-color);
+}
+
+.catalog-shelf-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: -0.3px;
+}
+
+.catalog-shelf-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: #F1F5F9;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+}
+
+.catalog-see-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.catalog-see-all:hover {
+    background: rgba(58, 154, 255, 0.08);
+    color: var(--primary-dark);
+}
+
+.catalog-see-all i {
+    font-size: 13px;
+    transition: transform 0.2s;
+}
+
+.catalog-see-all:hover i {
+    transform: translateX(3px);
+}
+
+/* ── Scroll Track ── */
+.catalog-shelf-track-wrap {
+    position: relative;
+    padding: 0 48px;
+}
+
+.catalog-shelf-track {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 4px 14px 4px;
+    /* Hide scrollbar */
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* IE/Edge */
+}
+.catalog-shelf-track::-webkit-scrollbar {
+    display: none;                  /* Chrome/Safari */
+}
+
+/* ── Scroll Arrows ── */
+.catalog-scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-56%);
+    z-index: 5;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+    font-size: 16px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.catalog-shelf-track-wrap:hover .catalog-scroll-arrow {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.catalog-scroll-arrow:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 14px rgba(58, 154, 255, 0.3);
+}
+
+.catalog-scroll-arrow.catalog-scroll-left {
+    left: 8px;
+}
+
+.catalog-scroll-arrow.catalog-scroll-right {
+    right: 8px;
+}
+
+.catalog-scroll-arrow:disabled,
+.catalog-scroll-arrow.hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ── Catalog Card ── */
+.catalog-card {
+    flex: 0 0 180px;
+    scroll-snap-align: start;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    border: 1px solid #E8EDF2;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.catalog-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.catalog-card-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    background: #F3F4F6;
+}
+
+.catalog-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+}
+
+.catalog-card:hover .catalog-card-thumb img {
+    transform: scale(1.04);
+}
+
+.catalog-card-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%);
+    color: #9CA3AF;
+    font-size: 44px;
+}
+
+.catalog-card-info {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.catalog-card-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+}
+
+.catalog-card-date {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748B;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Responsive: Catalog Shelves ── */
+@media (max-width: 1024px) {
+    .catalog-shelf-header {
+        padding: 0 28px;
+    }
+    .catalog-shelf-track-wrap {
+        padding: 0 28px;
+    }
+    .catalog-scroll-arrow.catalog-scroll-left { left: 2px; }
+    .catalog-scroll-arrow.catalog-scroll-right { right: 2px; }
+}
+
+@media (max-width: 768px) {
+    .catalog-shelf-header {
+        padding: 0 18px;
+    }
+    .catalog-shelf-track-wrap {
+        padding: 0 18px;
+    }
+    .catalog-shelf-title {
+        font-size: 18px;
+    }
+    .catalog-card {
+        flex: 0 0 150px;
+    }
+    .catalog-scroll-arrow {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+    }
+    .catalog-scroll-arrow.catalog-scroll-left { left: 0; }
+    .catalog-scroll-arrow.catalog-scroll-right { right: 0; }
+}
+
+@media (max-width: 480px) {
+    .catalog-shelf-header {
+        padding: 0 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .catalog-shelf-track-wrap {
+        padding: 0 14px;
+    }
+    .catalog-card {
+        flex: 0 0 135px;
+    }
+    .catalog-shelf-title {
+        font-size: 16px;
+    }
+    .catalog-shelf {
+        margin-bottom: 30px;
+    }
+    /* Always show arrows on mobile (no hover) */
+    .catalog-shelf-track-wrap .catalog-scroll-arrow {
+        opacity: 1;
+        pointer-events: auto;
     }
 }

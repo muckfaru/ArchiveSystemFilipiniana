@@ -146,11 +146,40 @@
 
     // ── Card click → open modal ───────────────────────────────────────────────
     function attachCardListeners() {
-        document.querySelectorAll('.public-file-card, .browse-card, .browse-file-card-compact').forEach(card => {
+        document.querySelectorAll('.public-file-card, .catalog-card, .browse-card, .browse-file-card-compact').forEach(card => {
             card.addEventListener('click', () => openModal(card));
         });
     }
     attachCardListeners();
+
+    // ── Catalog shelf scroll arrows ───────────────────────────────────────────
+    document.querySelectorAll('.catalog-shelf-track-wrap').forEach(wrap => {
+        const track = wrap.querySelector('.catalog-shelf-track');
+        const leftBtn = wrap.querySelector('.catalog-scroll-left');
+        const rightBtn = wrap.querySelector('.catalog-scroll-right');
+        if (!track || !leftBtn || !rightBtn) return;
+
+        const scrollAmount = 400;
+
+        function updateArrows() {
+            leftBtn.classList.toggle('hidden', track.scrollLeft <= 10);
+            rightBtn.classList.toggle('hidden', track.scrollLeft + track.clientWidth >= track.scrollWidth - 10);
+        }
+
+        leftBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        rightBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+
+        track.addEventListener('scroll', updateArrows);
+        // Initial check
+        setTimeout(updateArrows, 100);
+        window.addEventListener('resize', updateArrows);
+    });
 
     // ── Live search (debounced) ───────────────────────────────────────────────
     const searchInput = document.getElementById('publicSearchInput');
@@ -168,10 +197,10 @@
     }
 
     // ── Live update polling (reflects admin upload/delete) ────────────────────
-    // Read the initial archive count embedded by PHP in the grid container.
-    const gridContainer = document.querySelector('.public-grid-container[data-total]');
-    if (gridContainer && typeof APP_URL !== 'undefined') {
-        let knownCount = parseInt(gridContainer.dataset.total, 10);
+    // Read the initial archive count embedded by PHP in the grid/catalog container.
+    const totalContainer = document.querySelector('.public-grid-container[data-total], .catalog-container[data-total]');
+    if (totalContainer && typeof APP_URL !== 'undefined') {
+        let knownCount = parseInt(totalContainer.dataset.total, 10);
         if (!isNaN(knownCount)) {
             setInterval(() => {
                 fetch(APP_URL + '/backend/api/stats.php', { cache: 'no-store' })
