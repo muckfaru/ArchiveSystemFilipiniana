@@ -27,6 +27,20 @@ if ($view === 'browse') {
 $searchQuery = trim($_GET['q'] ?? '');
 $categoryFilter = $_GET['category'] ?? '';
 
+// Date range inputs (expected format: mm/dd/yyyy)
+$fromInput = trim($_GET['from'] ?? '');
+$toInput   = trim($_GET['to'] ?? '');
+
+function normalizeUsDateToSql(?string $value): ?string {
+    if (!$value) return null;
+    $dt = DateTime::createFromFormat('m/d/Y', $value);
+    if (!$dt) return null;
+    return $dt->format('Y-m-d');
+}
+
+$fromDateSql = normalizeUsDateToSql($fromInput);
+$toDateSql   = normalizeUsDateToSql($toInput);
+
 // --- Helper: attach metadata arrays to a list of documents ---
 function attachMetadataToDocs(&$docs, $pdo, $cardFields, $modalFields) {
     if (empty($docs)) return;
@@ -63,7 +77,17 @@ function attachMetadataToDocs(&$docs, $pdo, $cardFields, $modalFields) {
 }
 
 // --- Determine mode: search vs catalog ---
-$isSearchMode = ($searchQuery !== '' || ($categoryFilter !== '' && $categoryFilter !== 'all'));
+$isSearchMode = (
+    $searchQuery !== '' ||
+    ($categoryFilter !== '' && $categoryFilter !== 'all') ||
+    $fromDateSql !== null ||
+    $toDateSql !== null
+);
+
+// UI helper flags (non-breaking; for view rendering only)
+$uiMode = $isSearchMode ? 'search' : 'catalog';
+$uiHasResults = false;
+$uiEmptyMessage = '';
 
 // Get card and modal fields once
 $cardFields = getVisibleFields($pdo, 'card');
@@ -101,6 +125,16 @@ if ($isSearchMode) {
         $params[] = $categoryFilter;
     }
 
+    if ($fromDateSql !== null) {
+        $whereClause .= " AND DATE(n.created_at) >= ?";
+        $params[] = $fromDateSql;
+    }
+
+    if ($toDateSql !== null) {
+        $whereClause .= " AND DATE(n.created_at) <= ?";
+        $params[] = $toDateSql;
+    }
+
     $countSql = "SELECT COUNT(DISTINCT n.id) as total FROM newspapers n $whereClause";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
@@ -119,6 +153,12 @@ if ($isSearchMode) {
     attachMetadataToDocs($documents, $pdo, $cardFields, $modalFields);
 
     $catalogShelves = []; // empty — search mode uses $documents
+
+    // UI state
+    $uiHasResults = !empty($documents);
+    if (!$uiHasResults) {
+        $uiEmptyMessage = 'No archive items matched your search/filter.';
+    }
 } else {
     // ── CATALOG MODE: group by Publication Type ──
     $documents = [];
@@ -193,6 +233,12 @@ if ($isSearchMode) {
             ];
         }
     }
+
+    // UI state
+    $uiHasResults = !empty($catalogShelves);
+    if (!$uiHasResults) {
+        $uiEmptyMessage = 'No archive items are available yet.';
+    }
 }
 
 // --- Fetch Categories for filter dropdown ---
@@ -203,6 +249,17 @@ $catSql = "SELECT DISTINCT cmv.field_value as id, cmv.field_value as name
            WHERE cmf.field_label = 'Category' AND n.deleted_at IS NULL
            ORDER BY cmv.field_value ASC";
 $categories = $pdo->query($catSql)->fetchAll();
+
+// Expose UI payload for view-level enhancements (no logic changes)
+$uiState = [
+    'mode' => $uiMode,
+    'has_results' => $uiHasResults,
+    'empty_message' => $uiEmptyMessage,
+    'filters' => [
+        'from' => $fromInput, // keep mm/dd/yyyy for UI
+        'to'   => $toInput    // keep mm/dd/yyyy for UI
+    ]
+];
 
 // --- Include View ---
 include __DIR__ . '/../views/public.php';
