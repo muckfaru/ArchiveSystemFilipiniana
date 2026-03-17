@@ -11,6 +11,8 @@ backend/core/config.php
 # IDE files
 .vscode/
 .idea/
+.kiro/
+.vscode/
 
 # OS files
 .DS_Store
