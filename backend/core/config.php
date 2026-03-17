@@ -43,8 +43,8 @@ define('CALIBRE_CONVERT_PATH', 'C:\xampp\htdocs\CalibrePortable\Calibre\\ebook-c
 // 3. Replace the values below with your Gmail and App Password
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 465);
-define('SMTP_USERNAME', ''); // Your Gmail address
-define('SMTP_PASSWORD', ''); // Your Gmail App Password
+define('SMTP_USERNAME', 'archivesystemfilipiniana@gmail.com'); // Your Gmail address
+define('SMTP_PASSWORD', 'folx ljgj qnub zjxn'); // Your Gmail App Password
 define('SMTP_FROM_NAME', 'Archive System Filipiniana');
 
 // Session settings
