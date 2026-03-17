@@ -6,7 +6,7 @@ node_modules/
 .env.local
 
 # Local config (each user creates their own from config.example.php)
-backend/core/config.php
+# backend/core/config.php
 
 # IDE files
 .vscode/
