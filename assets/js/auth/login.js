@@ -8,12 +8,19 @@ const password = document.querySelector('#password');
 
 if (togglePassword) {
     togglePassword.addEventListener('click', function (e) {
-        // toggle the type attribute
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
-        // toggle the eye slash icon
-        this.classList.toggle('bi-eye');
-        this.classList.toggle('bi-eye-slash-fill');
+        
+        const icon = this.querySelector('i');
+        if (icon) {
+            if (type === 'text') {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash-fill');
+            } else {
+                icon.classList.remove('bi-eye-slash-fill');
+                icon.classList.add('bi-eye');
+            }
+        }
     });
 }
 

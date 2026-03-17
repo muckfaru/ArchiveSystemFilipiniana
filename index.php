@@ -11,6 +11,11 @@
 require_once __DIR__ . '/backend/core/config.php';
 require_once __DIR__ . '/backend/core/functions.php';
 
-// Always redirect to the public reader landing page
+// Redirect logged-in users to the dashboard
+if (isLoggedIn()) {
+    redirect(APP_URL . '/admin_pages/dashboard.php');
+}
+
+// Always redirect to the public reader landing page if not logged in
 redirect(APP_URL . '/user_pages/public.php');
 ?>

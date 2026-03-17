@@ -95,6 +95,13 @@ if ($editMode) {
             }
         }
     }
+} else {
+    // Load from session draft if exists
+    if (isset($_SESSION['upload_draft']) && is_array($_SESSION['upload_draft'])) {
+        foreach ($_SESSION['upload_draft'] as $fieldId => $value) {
+            $customMetadataValues[$fieldId] = $value;
+        }
+    }
 }
 
 function isAjaxRequest()
@@ -148,7 +155,43 @@ function rejectInvalidPublicationDate()
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'upload' || $action === 'edit') {
+    if ($action === 'upload' || $action === 'edit' || $action === 'save_draft' || $action === 'clear_draft') {
+        // Handle Save Draft (AJAX)
+        if ($action === 'save_draft') {
+            if (!isset($_SESSION['upload_draft'])) {
+                $_SESSION['upload_draft'] = [];
+            }
+            
+            foreach ($_POST as $key => $value) {
+                if (strpos($key, 'field_') === 0) {
+                    $fieldId = str_replace('field_', '', $key);
+                    // Strip trailing [] from checkbox field names if present
+                    $fieldId = str_replace('[]', '', $fieldId);
+                    
+                    if (is_array($value)) {
+                        // Checkbox or multiple select
+                        $_SESSION['upload_draft'][$fieldId] = json_encode($value);
+                    } else {
+                        $_SESSION['upload_draft'][$fieldId] = $value;
+                    }
+                }
+            }
+            
+            if (isAjaxRequest()) {
+                echo json_encode(['success' => true]);
+                exit;
+            }
+        }
+
+        // Handle Clear Draft (AJAX or Discard)
+        if ($action === 'clear_draft') {
+            unset($_SESSION['upload_draft']);
+            if (isAjaxRequest()) {
+                echo json_encode(['success' => true]);
+                exit;
+            }
+        }
+
         $title = sanitize($_POST['title'] ?? '');
 
         // Validate custom required fields (form templates)
@@ -381,6 +424,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
 
                         logActivity($currentUser['id'], 'upload', $title, $newId);
+                        
+                        // Clear session draft upon successful upload
+                        unset($_SESSION['upload_draft']);
 
                         // Respond with JSON if AJAX, else redirect
                         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {

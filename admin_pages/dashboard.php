@@ -52,8 +52,9 @@ $cardFields = getVisibleFields($pdo, 'card');
 // INTEGRATION: Attach display-configured metadata to recent newspapers
 if (!empty($recentNewspapers)) {
     $fileIds = array_column($recentNewspapers, 'id');
+    $allMetadata = getFilesMetadataForDisplay($pdo, $fileIds, 'card');
     foreach ($recentNewspapers as &$newspaper) {
-        $newspaper['custom_metadata'] = getFileMetadataForDisplay($pdo, $newspaper['id'], 'card');
+        $newspaper['custom_metadata'] = $allMetadata[$newspaper['id']] ?? [];
     }
 }
 
@@ -160,8 +161,9 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
     // INTEGRATION: Attach display-configured metadata to search results
     if (!empty($searchResults)) {
         $fileIds = array_column($searchResults, 'id');
+        $allMetadata = getFilesMetadataForDisplay($pdo, $fileIds, 'card');
         foreach ($searchResults as &$result) {
-            $result['custom_metadata'] = getFileMetadataForDisplay($pdo, $result['id'], 'card');
+            $result['custom_metadata'] = $allMetadata[$result['id']] ?? [];
         }
     }
 }

@@ -652,5 +652,110 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     }
+    // --- Refresh Rankings Logic ---
+    const refreshRankingBtn = document.getElementById('refreshRankingBtn');
+    const topReadsList = document.getElementById('topReadsList');
+    const mostReadPeriod = document.getElementById('mostReadPeriod');
+
+    function refreshRankings(period = 'all') {
+        if (!topReadsList) return;
+
+        // Visual feedback
+        if (refreshRankingBtn) {
+            refreshRankingBtn.disabled = true;
+            refreshRankingBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> REFRESHING...';
+        }
+        topReadsList.style.opacity = '0.5';
+
+        fetch(APP_URL + `/backend/api/dashboard.php?action=refresh_rankings&period=${period}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    // Render new ranking list
+                    topReadsList.innerHTML = '';
+                    
+                    if (data.data.length === 0) {
+                        topReadsList.innerHTML = '<div class="text-center py-4 text-muted small">No view data available for this period.</div>';
+                    } else {
+                        data.data.forEach((tr, idx) => {
+                            const rank = idx + 1;
+                            const isTop = (rank === 1);
+                            
+                            // Extract metadata for modal quick-preview
+                            const getMetaValue = (labels) => {
+                                if (!tr.custom_metadata) return '';
+                                const targetLabels = Array.isArray(labels) ? labels.map(l => l.toLowerCase()) : [labels.toLowerCase()];
+                                const found = tr.custom_metadata.find(m => targetLabels.includes((m.field_label || '').toLowerCase()));
+                                return found ? found.field_value : '';
+                            };
+                            
+                            const category = getMetaValue('Category') || 'Uncategorized';
+                            const description = getMetaValue(['Description', 'Summary', 'About']);
+                            const isBulk = tr.is_bulk == 1;
+                            const imagePaths = tr.image_paths ? JSON.parse(tr.image_paths) : [];
+                            const fileUrl = tr.file_path ? `${APP_URL}/${tr.file_path}` : '';
+                            const thumbnail = tr.thumbnail_path ? `${APP_URL}/${tr.thumbnail_path}` : '';
+
+                            const item = document.createElement('div');
+                            item.className = `most-read-item dashboard-file-card ${isTop ? 'top-rank' : ''}`;
+                            item.style.animationDelay = `${idx * 0.1}s`;
+                            
+                            // Set data attributes for the modal handler
+                            item.dataset.id = tr.id;
+                            item.dataset.title = tr.title;
+                            item.dataset.thumbnail = thumbnail;
+                            item.dataset.file = fileUrl;
+                            item.dataset.category = category;
+                            item.dataset.description = description;
+                            item.dataset.format = (tr.file_type || 'pdf').toLowerCase();
+                            item.dataset.isBulk = isBulk ? '1' : '0';
+                            item.dataset.imagePaths = JSON.stringify(imagePaths);
+
+                            item.innerHTML = `
+                                <div class="rank-badge ${isTop ? 'bg-primary' : 'bg-light text-muted'}">
+                                    ${rank}
+                                </div>
+                                <div class="most-read-thumb">
+                                    ${tr.thumbnail_path 
+                                        ? `<img src="${thumbnail}" alt="Thumbnail">`
+                                        : `<div class="most-read-thumb-placeholder"><i class="bi bi-image"></i></div>`
+                                    }
+                                </div>
+                                <div class="most-read-content">
+                                    <h6 class="most-read-item-title">${escapeHtml(tr.title)}</h6>
+                                    <div class="most-read-views">
+                                        <i class="bi bi-eye"></i>
+                                        <span>${Number(tr.view_count).toLocaleString()} views</span>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            topReadsList.appendChild(item);
+                        });
+                    }
+                }
+            })
+            .catch(error => console.error('Error refreshing rankings:', error))
+            .finally(() => {
+                topReadsList.style.opacity = '1';
+                if (refreshRankingBtn) {
+                    refreshRankingBtn.disabled = false;
+                    refreshRankingBtn.innerHTML = 'REFRESH RANKING';
+                }
+            });
+    }
+
+    if (refreshRankingBtn) {
+        refreshRankingBtn.addEventListener('click', () => {
+            const period = mostReadPeriod ? mostReadPeriod.value : 'all';
+            refreshRankings(period);
+        });
+    }
+
+    if (mostReadPeriod) {
+        mostReadPeriod.addEventListener('change', (e) => {
+            refreshRankings(e.target.value);
+        });
+    }
 });
 

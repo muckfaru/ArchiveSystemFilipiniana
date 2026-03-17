@@ -233,15 +233,6 @@
 
     <script>
         const APP_URL = "<?= APP_URL ?>";
-
-        // Eye toggle
-        document.getElementById('togglePassword').addEventListener('click', function () {
-            const pw = document.getElementById('password');
-            const icon = document.getElementById('eyeIcon');
-            const isPass = pw.type === 'password';
-            pw.type = isPass ? 'text' : 'password';
-            icon.className = isPass ? 'bi bi-eye-slash-fill' : 'bi bi-eye';
-        });
     </script>
 
     <!-- Page JS (handles form submit + alert) -->

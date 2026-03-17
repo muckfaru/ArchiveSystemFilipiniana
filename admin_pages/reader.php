@@ -36,9 +36,6 @@ $customMetadata = getCustomMetadataValues($fileId);
 // Log activity
 logActivity($currentUser['id'], 'read', $file['title']);
 
-// Record view for analytics (silent failure - won't break page rendering)
-recordNewspaperView($pdo, $fileId);
-
 $fileType = strtolower($file['file_type']);
 $fileUrl = '../serve_file.php?file=' . urlencode($file['file_path']);
 $filePath = __DIR__ . '/../' . $file['file_path'];

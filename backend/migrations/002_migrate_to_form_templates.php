@@ -11,20 +11,21 @@
 
 require_once __DIR__ . '/../core/config.php';
 
-function runMigration($pdo) {
+function runMigration($pdo)
+{
     try {
         echo "Starting migration: Migrate to Form Templates System\n";
         echo "====================================================\n\n";
-        
+
         $pdo->beginTransaction();
-        
+
         // Check if migration already applied
         $stmt = $pdo->query("SHOW TABLES LIKE 'form_templates'");
         if ($stmt->rowCount() > 0) {
             echo "✓ Migration already applied. Tables exist.\n";
             return;
         }
-        
+
         // Step 1: Create form_templates table
         echo "Step 1: Creating form_templates table...\n";
         $pdo->exec("
@@ -42,7 +43,7 @@ function runMigration($pdo) {
             COMMENT='Stores form template definitions'
         ");
         echo "✓ form_templates table created\n\n";
-        
+
         // Step 2: Create form_fields table
         echo "Step 2: Creating form_fields table...\n";
         $pdo->exec("
@@ -63,16 +64,16 @@ function runMigration($pdo) {
             COMMENT='Stores fields within form templates'
         ");
         echo "✓ form_fields table created\n\n";
-        
+
         // Step 3: Check if custom_metadata_fields has data
         echo "Step 3: Checking for existing custom metadata fields...\n";
         $stmt = $pdo->query("SELECT COUNT(*) as count FROM custom_metadata_fields");
         $fieldCount = $stmt->fetch()['count'];
         echo "Found $fieldCount existing custom metadata fields\n\n";
-        
+
         $defaultFormId = null;
         $fieldMapping = []; // Map old field_id to new field_id
-        
+
         if ($fieldCount > 0) {
             // Step 4: Create default form template
             echo "Step 4: Creating default form template...\n";
@@ -87,7 +88,7 @@ function runMigration($pdo) {
             ");
             $defaultFormId = $pdo->lastInsertId();
             echo "✓ Default form template created (ID: $defaultFormId)\n\n";
-            
+
             // Step 5: Migrate fields to form_fields
             echo "Step 5: Migrating fields to form_fields table...\n";
             $stmt = $pdo->query("
@@ -96,13 +97,13 @@ function runMigration($pdo) {
                 ORDER BY display_order ASC
             ");
             $existingFields = $stmt->fetchAll();
-            
+
             $insertStmt = $pdo->prepare("
                 INSERT INTO form_fields 
                 (form_id, field_label, field_type, field_options, is_required, display_order, help_text)
                 VALUES (?, ?, ?, ?, ?, ?, NULL)
             ");
-            
+
             foreach ($existingFields as $field) {
                 $insertStmt->execute([
                     $defaultFormId,
@@ -112,16 +113,17 @@ function runMigration($pdo) {
                     $field['is_required'],
                     $field['display_order']
                 ]);
-                
+
                 $newFieldId = $pdo->lastInsertId();
                 $fieldMapping[$field['id']] = $newFieldId;
             }
-            
+
             echo "✓ Migrated " . count($existingFields) . " fields\n\n";
-        } else {
+        }
+        else {
             echo "No existing fields to migrate\n\n";
         }
-        
+
         // Step 6: Add form_id column to custom_metadata_values
         echo "Step 6: Adding form_id column to custom_metadata_values...\n";
         $pdo->exec("
@@ -129,7 +131,7 @@ function runMigration($pdo) {
             ADD COLUMN form_id INT DEFAULT NULL COMMENT 'References form_templates.id' AFTER file_id
         ");
         echo "✓ Column added\n\n";
-        
+
         // Step 7: Add foreign key constraint
         echo "Step 7: Adding foreign key constraint...\n";
         $pdo->exec("
@@ -137,7 +139,7 @@ function runMigration($pdo) {
             ADD FOREIGN KEY (form_id) REFERENCES form_templates(id) ON DELETE SET NULL
         ");
         echo "✓ Foreign key added\n\n";
-        
+
         // Step 8: Add index
         echo "Step 8: Adding index on form_id...\n";
         $pdo->exec("
@@ -145,18 +147,18 @@ function runMigration($pdo) {
             ADD INDEX idx_form_id (form_id)
         ");
         echo "✓ Index added\n\n";
-        
+
         // Step 9: Update existing custom_metadata_values
         if ($defaultFormId && $fieldCount > 0) {
             echo "Step 9: Updating existing custom_metadata_values...\n";
-            
+
             // Update form_id for all existing values
             $pdo->exec("
                 UPDATE custom_metadata_values
                 SET form_id = $defaultFormId
                 WHERE form_id IS NULL
             ");
-            
+
             // Update field_id mapping
             foreach ($fieldMapping as $oldFieldId => $newFieldId) {
                 $stmt = $pdo->prepare("
@@ -166,16 +168,17 @@ function runMigration($pdo) {
                 ");
                 $stmt->execute([$newFieldId, $oldFieldId]);
             }
-            
+
             $stmt = $pdo->query("SELECT COUNT(*) as count FROM custom_metadata_values WHERE form_id = $defaultFormId");
             $updatedCount = $stmt->fetch()['count'];
             echo "✓ Updated $updatedCount metadata values\n\n";
-        } else {
+        }
+        else {
             echo "Step 9: No existing values to update\n\n";
         }
-        
+
         $pdo->commit();
-        
+
         echo "====================================================\n";
         echo "✓ Migration completed successfully!\n\n";
         echo "Summary:\n";
@@ -190,8 +193,9 @@ function runMigration($pdo) {
         echo "  1. Review the default form template in the Form Library\n";
         echo "  2. Create additional form templates as needed\n";
         echo "  3. The old custom_metadata_fields table is preserved for reference\n\n";
-        
-    } catch (Exception $e) {
+
+    }
+    catch (Exception $e) {
         $pdo->rollBack();
         echo "\n✗ Migration failed: " . $e->getMessage() . "\n";
         echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
@@ -199,19 +203,20 @@ function runMigration($pdo) {
     }
 }
 
-function rollbackMigration($pdo) {
+function rollbackMigration($pdo)
+{
     try {
         echo "Starting rollback: Revert Form Templates Migration\n";
         echo "====================================================\n\n";
-        
+
         $pdo->beginTransaction();
-        
+
         echo "WARNING: This will delete all form templates and revert to individual field management!\n";
         echo "Existing custom_metadata_values will be preserved but form_id references will be lost.\n\n";
-        
+
         // Remove form_id column from custom_metadata_values
         echo "Removing form_id column from custom_metadata_values...\n";
-        
+
         // Get the foreign key name dynamically
         $stmt = $pdo->query("
             SELECT CONSTRAINT_NAME 
@@ -222,33 +227,34 @@ function rollbackMigration($pdo) {
             AND REFERENCED_TABLE_NAME = 'form_templates'
         ");
         $fkName = $stmt->fetch();
-        
+
         if ($fkName) {
             $pdo->exec("ALTER TABLE custom_metadata_values DROP FOREIGN KEY " . $fkName['CONSTRAINT_NAME']);
         }
-        
+
         $pdo->exec("ALTER TABLE custom_metadata_values DROP INDEX idx_form_id");
         $pdo->exec("ALTER TABLE custom_metadata_values DROP COLUMN form_id");
         echo "✓ Column removed\n\n";
-        
+
         // Drop form_fields table
         echo "Dropping form_fields table...\n";
         $pdo->exec("DROP TABLE IF EXISTS form_fields");
         echo "✓ form_fields table dropped\n\n";
-        
+
         // Drop form_templates table
         echo "Dropping form_templates table...\n";
         $pdo->exec("DROP TABLE IF EXISTS form_templates");
         echo "✓ form_templates table dropped\n\n";
-        
+
         $pdo->commit();
-        
+
         echo "====================================================\n";
         echo "✓ Rollback completed successfully!\n\n";
         echo "Note: custom_metadata_fields table was preserved.\n";
         echo "You may need to re-enable fields manually.\n\n";
-        
-    } catch (Exception $e) {
+
+    }
+    catch (Exception $e) {
         $pdo->rollBack();
         echo "\n✗ Rollback failed: " . $e->getMessage() . "\n";
         exit(1);
@@ -258,27 +264,31 @@ function rollbackMigration($pdo) {
 // Command-line interface
 if (php_sapi_name() === 'cli') {
     $command = $argv[1] ?? 'up';
-    
+
     if ($command === 'up') {
         runMigration($pdo);
-    } elseif ($command === 'down') {
+    }
+    elseif ($command === 'down') {
         echo "WARNING: This will delete all form templates!\n";
         echo "Are you sure you want to rollback? (yes/no): ";
         $handle = fopen("php://stdin", "r");
         $line = trim(fgets($handle));
         fclose($handle);
-        
+
         if ($line === 'yes') {
             rollbackMigration($pdo);
-        } else {
+        }
+        else {
             echo "Rollback cancelled.\n";
         }
-    } else {
+    }
+    else {
         echo "Usage: php 002_migrate_to_form_templates.php [up|down]\n";
         echo "  up   - Run migration (default)\n";
         echo "  down - Rollback migration\n";
     }
-} else {
+}
+else {
     // Web interface (for testing only - should be disabled in production)
     echo "<pre>";
     runMigration($pdo);

@@ -10,6 +10,21 @@ require_once __DIR__ . '/../core/auth.php'; // Ensure user is logged in
 
 header('Content-Type: application/json');
 
+// Handle Refresh Rankings (GET)
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'refresh_rankings') {
+    try {
+        require_once __DIR__ . '/../core/analytics.php';
+        $period = $_GET['period'] ?? 'all';
+        $topReads = getTopReadNewspapers($pdo, $period);
+        $top5 = array_slice($topReads, 0, 5);
+        
+        echo json_encode(['success' => true, 'data' => $top5]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
 // Handle Move to Trash
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'move_to_trash') {
     try {

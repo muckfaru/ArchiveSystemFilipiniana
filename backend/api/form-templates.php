@@ -84,7 +84,8 @@ function createFormTemplate($pdo, $currentUser, $input) {
     try {
         // If status is active, deactivate other forms
         if ($status === 'active') {
-            $pdo->exec("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1");
+            $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1");
+            $stmt->execute();
         }
         
         // Insert form template
@@ -162,7 +163,8 @@ function updateFormTemplate($pdo, $currentUser, $input) {
         
         // If status is active, deactivate other forms
         if ($status === 'active') {
-            $pdo->exec("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1 AND id != $formId");
+            $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1 AND id != ?");
+            $stmt->execute([$formId]);
         }
         
         // Update form template
@@ -174,27 +176,62 @@ function updateFormTemplate($pdo, $currentUser, $input) {
         $isActive = ($status === 'active') ? 1 : 0;
         $stmt->execute([$name, $description, $status, $isActive, $formId]);
         
-        // Delete existing fields
-        $stmt = $pdo->prepare("DELETE FROM form_fields WHERE form_id = ?");
-        $stmt->execute([$formId]);
+        // Sync fields instead of deleting all
+        $keepFieldIds = [];
         
-        // Insert updated fields
-        $fieldStmt = $pdo->prepare("
+        $updateFieldStmt = $pdo->prepare("
+            UPDATE form_fields 
+            SET field_label = ?, field_type = ?, field_options = ?, is_required = ?, display_order = ?, help_text = ?
+            WHERE id = ? AND form_id = ?
+        ");
+        
+        $insertFieldStmt = $pdo->prepare("
             INSERT INTO form_fields 
             (form_id, field_label, field_type, field_options, is_required, display_order, help_text)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
         
         foreach ($fields as $index => $field) {
-            $fieldStmt->execute([
-                $formId,
-                $field['field_label'],
-                $field['field_type'],
-                $field['field_options'],
-                $field['is_required'],
-                $index,
-                $field['help_text'] ?? null
-            ]);
+            $fieldId = isset($field['id']) && !empty($field['id']) ? intval($field['id']) : null;
+            
+            if ($fieldId) {
+                // Update existing field
+                $updateFieldStmt->execute([
+                    $field['field_label'],
+                    $field['field_type'],
+                    $field['field_options'],
+                    $field['is_required'],
+                    $index,
+                    $field['help_text'] ?? null,
+                    $fieldId,
+                    $formId
+                ]);
+                $keepFieldIds[] = $fieldId;
+            } else {
+                // Insert new field
+                $insertFieldStmt->execute([
+                    $formId,
+                    $field['field_label'],
+                    $field['field_type'],
+                    $field['field_options'],
+                    $field['is_required'],
+                    $index,
+                    $field['help_text'] ?? null
+                ]);
+                $keepFieldIds[] = $pdo->lastInsertId();
+            }
+        }
+        
+        // Delete fields that were removed
+        if (!empty($keepFieldIds)) {
+            $placeholders = implode(',', array_fill(0, count($keepFieldIds), '?'));
+            $deleteStmt = $pdo->prepare("DELETE FROM form_fields WHERE form_id = ? AND id NOT IN ($placeholders)");
+            $params = array_merge([$formId], $keepFieldIds);
+            $deleteStmt->execute($params);
+        } else {
+            // This should not happen due to the check at line 148, but added for safety
+            $stmt = $pdo->prepare("DELETE FROM form_fields WHERE form_id = ?");
+            $stmt->execute([$formId]);
         }
         
         $pdo->commit();
@@ -275,7 +312,8 @@ function setActiveFormTemplate($pdo, $currentUser, $input) {
     
     try {
         // Deactivate all forms
-        $pdo->exec("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1");
+        $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1");
+        $stmt->execute();
         
         // Activate selected form
         $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 1, status = 'active' WHERE id = ?");

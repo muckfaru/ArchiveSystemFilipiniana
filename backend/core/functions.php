@@ -897,6 +897,98 @@ function getFileMetadataForDisplay($pdo, $fileId, $context)
 }
 
 /**
+ * Get custom metadata values for multiple files with display configuration applied
+ * Optimized for bulk operations like ranking lists or browse grids
+ * 
+ * @param PDO $pdo Database connection
+ * @param array $fileIds Array of file IDs
+ * @param string $context 'card' or 'modal'
+ * @return array Nested array: [file_id => metadata_array_for_display]
+ */
+function getFilesMetadataForDisplay($pdo, $fileIds, $context)
+{
+    if (empty($fileIds)) {
+        return [];
+    }
+
+    // Get visible fields for context
+    $visibleFields = getVisibleFields($pdo, $context);
+    if (empty($visibleFields)) {
+        return array_fill_keys($fileIds, []);
+    }
+
+    // Get field IDs
+    $fieldIds = array_column($visibleFields, 'field_id');
+    $fieldPlaceholders = implode(',', array_fill(0, count($fieldIds), '?'));
+    $filePlaceholders = implode(',', array_fill(0, count($fileIds), '?'));
+
+    // Get values from custom_metadata_values for all files at once
+    $stmt = $pdo->prepare("
+        SELECT file_id, field_id, field_value
+        FROM custom_metadata_values
+        WHERE field_id IN ($fieldPlaceholders) AND file_id IN ($filePlaceholders)
+    ");
+    
+    $params = array_merge($fieldIds, $fileIds);
+    $stmt->execute($params);
+    
+    // Group values by file_id [file_id => [field_id => value]]
+    $rawValues = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        if (!isset($rawValues[$row['file_id']])) {
+            $rawValues[$row['file_id']] = [];
+        }
+        $rawValues[$row['file_id']][$row['field_id']] = $row['field_value'];
+    }
+
+    // Fetch core newspaper details for auto-fill (title, file_name)
+    $stmt = $pdo->prepare("SELECT id, title, file_name FROM newspapers WHERE id IN ($filePlaceholders)");
+    $stmt->execute($fileIds);
+    $coreDataMap = $stmt->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
+
+    // Combine fields with values for each file, maintaining field order
+    $result = [];
+    foreach ($fileIds as $fileId) {
+        $fileResult = [];
+        $fileValues = $rawValues[$fileId] ?? [];
+        $fileCore = $coreDataMap[$fileId] ?? [];
+
+        foreach ($visibleFields as $field) {
+            $fieldId = $field['field_id'];
+            $label = strtolower(trim($field['field_label']));
+            $val = $fileValues[$fieldId] ?? '';
+
+            // Auto-fill title from core newspaper data if custom metadata value is empty
+            if (empty($val) && !empty($fileCore)) {
+                if ($label === 'title') {
+                    $val = !empty($fileCore['title']) ? $fileCore['title'] : ($fileCore['file_name'] ?? '');
+                }
+            }
+
+            // Normalize field_name for renderer styling
+            $normalizedName = $field['field_label'];
+            if ($label === 'publication date' || $label === 'date published') {
+                $normalizedName = 'publication_date';
+            } elseif ($label === 'publisher') {
+                $normalizedName = 'publisher';
+            }
+
+            $fileResult[] = [
+                'field_id' => $fieldId,
+                'field_name' => $normalizedName,
+                'field_label' => $field['field_label'],
+                'field_type' => $field['field_type'],
+                'field_value' => $val
+            ];
+        }
+        $result[$fileId] = $fileResult;
+    }
+
+    return $result;
+}
+
+
+/**
  * Validate display configuration data
  * 
  * @param array $config Configuration data

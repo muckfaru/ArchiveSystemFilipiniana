@@ -10,6 +10,11 @@
 require_once __DIR__ . '/../backend/core/config.php';
 require_once __DIR__ . '/../backend/core/functions.php';
 
+// Redirect if already logged in
+if (isLoggedIn()) {
+    redirect(APP_URL . '/admin_pages/dashboard.php');
+}
+
 // Check if browse view is requested
 $view = $_GET['view'] ?? 'home';
 
@@ -26,53 +31,31 @@ $categoryFilter = $_GET['category'] ?? '';
 function attachMetadataToDocs(&$docs, $pdo, $cardFields, $modalFields) {
     if (empty($docs)) return;
     $fileIds = array_column($docs, 'id');
-    $customMetadata = getCustomMetadataValuesForFiles($fileIds);
+    $cardMetadata = getFilesMetadataForDisplay($pdo, $fileIds, 'card');
+    $modalMetadata = getFilesMetadataForDisplay($pdo, $fileIds, 'modal');
 
     foreach ($docs as &$doc) {
-        $rawMeta = $customMetadata[$doc['id']] ?? [];
-
-        $doc['custom_metadata'] = [];
-        foreach ($cardFields as $field) {
-            if (isset($rawMeta[$field['field_id']])) {
-                $doc['custom_metadata'][] = [
-                    'field_id' => $field['field_id'],
-                    'field_label' => $field['field_label'],
-                    'field_value' => $rawMeta[$field['field_id']],
-                    'field_type' => $field['field_type'] ?? 'text'
-                ];
-            }
-        }
-        $cardFieldIds = array_column($cardFields, 'field_id');
-        foreach ($modalFields as $field) {
-            if (isset($rawMeta[$field['field_id']]) && !in_array($field['field_id'], $cardFieldIds)) {
-                $doc['custom_metadata'][] = [
-                    'field_id' => $field['field_id'],
-                    'field_label' => $field['field_label'],
-                    'field_value' => $rawMeta[$field['field_id']],
-                    'field_type' => $field['field_type'] ?? 'text'
-                ];
-            }
-        }
-
+        // custom_metadata is used by helper functions like getCategoryFromMetadata
+        // we'll combine them but prioritize modal metadata for a fuller list
+        $doc['custom_metadata'] = $modalMetadata[$doc['id']] ?? [];
+        
         $doc['display_metadata'] = [];
-        foreach ($cardFields as $field) {
-            if (isset($rawMeta[$field['field_id']])) {
-                $doc['display_metadata'][] = [
-                    'label' => $field['field_label'],
-                    'value' => $rawMeta[$field['field_id']]
-                ];
-            }
+        foreach ($cardMetadata[$doc['id']] ?? [] as $meta) {
+            $doc['display_metadata'][] = [
+                'label' => $meta['field_label'],
+                'value' => $meta['field_value']
+            ];
         }
 
         $doc['modal_metadata'] = [];
-        foreach ($modalFields as $field) {
-            if (strtolower(trim($field['field_label'])) === 'title') continue;
-            $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $field['field_label']));
+        foreach ($modalMetadata[$doc['id']] ?? [] as $meta) {
+            if (strtolower(trim($meta['field_label'])) === 'title') continue;
+            $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $meta['field_label']));
             $doc['modal_metadata'][] = [
-                'label'      => $field['field_label'],
-                'value'      => $rawMeta[$field['field_id']] ?? '',
+                'label'      => $meta['field_label'],
+                'value'      => $meta['field_value'],
                 'field_name' => $fieldName,
-                'field_type' => $field['field_type'] ?? 'text'
+                'field_type' => $meta['field_type']
             ];
         }
     }

@@ -9,6 +9,11 @@
 require_once __DIR__ . '/../backend/core/config.php';
 require_once __DIR__ . '/../backend/core/functions.php';
 
+// Redirect if already logged in
+if (isLoggedIn()) {
+    redirect(APP_URL . '/admin_pages/dashboard.php');
+}
+
 // --- Pagination & Filters ---
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = 20; // Match collections page
@@ -226,45 +231,30 @@ if (!empty($documents)) {
     
     // Get visible fields for modal display
     $modalFields = getVisibleFields($pdo, 'modal');
-    
-    $customMetadataByFile = getCustomMetadataValuesForFiles($fileIds);
+    $allMetadata = getFilesMetadataForDisplay($pdo, $fileIds, 'modal');
 
     // Attach custom metadata to each document
     foreach ($documents as &$doc) {
-        $rawMeta = $customMetadataByFile[$doc['id']] ?? [];
-        
-        // Build rich metadata array with field_label and field_value
-        // (needed by getCategoryFromMetadata and getMetadataValueByLabel)
-        $doc['custom_metadata'] = [];
-        foreach ($modalFields as $field) {
-            if (isset($rawMeta[$field['field_id']])) {
-                $doc['custom_metadata'][] = [
-                    'field_id' => $field['field_id'],
-                    'field_label' => $field['field_label'],
-                    'field_value' => $rawMeta[$field['field_id']],
-                    'field_type' => $field['field_type'] ?? 'text'
-                ];
-            }
-        }
+        $doc['custom_metadata'] = $allMetadata[$doc['id']] ?? [];
 
-        // Filter metadata for modal display – include ALL visible fields
-        $doc['modal_metadata'] = [];
         // Build label-indexed lookup for easy access in view
         $doc['metadata_by_label'] = [];
-        foreach ($modalFields as $field) {
-            // Skip the Title field – already shown separately in the modal header
-            if (strtolower(trim($field['field_label'])) === 'title') continue;
+        // Filter metadata for modal display – include ALL visible fields
+        $doc['modal_metadata'] = [];
 
-            $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $field['field_label']));
-            $val = $rawMeta[$field['field_id']] ?? '';
+        foreach ($doc['custom_metadata'] as $meta) {
+            // Skip the Title field – already shown separately in the modal header
+            if (strtolower(trim($meta['field_label'])) === 'title') continue;
+
+            $fieldName = strtolower(str_replace([' ', '/'], ['_', '_'], $meta['field_label']));
             $doc['modal_metadata'][] = [
-                'label'      => $field['field_label'],
-                'value'      => $val,
+                'label'      => $meta['field_label'],
+                'value'      => $meta['field_value'],
                 'field_name' => $fieldName,
-                'field_type' => $field['field_type'] ?? 'text'
+                'field_type' => $meta['field_type']
             ];
-            if ($val !== '') {
-                $doc['metadata_by_label'][strtolower(trim($field['field_label']))] = $val;
+            if ($meta['field_value'] !== '') {
+                $doc['metadata_by_label'][strtolower(trim($meta['field_label']))] = $meta['field_value'];
             }
         }
     }

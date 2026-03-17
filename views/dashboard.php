@@ -97,34 +97,193 @@
     </div>
 <?php endif; ?>
 
-<?php if (!empty($topReads)): ?>
-    <!-- Most Read List -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card p-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Most Read</h5>
-                    <small class="text-muted">Top <?= count($topReads) ?> by unique viewers</small>
-                </div>
-                <div class="list-group list-group-flush">
-                    <?php foreach ($topReads as $idx => $tr): ?>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong><?= htmlspecialchars($tr['title']) ?></strong>
-                                <div class="text-muted small">#<?= $idx + 1 ?></div>
+    <div class="row g-4">
+        <!-- Left Column: Recent Activities (8/12) -->
+        <div class="col-lg-8">
+            <div class="recent-activities h-100 mt-0">
+                <div class="recent-activities-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <h2 class="recent-activities-title mb-0">Recent Uploads</h2>
+                        <span id="selectedFilesCount" class="badge bg-primary"
+                            style="display: none; font-size: 12px; padding: 6px 12px; border-radius: 20px;">
+                            <i class="bi bi-check-circle"></i>
+                            <span id="selectedCount">0</span> selected
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <?php if (!empty($recentNewspapers)): ?>
+                            <div class="form-check m-0">
+                                <input class="form-check-input shadow-none" type="checkbox" id="dashboardSelectAll"
+                                    style="cursor: pointer; width: 16px; height: 16px; margin-top: 2px;">
+                                <label class="form-check-label text-muted fw-semibold" for="dashboardSelectAll"
+                                    style="font-size: 13px; cursor: pointer; user-select: none;">Select All</label>
                             </div>
-                            <div class="text-end">
-                                <div class="fw-bold"><?= number_format($tr['view_count']) ?></div>
-                                <div class="text-muted small">unique views</div>
+                            <button type="button" id="dashboardBulkDeleteBtn"
+                                class="btn btn-sm btn-danger d-none d-flex align-items-center gap-1"
+                                style="border-radius: 6px; padding: 4px 10px;">
+                                <i class="bi bi-trash3"></i> Delete
+                            </button>
+                        <?php endif; ?>
+                        <a href="<?= APP_URL ?>/user_pages/collections.php" class="view-all-link m-0">View all</a>
+                    </div>
+                </div>
+
+                <?php if (empty($recentNewspapers)): ?>
+                    <div class="empty-state-container">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-cloud-upload"></i>
+                        </div>
+                        <h5 class="empty-state-title">No Archives Yet</h5>
+                        <p class="empty-state-text">Start building your repository by uploading documents.</p>
+                        <a href="<?= APP_URL ?>/admin_pages/upload.php" class="btn btn-primary empty-state-btn">
+                            <i class="bi bi-plus-lg me-2"></i>Upload Now
+                        </a>
+                    </div>
+                <?php else: ?>
+                    <div class="row g-4">
+                        <?php foreach ($recentNewspapers as $paper): ?>
+                            <?php
+                                $meta = $paper['custom_metadata'] ?? [];
+                                $pubDate = getMetadataValueByLabel($meta, ['publication date', 'date published', 'date issued']);
+                                $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
+                            ?>
+                            <div class="col-md-6 col-xl-4">
+                                <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
+                                    data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
+                                    data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+                                    data-category="<?= htmlspecialchars(getCategoryFromMetadata($meta)) ?>"
+                                    data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>">
+
+                                    <div class="dashboard-thumb-wrap">
+                                        <input class="form-check-input dashboard-item-checkbox shadow-none bg-white" type="checkbox"
+                                            value="<?= $paper['id'] ?>" onclick="event.stopPropagation();">
+
+                                        <?php if ($paper['thumbnail_path']): ?>
+                                            <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="dashboard-file-thumbnail"
+                                                alt="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>">
+                                        <?php else: ?>
+                                            <div class="dashboard-file-thumbnail-placeholder">
+                                                <i class="bi bi-newspaper"></i>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php 
+                                            $categoryVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                                            $catClass = 'dashboard-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $categoryVal));
+                                            if ($categoryVal && strtolower($categoryVal) !== 'uncategorized'): 
+                                        ?>
+                                        <span class="dashboard-thumb-badge <?= htmlspecialchars($catClass) ?>">
+                                            <?= htmlspecialchars($categoryVal) ?>
+                                        </span>
+                                        <?php endif; ?>
+
+                                        <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
+                                            <div class="position-absolute bottom-0 start-0 m-2 badge bg-success shadow-sm"
+                                                style="font-size: 10px; z-index: 2;">
+                                                NEW
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div class="dashboard-card-info">
+                                        <div class="dashboard-card-type-badge">
+                                            <?= strtoupper($paper['file_type'] ?? 'DOCUMENT') ?>
+                                        </div>
+                                        <div class="dashboard-card-title">
+                                            <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
+                                        </div>
+                                        <?= renderCardMetadata($paper['custom_metadata'] ?? []) ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Right Column: Most Read (4/12) -->
+        <div class="col-lg-4">
+            <div class="most-read-container">
+                <div class="most-read-header d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <h5 class="most-read-title mb-0">Most Read</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-select form-select-sm most-read-period-select" 
+                                id="mostReadPeriod">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                            <option value="all" selected>All Time</option>
+                        </select>
+                        <span class="most-read-badge">Top 5</span>
+                    </div>
+                </div>
+
+                <div class="most-read-list-wrapper">
+                    <div id="topReadsList" class="most-read-list">
+                    <?php 
+                    $top5 = array_slice($topReads, 0, 5);
+                    foreach ($top5 as $idx => $tr): 
+                        $rank = $idx + 1;
+                        $isTop = $rank === 1;
+                        $meta = $tr['custom_metadata'] ?? [];
+                        $category = getCategoryFromMetadata($meta);
+                        $description = getMetadataValueByLabel($meta, ['description', 'summary', 'about'], '');
+                        $isBulk = ($tr['is_bulk'] ?? 0) == 1;
+                        $imagePaths = $tr['image_paths'] ? json_decode($tr['image_paths'], true) : [];
+                        $fileUrl = $tr['file_path'] ? APP_URL . '/' . $tr['file_path'] : '';
+                        $fullThumbnail = $tr['thumbnail_path'] ? APP_URL . '/' . $tr['thumbnail_path'] : '';
+                    ?>
+                        <div class="most-read-item dashboard-file-card <?= $isTop ? 'top-rank' : '' ?>"
+                            data-id="<?= $tr['id'] ?>"
+                            data-title="<?= htmlspecialchars($tr['title']) ?>"
+                            data-thumbnail="<?= $fullThumbnail ?>"
+                            data-file="<?= $fileUrl ?>"
+                            data-category="<?= htmlspecialchars($category) ?>"
+                            data-description="<?= htmlspecialchars($description) ?>"
+                            data-format="<?= strtolower($tr['file_type'] ?? 'pdf') ?>"
+                            data-is-bulk="<?= $isBulk ? '1' : '0' ?>"
+                            data-image-paths='<?= json_encode($imagePaths) ?>'>
+                            
+                            <div class="rank-badge <?= $isTop ? 'bg-primary' : 'bg-light text-muted' ?>">
+                                <?= $rank ?>
+                            </div>
+                            <div class="most-read-thumb">
+                                <?php if ($tr['thumbnail_path']): ?>
+                                    <img src="<?= $fullThumbnail ?>" alt="Thumbnail">
+                                <?php else: ?>
+                                    <div class="most-read-thumb-placeholder">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="most-read-content">
+                                <h6 class="most-read-item-title"><?= htmlspecialchars($tr['title']) ?></h6>
+                                <div class="most-read-views">
+                                    <i class="bi bi-eye"></i>
+                                    <span><?= number_format($tr['view_count']) ?> views</span>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
+                    
+                    <?php if (empty($top5)): ?>
+                        <div class="text-center py-4 text-muted small">
+                            No view data available yet.
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <button id="refreshRankingBtn" class="refresh-ranking-btn w-100 mt-3">
+                    REFRESH RANKING
+                </button>
                 </div>
             </div>
         </div>
     </div>
-<?php endif; ?>
-
 <!-- Search Results (if any) -->
 <?php if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo): ?>
     <div class="mb-4">
@@ -176,29 +335,14 @@
                         $meta = $paper['custom_metadata'] ?? [];
                         $pubDate = getMetadataValueByLabel($meta, ['publication date', 'date published', 'date issued']);
                         $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
-                        $publicationLong = $pubDate ? strtoupper(formatPublicationDate($pubDate, true)) : strtoupper(date('F j, Y', strtotime($paper['created_at'])));
                     ?>
                     <div class="col-md-6 col-lg-3">
                         <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
                             data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= htmlspecialchars($publicationShort) ?>"
-                            data-edition="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'edition', 'Standard')) ?>"
-                            data-pages="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['pages', 'page count'], 'N/A')) ?>"
-                            data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
-                            data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
-                            data-tags="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['keywords', 'tags'])) ?>"
-                            data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
                             data-category="<?= htmlspecialchars(getCategoryFromMetadata($meta)) ?>"
-                            data-publisher="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'publisher', 'N/A')) ?>"
-                            data-description="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'description')) ?>"
-                            data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
-                            data-volume="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['volume', 'issue', 'volume/issue'])) ?>"
-                            data-language="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'language')) ?>"
-                            data-views="<?= intval($paper['view_count'] ?? 0) ?>">
+                            data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>">
 
-                            <!-- Thumbnail with category badge -->
                             <div class="dashboard-thumb-wrap">
                                 <?php if ($paper['thumbnail_path']): ?>
                                     <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="dashboard-file-thumbnail"
@@ -209,7 +353,6 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- Category badge on thumbnail -->
                                 <?php 
                                     $searchCatVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
                                     $searchCatClass = 'dashboard-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $searchCatVal));
@@ -221,7 +364,6 @@
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Card info -->
                             <div class="dashboard-card-info">
                                 <div class="dashboard-card-type-badge">
                                     <?= strtoupper($paper['file_type'] ?? 'DOCUMENT') ?>
@@ -229,21 +371,7 @@
                                 <div class="dashboard-card-title">
                                     <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
                                 </div>
-
-                                <!-- INTEGRATION: Display custom metadata using display configuration -->
                                 <?= renderCardMetadata($paper['custom_metadata'] ?? []) ?>
-                                <div class="dashboard-card-views text-muted small mt-2">Views: <?= number_format($paper['view_count'] ?? 0) ?></div>
-                            </div>
-
-                            <!-- Admin action buttons (shown on hover) -->
-                            <div class="dashboard-card-actions">
-                                <button class="btn btn-edit"
-                                    onclick="event.stopPropagation(); window.location.href='<?= APP_URL ?>/admin_pages/upload.php?edit=<?= $paper['id'] ?>'">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </button>
-                                <button class="btn btn-delete" onclick="event.stopPropagation(); deleteFile(<?= $paper['id'] ?>)">
-                                    <i class="bi bi-trash3"></i> Delete
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -253,140 +381,6 @@
     </div>
 <?php endif; ?>
 
-<?php if (empty($searchQuery) && empty($categoryFilter) && empty($languageFilter) && empty($dateFrom) && empty($dateTo)): ?>
-    <!-- Recent Activities -->
-    <div class="recent-activities">
-        <div class="recent-activities-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
-                <h2 class="recent-activities-title mb-0">Recent Activities</h2>
-                <span id="selectedFilesCount" class="badge bg-primary"
-                    style="display: none; font-size: 12px; padding: 6px 12px; border-radius: 20px;">
-                    <i class="bi bi-check-circle"></i>
-                    <span id="selectedCount">0</span> selected
-                </span>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <?php if (!empty($recentNewspapers)): ?>
-                    <div class="form-check m-0">
-                        <input class="form-check-input shadow-none" type="checkbox" id="dashboardSelectAll"
-                            style="cursor: pointer; width: 16px; height: 16px; margin-top: 2px;">
-                        <label class="form-check-label text-muted fw-semibold" for="dashboardSelectAll"
-                            style="font-size: 13px; cursor: pointer; user-select: none;">Select All</label>
-                    </div>
-                    <button type="button" id="dashboardBulkDeleteBtn"
-                        class="btn btn-sm btn-danger d-none d-flex align-items-center gap-1"
-                        style="border-radius: 6px; padding: 4px 10px;">
-                        <i class="bi bi-trash3"></i> Delete
-                    </button>
-                <?php endif; ?>
-                <a href="<?= APP_URL ?>/user_pages/collections.php" class="view-all-link m-0">View all</a>
-            </div>
-        </div>
-
-        <?php if (empty($recentNewspapers)): ?>
-            <div class="empty-state-container">
-                <div class="empty-state-icon">
-                    <i class="bi bi-cloud-upload"></i>
-                </div>
-                <h5 class="empty-state-title">No Archives Yet</h5>
-                <p class="empty-state-text">Start building your repository by uploading documents.</p>
-                <a href="<?= APP_URL ?>/admin_pages/upload.php" class="btn btn-primary empty-state-btn">
-                    <i class="bi bi-plus-lg me-2"></i>Upload Now
-                </a>
-            </div>
-        <?php else: ?>
-            <div class="row g-4">
-                <?php foreach ($recentNewspapers as $paper): ?>
-                    <?php
-                        $meta = $paper['custom_metadata'] ?? [];
-                        $pubDate = getMetadataValueByLabel($meta, ['publication date', 'date published', 'date issued']);
-                        $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
-                        $publicationLong = $pubDate ? strtoupper(formatPublicationDate($pubDate, true)) : strtoupper(date('F j, Y', strtotime($paper['created_at'])));
-                    ?>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="dashboard-file-card" data-id="<?= $paper['id'] ?>"
-                            data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
-                            data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
-                            data-date="<?= htmlspecialchars($publicationShort) ?>"
-                            data-edition="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'edition', 'Standard')) ?>"
-                            data-pages="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['pages', 'page count'], 'N/A')) ?>"
-                            data-format="<?= strtoupper($paper['file_type'] ?? 'PDF') ?>"
-                            data-uploader="<?= htmlspecialchars($paper['uploader_name'] ?? 'Admin') ?>"
-                            data-tags="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['keywords', 'tags'])) ?>"
-                            data-file="<?= APP_URL . '/' . $paper['file_path'] ?>"
-                            data-category="<?= htmlspecialchars(getCategoryFromMetadata($meta)) ?>"
-                            data-publisher="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'publisher', 'N/A')) ?>"
-                            data-description="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'description')) ?>"
-                            data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
-                            data-image-paths="<?= htmlspecialchars($paper['image_paths'] ?? '[]') ?>"
-                            data-volume="<?= htmlspecialchars(getMetadataValueByLabel($meta, ['volume', 'issue', 'volume/issue'])) ?>"
-                            data-language="<?= htmlspecialchars(getMetadataValueByLabel($meta, 'language')) ?>">
-
-                            <!-- Thumbnail with category badge -->
-                            <div class="dashboard-thumb-wrap">
-                                <!-- Checkbox for multi-select -->
-                                <input class="form-check-input dashboard-item-checkbox shadow-none bg-white" type="checkbox"
-                                    value="<?= $paper['id'] ?>" onclick="event.stopPropagation();">
-
-                                <?php if ($paper['thumbnail_path']): ?>
-                                    <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="dashboard-file-thumbnail"
-                                        alt="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>">
-                                <?php else: ?>
-                                    <div class="dashboard-file-thumbnail-placeholder">
-                                        <i class="bi bi-newspaper"></i>
-                                    </div>
-                                <?php endif; ?>
-
-                                <!-- Category badge on thumbnail -->
-                                <?php 
-                                    $categoryVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
-                                    $catClass = 'dashboard-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $categoryVal));
-                                    if ($categoryVal && strtolower($categoryVal) !== 'uncategorized'): 
-                                ?>
-                                <span class="dashboard-thumb-badge <?= htmlspecialchars($catClass) ?>">
-                                    <?= htmlspecialchars($categoryVal) ?>
-                                </span>
-                                <?php endif; ?>
-
-                                <!-- NEW badge for recent uploads -->
-                                <?php if (strtotime($paper['created_at']) > strtotime('-24 hours')): ?>
-                                    <div class="position-absolute bottom-0 start-0 m-2 badge bg-success shadow-sm"
-                                        style="font-size: 10px; z-index: 2;">
-                                        NEW
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Card info -->
-                            <div class="dashboard-card-info">
-                                <div class="dashboard-card-type-badge">
-                                    <?= strtoupper($paper['file_type'] ?? 'DOCUMENT') ?>
-                                </div>
-                                <div class="dashboard-card-title">
-                                    <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
-                                </div>
-
-                                <!-- INTEGRATION: Display custom metadata using display configuration -->
-                                <?= renderCardMetadata($paper['custom_metadata'] ?? []) ?>
-                            </div>
-
-                            <!-- Admin action buttons (shown on hover) -->
-                            <div class="dashboard-card-actions">
-                                <button class="btn btn-edit"
-                                    onclick="event.stopPropagation(); window.location.href='<?= APP_URL ?>/admin_pages/upload.php?edit=<?= $paper['id'] ?>'">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </button>
-                                <button class="btn btn-delete" onclick="event.stopPropagation(); deleteFile(<?= $paper['id'] ?>)">
-                                    <i class="bi bi-trash3"></i> Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
-<?php endif; ?>
 
 <!-- File Preview Modal (Admin) -->
 <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">

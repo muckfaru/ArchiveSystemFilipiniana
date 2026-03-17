@@ -49,16 +49,16 @@ function markViewedInSession($newspaperId): void {
  * @return bool True if view was recorded, false if already viewed in session
  */
 function recordNewspaperView($pdo, $newspaperId): bool {
+    // Only record views for public users (not logged-in admins)
+    if (function_exists('isLoggedIn') && isLoggedIn()) {
+        return false;
+    }
+
     try {
         // Validate newspaper ID is positive integer
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) {
             error_log("Invalid newspaper ID: $newspaperId");
-            return false;
-        }
-        
-        // Check session using hasViewedInSession() before recording
-        if (hasViewedInSession($newspaperId)) {
             return false;
         }
         
@@ -71,31 +71,31 @@ function recordNewspaperView($pdo, $newspaperId): bool {
             $ipAddress = '0.0.0.0'; // Fallback to default
         }
         
-        // Insert view record with prepared statement if not already viewed in session
+        // Insert view record - every view is now recorded (no session limit)
         $stmt = $pdo->prepare("
             INSERT INTO newspaper_views (newspaper_id, ip_address, view_date)
             VALUES (?, ?, NOW())
         ");
         $stmt->execute([$newspaperId, $ipAddress]);
         
-        // Call markViewedInSession() after successful insert
+        // Mark in session is kept for other potential UI logic, 
+        // but recordNewspaperView no longer checks it.
         markViewedInSession($newspaperId);
         
         return true;
         
     } catch (PDOException $e) {
-        // Add try-catch for PDOException with error logging
         error_log("Analytics view recording failed: " . $e->getMessage());
         return false;
     }
 }
 
 /**
- * Get daily unique view count for a newspaper
+ * Get daily view count for a newspaper
  * 
  * @param PDO $pdo Database connection
  * @param int $newspaperId The newspaper ID
- * @return int Count of unique IP addresses today
+ * @return int Count of all views today
  */
 function getDailyViews($pdo, $newspaperId): int {
     try {
@@ -108,7 +108,7 @@ function getDailyViews($pdo, $newspaperId): int {
         
         // Use prepared statement with newspaper_id parameter
         $stmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT ip_address) as count
+            SELECT COUNT(*) as count
             FROM newspaper_views
             WHERE newspaper_id = ? AND DATE(view_date) = CURDATE()
         ");
@@ -127,11 +127,11 @@ function getDailyViews($pdo, $newspaperId): int {
 }
 
 /**
- * Get weekly unique view count for a newspaper
+ * Get weekly view count for a newspaper
  * 
  * @param PDO $pdo Database connection
  * @param int $newspaperId The newspaper ID
- * @return int Count of unique IP addresses this week
+ * @return int Count of all views this week
  */
 function getWeeklyViews($pdo, $newspaperId): int {
     try {
@@ -144,7 +144,7 @@ function getWeeklyViews($pdo, $newspaperId): int {
         
         // Use prepared statement with newspaper_id parameter
         $stmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT ip_address) as count
+            SELECT COUNT(*) as count
             FROM newspaper_views
             WHERE newspaper_id = ? AND YEARWEEK(view_date, 1) = YEARWEEK(CURDATE(), 1)
         ");
@@ -163,11 +163,11 @@ function getWeeklyViews($pdo, $newspaperId): int {
 }
 
 /**
- * Get monthly unique view count for a newspaper
+ * Get monthly view count for a newspaper
  * 
  * @param PDO $pdo Database connection
  * @param int $newspaperId The newspaper ID
- * @return int Count of unique IP addresses this month
+ * @return int Count of all views this month
  */
 function getMonthlyViews($pdo, $newspaperId): int {
     try {
@@ -180,7 +180,7 @@ function getMonthlyViews($pdo, $newspaperId): int {
         
         // Use prepared statement with newspaper_id parameter
         $stmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT ip_address) as count
+            SELECT COUNT(*) as count
             FROM newspaper_views
             WHERE newspaper_id = ? 
               AND MONTH(view_date) = MONTH(CURDATE()) 
@@ -201,11 +201,11 @@ function getMonthlyViews($pdo, $newspaperId): int {
 }
 
 /**
- * Get yearly unique view count for a newspaper
+ * Get yearly view count for a newspaper
  * 
  * @param PDO $pdo Database connection
  * @param int $newspaperId The newspaper ID
- * @return int Count of unique IP addresses this year
+ * @return int Count of all views this year
  */
 function getYearlyViews($pdo, $newspaperId): int {
     try {
@@ -218,7 +218,7 @@ function getYearlyViews($pdo, $newspaperId): int {
         
         // Use prepared statement with newspaper_id parameter
         $stmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT ip_address) as count
+            SELECT COUNT(*) as count
             FROM newspaper_views
             WHERE newspaper_id = ? AND YEAR(view_date) = YEAR(CURDATE())
         ");
@@ -258,31 +258,57 @@ function getNewspaperAnalytics($pdo, $newspaperId): array {
  * @param PDO $pdo Database connection
  * @return array Array of newspapers with id, title, and view_count
  */
-function getTopReadNewspapers($pdo): array {
+function getTopReadNewspapers($pdo, $period = 'all'): array {
     try {
-        // Use query joining newspapers and newspaper_views tables
-        // Count distinct IP addresses grouped by newspaper_id
-        // Filter out deleted newspapers (WHERE deleted_at IS NULL)
-        // Order by view_count DESC and limit to 10 results
+        $whereClause = "n.deleted_at IS NULL";
+        $params = [];
+
+        // Add time-based filtering
+        switch ($period) {
+            case 'today':
+                $whereClause .= " AND DATE(v.view_date) = CURDATE()";
+                break;
+            case 'week':
+                $whereClause .= " AND v.view_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+                break;
+            case 'month':
+                $whereClause .= " AND v.view_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+                break;
+            case 'year':
+                $whereClause .= " AND v.view_date >= DATE_SUB(NOW(), INTERVAL 1 YEAR)";
+                break;
+            // 'all' doesn't need additional filtering
+        }
+
+        // Count all views GROUP BY newspaper_id
         $stmt = $pdo->prepare("
             SELECT 
-                n.id,
-                n.title,
-                COUNT(DISTINCT v.ip_address) as view_count
+                n.*,
+                COUNT(v.id) as view_count
             FROM newspapers n
-            INNER JOIN newspaper_views v ON n.id = v.newspaper_id
-            WHERE n.deleted_at IS NULL
-            GROUP BY n.id, n.title
+            LEFT JOIN newspaper_views v ON n.id = v.newspaper_id
+            WHERE $whereClause
+            GROUP BY n.id
             ORDER BY view_count DESC
             LIMIT 10
         ");
-        $stmt->execute();
+        $stmt->execute($params);
+        $newspapers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch custom metadata for these newspapers in the rich format needed by the frontend
+        if (!empty($newspapers)) {
+            $fileIds = array_column($newspapers, 'id');
+            // Ranking list uses 'card' context metadata for summary/category
+            $customMetadata = getFilesMetadataForDisplay($pdo, $fileIds, 'card');
+
+            foreach ($newspapers as &$newspaper) {
+                $newspaper['custom_metadata'] = $customMetadata[$newspaper['id']] ?? [];
+            }
+        }
         
-        // Return array of newspapers with id, title, and view_count
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $newspapers;
         
     } catch (PDOException $e) {
-        // Add try-catch for PDOException with error logging
         error_log("Analytics getTopReadNewspapers failed: " . $e->getMessage());
         return [];
     }
@@ -301,7 +327,7 @@ function getTotalViews($pdo, $newspaperId): int {
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) return 0;
 
-        $stmt = $pdo->prepare("SELECT COUNT(DISTINCT ip_address) as cnt FROM newspaper_views WHERE newspaper_id = ?");
+        $stmt = $pdo->prepare("SELECT COUNT(*) as cnt FROM newspaper_views WHERE newspaper_id = ?");
         $stmt->execute([$newspaperId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ? intval($row['cnt']) : 0;

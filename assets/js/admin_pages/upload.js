@@ -14,6 +14,7 @@ let activeFileIndex = -1; // Current tab index
 let selectedFile = null;
 let originalFormData = {}; // Store initial values for dirty checking
 let coverFileId = null; // ID of the file selected as cover/thumbnail in Bind Mode
+let draftSaveTimeout = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     // FIX: BUG 1 - Add defensive guard for APP_URL
@@ -399,9 +400,45 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderTabs();
             } else {
                 updateButtons();
+                // Save draft for individual upload
+                const isEdit = document.querySelector('input[name="action"]').value === 'edit';
+                if (!isEdit) saveDraft();
             }
         });
     });
+
+    // Helper to save draft to session
+    function saveDraft() {
+        if (draftSaveTimeout) clearTimeout(draftSaveTimeout);
+        draftSaveTimeout = setTimeout(() => {
+            const formData = new FormData();
+            formData.append('action', 'save_draft');
+            
+            // Get all custom fields
+            const fields = document.querySelectorAll('.custom-field');
+            fields.forEach(field => {
+                if (field.type === 'checkbox') {
+                    if (field.checked) {
+                        formData.append(field.name, field.value);
+                    }
+                } else if (field.type === 'radio') {
+                    if (field.checked) {
+                        formData.append(field.name, field.value);
+                    }
+                } else if (field.value && field.value.trim() !== '') {
+                    formData.append(field.name, field.value);
+                }
+            });
+
+            fetch(APP_URL + '/admin_pages/upload.php', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(response => response.json())
+              .then(data => console.log('📝 Draft saved:', data))
+              .catch(err => console.error('❌ Draft save failed:', err));
+        }, 1000); // 1 second debounce
+    }
 
     // Mode Toggle Logic
     if (modeIndividual && modeBind) {
@@ -561,7 +598,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.hasUnsavedChanges = () => false;
                 window.location.href = APP_URL + '/admin_pages/dashboard.php';
             } else {
-                if (typeof window.resetForm === 'function') window.resetForm();
+                // Clear session draft on discard
+                fetch(APP_URL + '/admin_pages/upload.php', {
+                    method: 'POST',
+                    body: new URLSearchParams({ 'action': 'clear_draft' }),
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).finally(() => {
+                    if (typeof window.resetForm === 'function') window.resetForm();
+                });
             }
         } catch (e) {
             console.error('Error in discard action:', e);
