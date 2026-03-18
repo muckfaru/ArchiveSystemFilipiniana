@@ -90,6 +90,41 @@ function generateRandomString($length = 10)
 }
 
 /**
+ * URL Parameter Encryption (AES-256-CBC)
+ */
+function url_encrypt($data)
+{
+    // Use the DB_PASS or a fixed app secret as the encryption key
+    $key = hash('sha256', DB_PASS . 'QCPL_Archive_Secure_Salt_2024', true);
+    $iv = random_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+    
+    $encrypted = openssl_encrypt($data, 'aes-256-cbc', $key, 0, $iv);
+    // Return Base64 URL-safe string: IV + Encrypted Data
+    return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($iv . $encrypted));
+}
+
+/**
+ * URL Parameter Decryption (AES-256-CBC)
+ */
+function url_decrypt($data)
+{
+    $key = hash('sha256', DB_PASS . 'QCPL_Archive_Secure_Salt_2024', true);
+    
+    // Decode Base64 URL-safe string
+    $data = base64_decode(str_replace(['-', '_'], ['+', '/'], $data));
+    if ($data === false) return null;
+
+    $ivLength = openssl_cipher_iv_length('aes-256-cbc');
+    if (strlen($data) < $ivLength) return null;
+
+    $iv = substr($data, 0, $ivLength);
+    $encrypted = substr($data, $ivLength);
+
+    $decrypted = openssl_decrypt($encrypted, 'aes-256-cbc', $key, 0, $iv);
+    return $decrypted !== false ? $decrypted : null;
+}
+
+/**
  * Get setting value
  */
 function getSetting($key, $default = null)
@@ -763,16 +798,17 @@ function getDisplayConfig($pdo, $context = 'both')
                 ff.display_order as card_display_order,
                 ff.display_order as modal_display_order
             FROM form_fields ff
-            INNER JOIN form_templates ft ON ff.form_id = ft.id AND ft.is_active = 1
+            INNER JOIN form_templates ft ON ff.form_id = ft.id
             LEFT JOIN metadata_display_config mdc ON ff.id = mdc.form_field_id
+            WHERE ft.status != 'archived'
         ";
 
         if ($context === 'card') {
-            $query .= " WHERE COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ff.display_order ASC";
+            $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ft.is_active DESC, ff.display_order ASC";
         } elseif ($context === 'modal') {
-            $query .= " WHERE COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ff.display_order ASC";
+            $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ft.is_active DESC, ff.display_order ASC";
         } else {
-            $query .= " ORDER BY ff.display_order ASC";
+            $query .= " ORDER BY ft.is_active DESC, ff.display_order ASC";
         }
 
         $stmt = $pdo->query($query);
@@ -794,14 +830,15 @@ function getDisplayConfig($pdo, $context = 'both')
             FROM form_fields ff
             INNER JOIN form_templates ft ON ff.form_id = ft.id
             LEFT JOIN metadata_display_config mdc ON ff.id = mdc.form_field_id
+            WHERE ft.status != 'archived'
         ";
 
         if ($context === 'card') {
-            $query .= " WHERE COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ff.display_order ASC";
+            $query .= " AND COALESCE(mdc.show_on_card, 1) = 1 ORDER BY ft.is_active DESC, ff.display_order ASC";
         } elseif ($context === 'modal') {
-            $query .= " WHERE COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ff.display_order ASC";
+            $query .= " AND COALESCE(mdc.show_in_modal, 1) = 1 ORDER BY ft.is_active DESC, ff.display_order ASC";
         } else {
-            $query .= " ORDER BY ff.display_order ASC";
+            $query .= " ORDER BY ft.is_active DESC, ff.display_order ASC";
         }
 
         $stmt = $pdo->query($query);
@@ -1162,8 +1199,10 @@ function applyTitleOverrides(&$documents, $pdo)
     try {
         $stmt = $pdo->query("
             SELECT ff.id FROM form_fields ff
-            JOIN form_templates ft ON ff.form_id = ft.id AND ft.is_active = 1
+            JOIN form_templates ft ON ff.form_id = ft.id
             WHERE LOWER(TRIM(ff.field_label)) = 'title'
+            AND ft.status != 'archived'
+            ORDER BY ft.is_active DESC, ft.updated_at DESC
             LIMIT 1
         ");
         $row = $stmt->fetch();

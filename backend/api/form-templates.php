@@ -90,11 +90,11 @@ function createFormTemplate($pdo, $currentUser, $input) {
         
         // Insert form template
         $stmt = $pdo->prepare("
-            INSERT INTO form_templates (name, description, status, is_active)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO form_templates (name, description, status, is_active, modified_by)
+            VALUES (?, ?, ?, ?, ?)
         ");
         $isActive = ($status === 'active') ? 1 : 0;
-        $stmt->execute([$name, $description, $status, $isActive]);
+        $stmt->execute([$name, $description, $status, $isActive, $currentUser['id']]);
         
         $formId = $pdo->lastInsertId();
         
@@ -170,11 +170,11 @@ function updateFormTemplate($pdo, $currentUser, $input) {
         // Update form template
         $stmt = $pdo->prepare("
             UPDATE form_templates 
-            SET name = ?, description = ?, status = ?, is_active = ?
+            SET name = ?, description = ?, status = ?, is_active = ?, modified_by = ?
             WHERE id = ?
         ");
         $isActive = ($status === 'active') ? 1 : 0;
-        $stmt->execute([$name, $description, $status, $isActive, $formId]);
+        $stmt->execute([$name, $description, $status, $isActive, $currentUser['id'], $formId]);
         
         // Sync fields instead of deleting all
         $keepFieldIds = [];
@@ -312,12 +312,12 @@ function setActiveFormTemplate($pdo, $currentUser, $input) {
     
     try {
         // Deactivate all forms
-        $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 0, status = 'draft' WHERE is_active = 1");
-        $stmt->execute();
+        $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 0, status = 'draft', modified_by = ? WHERE is_active = 1");
+        $stmt->execute([$currentUser['id']]);
         
         // Activate selected form
-        $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 1, status = 'active' WHERE id = ?");
-        $stmt->execute([$formId]);
+        $stmt = $pdo->prepare("UPDATE form_templates SET is_active = 1, status = 'active', modified_by = ? WHERE id = ?");
+        $stmt->execute([$currentUser['id'], $formId]);
         
         $pdo->commit();
         
@@ -356,10 +356,10 @@ function duplicateFormTemplate($pdo, $currentUser, $input) {
         // Create duplicate
         $newName = $originalForm['name'] . ' (Copy)';
         $stmt = $pdo->prepare("
-            INSERT INTO form_templates (name, description, status, is_active)
-            VALUES (?, ?, 'draft', 0)
+            INSERT INTO form_templates (name, description, status, is_active, modified_by)
+            VALUES (?, ?, 'draft', 0, ?)
         ");
-        $stmt->execute([$newName, $originalForm['description']]);
+        $stmt->execute([$newName, $originalForm['description'], $currentUser['id']]);
         
         $newFormId = $pdo->lastInsertId();
         
@@ -406,8 +406,8 @@ function duplicateFormTemplate($pdo, $currentUser, $input) {
 function archiveFormTemplate($pdo, $currentUser, $input) {
     $formId = intval($input['form_id']);
     
-    $stmt = $pdo->prepare("UPDATE form_templates SET status = 'archived', is_active = 0 WHERE id = ?");
-    $stmt->execute([$formId]);
+    $stmt = $pdo->prepare("UPDATE form_templates SET status = 'archived', is_active = 0, modified_by = ? WHERE id = ?");
+    $stmt->execute([$currentUser['id'], $formId]);
     
     // Log activity
     $stmt = $pdo->prepare("SELECT name FROM form_templates WHERE id = ?");

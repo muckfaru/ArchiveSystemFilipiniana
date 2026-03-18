@@ -376,12 +376,16 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
     // Date range
     if ($dateFrom || $dateTo) {
         $dateLabel = '';
+        
+        $dfLabel = $dateFrom ? date('m/d/Y', strtotime($dateFrom)) : '';
+        $dtLabel = $dateTo ? date('m/d/Y', strtotime($dateTo)) : '';
+
         if ($dateFrom && $dateTo) {
-            $dateLabel = htmlspecialchars($dateFrom) . ' - ' . htmlspecialchars($dateTo);
+            $dateLabel = htmlspecialchars($dfLabel) . ' - ' . htmlspecialchars($dtLabel);
         } elseif ($dateFrom) {
-            $dateLabel = 'From ' . htmlspecialchars($dateFrom);
+            $dateLabel = 'From ' . htmlspecialchars($dfLabel);
         } else {
-            $dateLabel = 'Until ' . htmlspecialchars($dateTo);
+            $dateLabel = 'Until ' . htmlspecialchars($dtLabel);
         }
         $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter, '', '');
 

@@ -16,7 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
         require_once __DIR__ . '/../core/analytics.php';
         $period = $_GET['period'] ?? 'all';
         $topReads = getTopReadNewspapers($pdo, $period);
-        $top5 = array_slice($topReads, 0, 5);
+        $topReads = array_filter($topReads, function($read) {
+            return intval($read['view_count']) > 0;
+        });
+        $top5 = array_slice(array_values($topReads), 0, 5);
         
         echo json_encode(['success' => true, 'data' => $top5]);
     } catch (Exception $e) {

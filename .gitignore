@@ -9,7 +9,6 @@ node_modules/
 # backend/core/config.php
 
 # IDE files
-.vscode/
 .idea/
 .kiro/
 .vscode/

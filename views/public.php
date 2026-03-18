@@ -81,39 +81,12 @@
                 </div>
             </form>
 
-            <!-- Advanced Search Dropdown -->
-            <div class="public-adv-search-panel" id="advSearchPanel">
-                <div class="public-adv-search-header">
-                    <i class="bi bi-sliders2"></i>
-                    <span>Advanced Search</span>
-                </div>
-                <div class="public-adv-search-body">
-                    <div class="public-adv-field">
-                        <label for="advKeyword">Keyword</label>
-                        <input type="text" id="advKeyword" class="public-adv-input" placeholder="Enter keyword..." autocomplete="off">
-                    </div>
-                    <div class="public-adv-row">
-                        <div class="public-adv-field">
-                            <label for="advDateFrom">Date From</label>
-                            <input type="text" id="advDateFrom" class="public-adv-input" placeholder="mm/dd/yyyy" maxlength="10" autocomplete="off">
-                        </div>
-                        <div class="public-adv-field">
-                            <label for="advDateTo">Date To</label>
-                            <input type="text" id="advDateTo" class="public-adv-input" placeholder="mm/dd/yyyy" maxlength="10" autocomplete="off">
-                        </div>
-                    </div>
-                </div>
-                <div class="public-adv-search-footer">
-                    <button type="button" class="public-adv-reset-btn" id="advResetBtn">Reset</button>
-                    <button type="button" class="public-adv-apply-btn" id="advApplyBtn">
-                        <i class="bi bi-search me-1"></i>Search
-                    </button>
-                </div>
-            </div>
+
         </div>
     </section>
 
     <!-- ==================== SEARCH ACTIVE FILTER BAR ==================== -->
+    <div id="publicContentArea">
     <?php if ($isSearchMode && ($searchQuery || $categoryFilter)): ?>
         <div class="public-grid-container" style="padding-bottom: 0;">
             <div class="d-flex align-items-center justify-content-between mb-3 px-1">
@@ -176,7 +149,7 @@
                             $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
                             ?>
                             <div class="public-file-card" 
-                                data-id="<?= $paper['id'] ?>"
+                                data-id="<?= url_encrypt($paper['id']) ?>"
                                 data-title="<?= htmlspecialchars($paper['title']) ?>"
                                 data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                                 data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
@@ -208,7 +181,7 @@
                                             if ($label === 'publication date' || $label === 'date published' || $label === 'date'): 
                                             ?>
                                                 <div class="public-file-date">
-                                                    <?= pubHighlight($meta['value'], $searchQuery) ?>
+                                                    <?= pubHighlight(formatPublicationDate($meta['value']), $searchQuery) ?>
                                                 </div>
                                             <?php 
                                                 break;
@@ -336,7 +309,7 @@
                                     }
                                     ?>
                                     <div class="catalog-card public-file-card"
-                                        data-id="<?= $paper['id'] ?>"
+                                        data-id="<?= url_encrypt($paper['id']) ?>"
                                         data-title="<?= htmlspecialchars($paper['title']) ?>"
                                         data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                                         data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
@@ -362,7 +335,7 @@
                                         <div class="catalog-card-info">
                                             <div class="catalog-card-title"><?= htmlspecialchars($paper['title']) ?></div>
                                             <?php if ($pubDate): ?>
-                                                <div class="catalog-card-date"><?= htmlspecialchars($pubDate) ?></div>
+                                                <div class="catalog-card-date"><?= htmlspecialchars(formatPublicationDate($pubDate)) ?></div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -377,6 +350,7 @@
             <?php endif; ?>
         </div>
     <?php endif; ?>
+    </div>
 
 
 

@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($token) {
                 // Generate reset link
-                $resetLink = APP_URL . '/reset-password.php?token=' . $token;
+                $resetLink = APP_URL . '/auth/reset-password.php?token=' . $token;
                 
                 // Log the reset link for debugging
                 error_log("Reset link generated: $resetLink");

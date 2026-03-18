@@ -44,10 +44,12 @@ CREATE TABLE IF NOT EXISTS form_templates (
     description TEXT DEFAULT NULL,
     status ENUM('draft', 'active', 'archived') DEFAULT 'draft',
     is_active TINYINT(1) DEFAULT 0 COMMENT '1 = currently active template, 0 = inactive',
+    modified_by INT DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_status (status),
-    INDEX idx_is_active (is_active)
+    INDEX idx_is_active (is_active),
+    CONSTRAINT fk_form_modified_by FOREIGN KEY (modified_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Stores form template definitions';
 
@@ -166,7 +168,8 @@ CREATE TABLE IF NOT EXISTS activity_logs (
         'custom_metadata_update',
         'form_template_create',
         'form_template_update',
-        'form_template_delete'
+        'form_template_delete',
+        'export_report'
     ) NOT NULL,
     target_title VARCHAR(255) DEFAULT NULL,
     details TEXT DEFAULT NULL,

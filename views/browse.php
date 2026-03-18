@@ -255,17 +255,15 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <div class="browse-date-inputs">
                             <div class="browse-date-input-group">
                                 <label>FROM</label>
-                                <input type="number" name="date_from" class="browse-year-input" 
-                                    placeholder="1990" 
+                                <input type="date" name="date_from" class="browse-year-input" 
                                     value="<?= htmlspecialchars($dateFrom) ?>"
-                                    min="<?= $minYear ?>" max="<?= $maxYear ?>">
+                                    min="<?= $minYear ?>-01-01" max="<?= $maxYear ?>-12-31">
                             </div>
                             <div class="browse-date-input-group">
                                 <label>TO</label>
-                                <input type="number" name="date_to" class="browse-year-input" 
-                                    placeholder="<?= $maxYear ?>" 
+                                <input type="date" name="date_to" class="browse-year-input" 
                                     value="<?= htmlspecialchars($dateTo) ?>"
-                                    min="<?= $minYear ?>" max="<?= $maxYear ?>">
+                                    min="<?= $minYear ?>-01-01" max="<?= $maxYear ?>-12-31">
                             </div>
                         </div>
                     </form>
@@ -390,12 +388,12 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
                         $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
                         $ml = $paper['metadata_by_label'] ?? [];
-                        $pubDateVal = $ml['publication date'] ?? $ml['date published'] ?? $ml['date issued'] ?? '';
+                        $pubDateVal = $ml['publication date'] ?? $ml['date published'] ?? $ml['date issued'] ?? $ml['date'] ?? '';
                         $publicationLabel = $pubDateVal ? formatPublicationDate($pubDateVal, true) : '';
                         // Prepare modal metadata as JSON for data attribute
                         $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
                         ?>
-                        <div class="public-file-card browse-file-card-compact" data-id="<?= $paper['id'] ?>"
+                        <div class="public-file-card browse-file-card-compact" data-id="<?= url_encrypt($paper['id']) ?>"
                             data-title="<?= htmlspecialchars($paper['title']) ?>"
                             data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
                             data-modal-metadata="<?= $modalMetaJson ?>"
@@ -436,6 +434,13 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                 <div class="public-file-title">
                                     <?= highlightSearch($paper['title'], $searchQuery) ?>
                                 </div>
+                                
+                                <?php if (!empty($pubDateVal)): ?>
+                                    <div class="public-file-date" style="font-size: 13px; color: #6B7280; margin-top: 4px;">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        <?= htmlspecialchars(formatPublicationDate($pubDateVal, true)) ?>
+                                    </div>
+                                <?php endif; ?>
 
                                 <!-- Description -->
                                 <?php $descVal = $ml['description'] ?? ''; ?>
@@ -750,7 +755,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         // Enter key support for date filter
         document.addEventListener('DOMContentLoaded', function() {
             const dateForm = document.getElementById('dateRangeForm');
-            const dateInputs = dateForm.querySelectorAll('input[type="number"]');
+            const dateInputs = dateForm.querySelectorAll('input[type="date"]');
             
             dateInputs.forEach(input => {
                 input.addEventListener('keypress', function(e) {

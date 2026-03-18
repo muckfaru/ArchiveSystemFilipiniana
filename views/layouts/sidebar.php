@@ -32,6 +32,13 @@
                         <span>History</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="<?= APP_URL ?>/admin_pages/trash.php"
+                        class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'trash.php' ? 'active' : '' ?>">
+                        <i class="bi bi-trash3-fill"></i>
+                        <span>Trash</span>
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -68,6 +75,13 @@
                             </a>
                         </li>
                     </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="<?= APP_URL ?>/admin_pages/report.php"
+                        class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'report.php' ? 'active' : '' ?>">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        <span>Report</span>
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a href="<?= APP_URL ?>/admin_pages/settings.php"

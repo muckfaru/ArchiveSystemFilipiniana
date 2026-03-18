@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Show empty state when all cards have been deleted
     function showEmptyStateIfNeeded() {
-        const remainingCards = document.querySelectorAll('.dashboard-file-card');
+        const remainingCards = document.querySelectorAll('#recentUploadsGrid .dashboard-file-card');
         if (remainingCards.length > 0) return;
 
         // Find the recent-activities container
@@ -110,15 +110,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const title = card.dataset.title;
             const thumbnail = card.dataset.thumbnail;
             const file = card.dataset.file;
-            const id = card.dataset.id;
+            const id = card.dataset.id;         // encrypted, used for reader URL
+            const rawId = card.dataset.rawId;   // numeric, used for delete/edit APIs
             const category = card.dataset.category;
             const description = card.dataset.description || '';
             const isBulk = card.dataset.isBulk === '1';
             const imagePaths = card.dataset.imagePaths ? JSON.parse(card.dataset.imagePaths) : [];
             const format = card.dataset.format;
 
-            // Store current file ID for delete
-            currentFileId = id;
+            // Store current file ID (raw numeric) for delete
+            currentFileId = rawId || id;
 
             // Update basic info immediately
             const titleEl = document.getElementById('previewTitle');
@@ -210,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!isBulk && readNowBtn) readNowBtn.href = APP_URL + '/admin_pages/reader.php?id=' + id;
 
             const editBtn = document.getElementById('editBtn');
-            if (editBtn) editBtn.href = APP_URL + '/admin_pages/upload.php?edit=' + id;
+            if (editBtn) editBtn.href = APP_URL + '/admin_pages/upload.php?edit=' + (rawId || id);
 
             // Bind delete button
             const deleteBtn = document.getElementById('deleteBtn');
@@ -221,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // INTEGRATION: Fetch modal metadata dynamically using display configuration
-            fetch(APP_URL + `/backend/api/file-metadata.php?id=${id}&context=modal`)
+            fetch(APP_URL + `/backend/api/file-metadata.php?id=${rawId || id}&context=modal`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.metadata) {
@@ -258,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (meta.field_label && meta.field_label.toLowerCase() === 'title') {
                 return;
             }
-            
+
             const row = document.createElement('div');
             row.className = 'public-modal-meta-row';
 
@@ -673,14 +674,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.success && data.data) {
                     // Render new ranking list
                     topReadsList.innerHTML = '';
-                    
+
                     if (data.data.length === 0) {
                         topReadsList.innerHTML = '<div class="text-center py-4 text-muted small">No view data available for this period.</div>';
                     } else {
                         data.data.forEach((tr, idx) => {
                             const rank = idx + 1;
                             const isTop = (rank === 1);
-                            
+
                             // Extract metadata for modal quick-preview
                             const getMetaValue = (labels) => {
                                 if (!tr.custom_metadata) return '';
@@ -688,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 const found = tr.custom_metadata.find(m => targetLabels.includes((m.field_label || '').toLowerCase()));
                                 return found ? found.field_value : '';
                             };
-                            
+
                             const category = getMetaValue('Category') || 'Uncategorized';
                             const description = getMetaValue(['Description', 'Summary', 'About']);
                             const isBulk = tr.is_bulk == 1;
@@ -699,9 +700,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             const item = document.createElement('div');
                             item.className = `most-read-item dashboard-file-card ${isTop ? 'top-rank' : ''}`;
                             item.style.animationDelay = `${idx * 0.1}s`;
-                            
+
                             // Set data attributes for the modal handler
-                            item.dataset.id = tr.id;
+                            item.dataset.id = tr.id;      // raw numeric (admin reader accepts both)
+                            item.dataset.rawId = tr.id;   // explicit raw numeric for delete/edit APIs
                             item.dataset.title = tr.title;
                             item.dataset.thumbnail = thumbnail;
                             item.dataset.file = fileUrl;
@@ -716,10 +718,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                     ${rank}
                                 </div>
                                 <div class="most-read-thumb">
-                                    ${tr.thumbnail_path 
-                                        ? `<img src="${thumbnail}" alt="Thumbnail">`
-                                        : `<div class="most-read-thumb-placeholder"><i class="bi bi-image"></i></div>`
-                                    }
+                                    ${tr.thumbnail_path
+                                    ? `<img src="${thumbnail}" alt="Thumbnail">`
+                                    : `<div class="most-read-thumb-placeholder"><i class="bi bi-image"></i></div>`
+                                }
                                 </div>
                                 <div class="most-read-content">
                                     <h6 class="most-read-item-title">${escapeHtml(tr.title)}</h6>
@@ -729,7 +731,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </div>
                                 </div>
                             `;
-                            
+
                             topReadsList.appendChild(item);
                         });
                     }
@@ -758,4 +760,57 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// --- Pagination Logic for Recent Uploads ---
+let currentRecentPage = 1;
+
+window.changeRecentPage = function (event, targetPage) {
+    if (event) event.preventDefault();
+
+    const items = document.querySelectorAll('.recent-upload-item');
+    const totalPages = Math.ceil(items.length / 8);
+
+    if (targetPage === 'prev') {
+        if (currentRecentPage > 1) targetPage = currentRecentPage - 1;
+        else return;
+    } else if (targetPage === 'next') {
+        if (currentRecentPage < totalPages) targetPage = currentRecentPage + 1;
+        else return;
+    }
+
+    // Now targetPage is a number
+    if (typeof targetPage !== 'number') return;
+    currentRecentPage = targetPage;
+
+    // Show/Hide items based on page
+    items.forEach(item => {
+        if (item.classList.contains(`page-${currentRecentPage}`)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    // Update pagination UI
+    const paginationItems = document.querySelectorAll('#recentUploadsPagination .page-item');
+    if (paginationItems.length > 0) {
+        // Update Prev button
+        const prevBtn = paginationItems[0];
+        if (currentRecentPage === 1) prevBtn.classList.add('disabled');
+        else prevBtn.classList.remove('disabled');
+
+        // Update Next button
+        const nextBtn = paginationItems[paginationItems.length - 1];
+        if (currentRecentPage === totalPages) nextBtn.classList.add('disabled');
+        else nextBtn.classList.remove('disabled');
+
+        // Update Number buttons (1 is at index 1, 2 at index 2, etc.)
+        for (let i = 1; i <= totalPages; i++) {
+            if (paginationItems[i]) {
+                if (i === currentRecentPage) paginationItems[i].classList.add('active');
+                else paginationItems[i].classList.remove('active');
+            }
+        }
+    }
+}
 

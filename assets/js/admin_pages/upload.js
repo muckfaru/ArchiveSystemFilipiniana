@@ -80,16 +80,16 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     function normalizePublicationDateForInput(value, inputType) {
         if (!value) return '';
-        
+
         const dateValue = (value || '').trim();
-        
+
         // If input type is 'date', ensure format is YYYY-MM-DD
         if (inputType === 'date') {
             // Check if already in correct format
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
                 return dateValue;
             }
-            
+
             // Try to parse and convert to YYYY-MM-DD
             const date = new Date(dateValue);
             if (!isNaN(date.getTime())) {
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return `${year}-${month}-${day}`;
             }
         }
-        
+
         // For text inputs or if parsing fails, return as-is
         return dateValue;
     }
@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
         draftSaveTimeout = setTimeout(() => {
             const formData = new FormData();
             formData.append('action', 'save_draft');
-            
+
             // Get all custom fields
             const fields = document.querySelectorAll('.custom-field');
             fields.forEach(field => {
@@ -435,8 +435,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: formData,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             }).then(response => response.json())
-              .then(data => console.log('📝 Draft saved:', data))
-              .catch(err => console.error('❌ Draft save failed:', err));
+                .then(data => console.log('📝 Draft saved:', data))
+                .catch(err => console.error('❌ Draft save failed:', err));
         }, 1000); // 1 second debounce
     }
 
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const fieldName = field.name;
                 const originalValue = originalFormData[fieldName] || '';
                 let currentValue = '';
-                
+
                 if (field.type === 'checkbox') {
                     const checkedBoxes = document.querySelectorAll(`input[name="${fieldName}"]:checked`);
                     currentValue = Array.from(checkedBoxes).map(cb => cb.value).join(',');
@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     currentValue = field.value?.trim() || '';
                 }
-                
+
                 if (currentValue !== originalValue) return true;
             }
 
@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function captureOriginalState() {
         originalFormData = {};
-        
+
         // Capture custom field values
         const customFields = document.querySelectorAll('.custom-field');
         customFields.forEach(field => {
@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         customFields.forEach(field => {
                             const fieldName = field.name;
                             const savedValue = m[fieldName];
-                            
+
                             if (field.type === 'checkbox') {
                                 // For checkboxes, send as array
                                 if (Array.isArray(savedValue) && savedValue.length > 0) {
@@ -1166,18 +1166,28 @@ document.addEventListener('DOMContentLoaded', function () {
             const fillField = (id, value, metaKey) => {
                 if (!value) return;
                 const el = document.getElementById(id);
-                if (el && !el.value.trim()) {
-                    el.value = id === 'publication_date'
-                        ? normalizePublicationDateForInput(value, el.type)
-                        : value;
-                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                }
+                const elType = el ? el.type : (publicationDateInput?.type || 'date');
+
+                const isDateField = id === 'publication_date' || (el && elType === 'date');
+                const formattedValue = isDateField
+                    ? normalizePublicationDateForInput(value, elType)
+                    : value;
+
                 // Update bulk state too
-                if (bulkIdx !== null && bulkFiles[bulkIdx] && metaKey) {
-                    if (!bulkFiles[bulkIdx].metadata[metaKey]) {
-                        bulkFiles[bulkIdx].metadata[metaKey] = id === 'publication_date'
-                            ? normalizePublicationDateForInput(value, publicationDateInput?.type || 'date')
-                            : value;
+                if (bulkIdx !== null && bulkFiles[bulkIdx]) {
+                    if (metaKey && !bulkFiles[bulkIdx].metadata[metaKey]) {
+                        bulkFiles[bulkIdx].metadata[metaKey] = formattedValue;
+                    }
+                    if (id && !bulkFiles[bulkIdx].metadata[id]) {
+                        bulkFiles[bulkIdx].metadata[id] = formattedValue;
+                    }
+                }
+
+                // Only update DOM if it's the active tab (or single mode)
+                if (bulkIdx === null || bulkIdx === activeFileIndex) {
+                    if (el && !el.value.trim()) {
+                        el.value = formattedValue;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                 }
             };
@@ -1221,18 +1231,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 const hiddenKw = tagsFieldId
                     ? document.getElementById(tagsFieldId + '_hidden')
                     : document.getElementById('keywordsHidden');
-                if (hiddenKw && !hiddenKw.value.trim()) {
-                    hiddenKw.value = m.keywords;
-                    const pillsFieldName = hiddenKw.id.replace('_hidden', '');
-                    if (typeof addTagChip === 'function') {
-                        m.keywords.split(',').map(t => t.trim()).filter(Boolean).forEach(tag => {
-                            addTagChip(pillsFieldName, tag);
-                        });
-                    } else if (typeof setTags === 'function') {
-                        setTags(m.keywords.split(',').map(t => t.trim()).filter(Boolean));
-                    }
-                    if (bulkIdx !== null && bulkFiles[bulkIdx]) {
-                        bulkFiles[bulkIdx].metadata.tags = m.keywords;
+
+                // Update bulk state too
+                if (bulkIdx !== null && bulkFiles[bulkIdx]) {
+                    if (!bulkFiles[bulkIdx].metadata.tags) bulkFiles[bulkIdx].metadata.tags = m.keywords;
+                    if (tagsFieldId && !bulkFiles[bulkIdx].metadata[tagsFieldId]) bulkFiles[bulkIdx].metadata[tagsFieldId] = m.keywords;
+                }
+
+                // Only visually update if active tab or single file
+                if (bulkIdx === null || bulkIdx === activeFileIndex) {
+                    if (hiddenKw && !hiddenKw.value.trim()) {
+                        hiddenKw.value = m.keywords;
+                        const pillsFieldName = hiddenKw.id.replace('_hidden', '');
+                        if (typeof addTagChip === 'function') {
+                            m.keywords.split(',').map(t => t.trim()).filter(Boolean).forEach(tag => {
+                                addTagChip(pillsFieldName, tag);
+                            });
+                        } else if (typeof setTags === 'function') {
+                            setTags(m.keywords.split(',').map(t => t.trim()).filter(Boolean));
+                        }
                     }
                 }
             }
@@ -1241,11 +1258,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.languageId) {
                 const langFieldId = findFieldId(['language']) || 'language_id';
                 const langEl = document.getElementById(langFieldId);
-                if (langEl && !langEl.value) {
-                    langEl.value = data.languageId;
-                    langEl.dispatchEvent(new Event('change', { bubbles: true }));
-                    if (bulkIdx !== null && bulkFiles[bulkIdx]) {
-                        bulkFiles[bulkIdx].metadata.language_id = String(data.languageId);
+
+                // Update bulk state too
+                if (bulkIdx !== null && bulkFiles[bulkIdx]) {
+                    if (!bulkFiles[bulkIdx].metadata.language_id) bulkFiles[bulkIdx].metadata.language_id = String(data.languageId);
+                    if (langFieldId && !bulkFiles[bulkIdx].metadata[langFieldId]) bulkFiles[bulkIdx].metadata[langFieldId] = String(data.languageId);
+                }
+
+                // Only visually update if active tab or single file
+                if (bulkIdx === null || bulkIdx === activeFileIndex) {
+                    if (langEl && !langEl.value) {
+                        langEl.value = data.languageId;
+                        langEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }
             }
@@ -1345,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const firstFileExt = firstFile.name.split('.').pop().toLowerCase();
         const isImageFile = firstFile.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(firstFileExt);
         const isSingleNonImageFile = files.length === 1 && !isImageFile && bulkFiles.length === 0;
-        
+
         if (!isEdit && !isSingleNonImageFile) {
             // Check types for Mode Detection IF starting fresh
             if (bulkFiles.length === 0) {
@@ -1417,7 +1441,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const fileExt = file.name.split('.').pop().toLowerCase();
             const isImageFile = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExt);
             const isDocumentFile = ['pdf', 'epub', 'mobi', 'doc', 'docx'].includes(fileExt);
-            
+
             // Enforce Mode Consistency
             if (isBindMode && !isImageFile) {
                 showAlert('warning', `Skipped "${file.name}": Only images allowed in Photo Mode.`);
@@ -1554,101 +1578,136 @@ document.addEventListener('DOMContentLoaded', function () {
         const file = bulkFiles[index];
         if (!file) return;
 
-        // Populate Form Fields (Safe Set)
-        const safelySetValue = (id, value) => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (id === 'publication_date') {
-                el.value = normalizePublicationDateForInput(value, el.type);
-                return;
-            }
-            el.value = value || '';
-        };
-
-        safelySetValue('title', file.metadata.title);
-        safelySetValue('publisher', file.metadata.publisher);
-        safelySetValue('publication_date', file.metadata.publication_date);
-        safelySetValue('edition', file.metadata.edition);
-        safelySetValue('category_id', file.metadata.category_id);
-        safelySetValue('language_id', file.metadata.language_id);
-        safelySetValue('page_count', file.metadata.page_count);
-        safelySetValue('description', file.metadata.description);
-        safelySetValue('volume_issue', file.metadata.volume_issue);
-
-        // Tags
-        safelySetValue('keywordsHidden', file.metadata.tags);
-
-        // Update Tag Visuals if available
-        if (typeof setTags === 'function') {
-            setTags(file.metadata.tags ? file.metadata.tags.split(',').filter(t => t.trim() !== '') : []);
-        }
-
-        // Load CUSTOM METADATA FIELDS from file's metadata
-        const customFields = document.querySelectorAll('.custom-field');
-        customFields.forEach(field => {
-            const fieldName = field.name;
-            const savedValue = file.metadata[fieldName];
-
-            if (field.type === 'checkbox') {
-                // For checkboxes, uncheck all first, then check saved values
-                const allCheckboxes = document.querySelectorAll(`input[name="${fieldName}"]`);
-                allCheckboxes.forEach(cb => cb.checked = false);
-                
-                if (Array.isArray(savedValue)) {
-                    savedValue.forEach(val => {
-                        const checkbox = document.querySelector(`input[name="${fieldName}"][value="${val}"]`);
-                        if (checkbox) checkbox.checked = true;
-                    });
+        window.isProgrammaticDataLoad = true;
+        try {
+            // Populate Form Fields (Safe Set)
+            const safelySetValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (id === 'publication_date') {
+                    el.value = normalizePublicationDateForInput(value, el.type);
+                    return;
                 }
-            } else if (field.type === 'radio') {
-                // For radio buttons, uncheck all first, then check saved value
-                const allRadios = document.querySelectorAll(`input[name="${fieldName}"]`);
-                allRadios.forEach(rb => rb.checked = false);
-                
-                if (savedValue) {
-                    const radio = document.querySelector(`input[name="${fieldName}"][value="${savedValue}"]`);
-                    if (radio) radio.checked = true;
-                }
-            } else {
-                // For other field types (text, textarea, number, date, select)
-                field.value = savedValue || '';
-            }
-        });
-
-        // Current File Badge
-        const badge = document.getElementById('currentFileName');
-        if (badge) {
-            badge.textContent = `Editing: ${file.name}`;
-            badge.classList.remove('d-none');
-        }
-
-        // Validate Status
-        validateCurrentFile();
-
-        // Thumbnail Handling
-        if (thumbnailInput) thumbnailInput.value = '';
-
-        if (file.customThumbnail) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (thumbnailPreview) {
-                    thumbnailPreview.src = e.target.result;
-                    thumbnailPreview.style.display = 'block';
-                }
-                if (thumbnailPlaceholder) thumbnailPlaceholder.style.display = 'none';
-                if (removeThumbnailBtn) removeThumbnailBtn.style.display = 'flex';
+                el.value = value || '';
             };
-            reader.readAsDataURL(file.customThumbnail);
-        } else if (file.file.type.startsWith('image/')) {
-            updateMainPreview(file.file);
-        } else {
-            // Clear
-            if (thumbnailPreview) {
-                thumbnailPreview.src = '#';
-                thumbnailPreview.style.display = 'none';
+
+            safelySetValue('title', file.metadata.title);
+            safelySetValue('publisher', file.metadata.publisher);
+            safelySetValue('publication_date', file.metadata.publication_date);
+            safelySetValue('edition', file.metadata.edition);
+            safelySetValue('category_id', file.metadata.category_id);
+            safelySetValue('language_id', file.metadata.language_id);
+            safelySetValue('page_count', file.metadata.page_count);
+            safelySetValue('description', file.metadata.description);
+            safelySetValue('volume_issue', file.metadata.volume_issue);
+
+            // Tags
+            safelySetValue('keywordsHidden', file.metadata.tags);
+
+            // Update Tag Visuals if available
+            if (typeof setTags === 'function') {
+                setTags(file.metadata.tags ? file.metadata.tags.split(',').filter(t => t.trim() !== '') : []);
+                const mainTagInput = document.getElementById('tagInput');
+                if (mainTagInput) mainTagInput.value = '';
             }
-            if (thumbnailPlaceholder) thumbnailPlaceholder.style.display = 'flex';
-            if (removeThumbnailBtn) removeThumbnailBtn.style.display = 'none';
+
+            // Load CUSTOM METADATA FIELDS from file's metadata
+            const customFields = document.querySelectorAll('.custom-field');
+            customFields.forEach(field => {
+                const fieldName = field.name;
+                const savedValue = file.metadata[fieldName];
+
+                if (field.type === 'checkbox') {
+                    // For checkboxes, uncheck all first, then check saved values
+                    const allCheckboxes = document.querySelectorAll(`input[name="${fieldName}"]`);
+                    allCheckboxes.forEach(cb => cb.checked = false);
+
+                    if (Array.isArray(savedValue)) {
+                        savedValue.forEach(val => {
+                            const checkbox = document.querySelector(`input[name="${fieldName}"][value="${val}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+                    }
+                } else if (field.type === 'radio') {
+                    // For radio buttons, uncheck all first, then check saved value
+                    const allRadios = document.querySelectorAll(`input[name="${fieldName}"]`);
+                    allRadios.forEach(rb => rb.checked = false);
+
+                    if (savedValue) {
+                        const radio = document.querySelector(`input[name="${fieldName}"][value="${savedValue}"]`);
+                        if (radio) radio.checked = true;
+                    }
+                } else {
+                    // For other field types (text, textarea, number, date, select, and hidden tags)
+                    field.value = savedValue || '';
+
+                    // If this is a custom tags field (hidden input), reset its visual pills and text input
+                    if (field.id && field.id.endsWith('_hidden')) {
+                        const baseName = field.id.substring(0, field.id.length - 7); // remove '_hidden'
+                        const pillsContainer = document.getElementById(baseName + '_pills');
+                        const textInput = document.getElementById(baseName + '_input');
+
+                        if (pillsContainer) {
+                            pillsContainer.innerHTML = '';
+                            if (savedValue) {
+                                const tagsArray = savedValue.split(',').map(t => t.trim()).filter(Boolean);
+                                tagsArray.forEach(tagText => {
+                                    const chip = document.createElement('span');
+                                    chip.className = 'tag-chip';
+
+                                    const div = document.createElement('div');
+                                    div.appendChild(document.createTextNode(tagText));
+                                    const escapedTag = div.innerHTML;
+
+                                    chip.innerHTML = `${escapedTag}<button type="button" class="tag-chip-remove" onclick="removeTagChip(this,'${baseName}')" title="Remove"><i class="bi bi-x"></i></button>`;
+                                    pillsContainer.appendChild(chip);
+                                });
+                            }
+                        }
+                        if (textInput) {
+                            textInput.value = '';
+                        }
+                    }
+                }
+            });
+
+            // Current File Badge
+            const badge = document.getElementById('currentFileName');
+            if (badge) {
+                badge.textContent = `Editing: ${file.name}`;
+                badge.classList.remove('d-none');
+            }
+
+            // Validate Status
+            validateCurrentFile();
+
+            // Thumbnail Handling
+            if (thumbnailInput) thumbnailInput.value = '';
+
+            if (file.customThumbnail) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (thumbnailPreview) {
+                        thumbnailPreview.src = e.target.result;
+                        thumbnailPreview.style.display = 'block';
+                    }
+                    if (thumbnailPlaceholder) thumbnailPlaceholder.style.display = 'none';
+                    if (removeThumbnailBtn) removeThumbnailBtn.style.display = 'flex';
+                };
+                reader.readAsDataURL(file.customThumbnail);
+            } else if (file.file.type.startsWith('image/')) {
+                updateMainPreview(file.file);
+            } else {
+                // Clear
+                if (thumbnailPreview) {
+                    thumbnailPreview.src = '#';
+                    thumbnailPreview.style.display = 'none';
+                }
+                if (thumbnailPlaceholder) thumbnailPlaceholder.style.display = 'flex';
+                if (removeThumbnailBtn) removeThumbnailBtn.style.display = 'none';
+            }
+        } finally {
+            window.isProgrammaticDataLoad = false;
         }
     }
 
@@ -1797,10 +1856,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // 3. Clear all file card containers from DOM
         const bulkTabs = document.getElementById('bulkTabs');
         if (bulkTabs) bulkTabs.innerHTML = '';
-        
+
         const fileTabs = document.getElementById('fileTabs');
         if (fileTabs) fileTabs.innerHTML = '';
-        
+
         if (bulkFileTabs) bulkFileTabs.innerHTML = '';
 
         // 4. Hide bulk containers
@@ -1873,7 +1932,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Handle drop zone visibility based on edit mode
         const dropZoneContainer = document.getElementById('dropZoneContainer');
         const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
-        
+
         if (!isEdit && dropZoneContainer) {
             dropZoneContainer.style.display = 'block';
         }
@@ -1887,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const tagsContainer = document.getElementById('tagsContainer');
         if (tagsContainer) tagsContainer.innerHTML = '';
         if (typeof tags !== 'undefined') tags = [];
-        
+
         const keywordsHidden = document.getElementById('keywordsHidden');
         if (keywordsHidden) keywordsHidden.value = '';
 
@@ -1935,9 +1994,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // Single Mode Logic - Check ONLY custom required fields
             let allRequiredFieldsFilled = true;
             const customFields = document.querySelectorAll('.custom-field[data-required="true"]');
-            
+
             console.log('🔍 Found', customFields.length, 'required custom fields');
-            
+
             if (customFields.length === 0) {
                 // No required fields defined, form is valid
                 allRequiredFieldsFilled = true;
@@ -1949,7 +2008,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         console.log('⏭️ Skipping hidden field:', field.name);
                         return; // Field is not visible, skip validation
                     }
-                    
+
                     if (field.type === 'checkbox') {
                         const checkboxGroup = document.querySelectorAll(`input[name="${field.name}"]:checked`);
                         if (checkboxGroup.length === 0) {
@@ -2105,11 +2164,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Check Metadata
         const m = file.metadata;
-        
+
         // Check ONLY custom required fields that exist in the DOM
         let allRequiredFieldsFilled = true;
         const customFields = document.querySelectorAll('.custom-field[data-required="true"]');
-        
+
         if (customFields.length === 0) {
             // No required fields defined, file is ready
             allRequiredFieldsFilled = true;
@@ -2117,7 +2176,7 @@ document.addEventListener('DOMContentLoaded', function () {
             customFields.forEach(field => {
                 const fieldName = field.name;
                 const fieldValue = m[fieldName];
-                
+
                 if (field.type === 'checkbox') {
                     // For checkboxes, check if at least one value exists
                     if (!fieldValue || (Array.isArray(fieldValue) && fieldValue.length === 0)) {
@@ -2150,7 +2209,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Check ONLY custom required fields that exist in the DOM
         let allRequiredFieldsFilled = true;
         const customFields = document.querySelectorAll('.custom-field[data-required="true"]');
-        
+
         if (customFields.length === 0) {
             // No required fields defined, form is valid if has files
             allRequiredFieldsFilled = true;
@@ -2555,13 +2614,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Re-render tabs to reflect removal
             renderTabs();
-            
+
             // Update bulk controls (stats, counters)
             updateBulkControls();
-            
+
             // Update UI to show current file
             updateBulkUI();
-            
+
             // Update button states
             updateButtons();
         }
@@ -2569,6 +2628,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Helper to save current form data to the object
     function saveCurrentFormData() {
+        if (window.isProgrammaticDataLoad) return; // Prevent saving stale DOM data during tab switch
         if (isBindMode) return; // Skip in Bind Mode as metadata is globally shared
         if (activeFileIndex === -1 || !bulkFiles[activeFileIndex]) return;
 

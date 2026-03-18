@@ -40,8 +40,8 @@ $catStmt = $pdo->query("
 $categories = $catStmt->fetchAll();
 $languages = getLanguages();
 
-// Get recent newspapers
-$recentNewspapers = getRecentNewspapers(8);
+// Get recent newspapers (Fetch more for pagination, e.g., 40 items = 5 pages of 8)
+$recentNewspapers = getRecentNewspapers(40);
 
 // Apply title overrides from custom metadata "Title" field
 applyTitleOverrides($recentNewspapers, $pdo);
@@ -67,8 +67,11 @@ if (!empty($recentNewspapers)) {
     }
     unset($n);
 }
-// Get overall top reads (top 10)
+// Get overall top reads (top 10) and filter out those with 0 views
 $topReads = getTopReadNewspapers($pdo);
+$topReads = array_filter($topReads, function($read) {
+    return intval($read['view_count']) > 0;
+});
 
 // Get search
 $searchQuery = $_GET['q'] ?? '';
@@ -169,7 +172,7 @@ if ($searchQuery || $categoryFilter || $languageFilter || $dateFrom || $dateTo) 
 }
 
 $pageTitle = 'Dashboard';
-$pageCss = ['dashboard.css'];
+$pageCss = ['dashboard.css?v=' . time()];
 
 // Include Layouts and View
 include __DIR__ . '/../views/layouts/header.php';

@@ -21,31 +21,37 @@ $sortBy = $_GET['sort'] ?? 'newest';
 // Base WHERE clauses
 $fileWhere = "n.deleted_at IS NOT NULL";
 $userWhere = "u.deleted_at IS NOT NULL";
-$params = [];
+$fileParams = [];
+$userParams = [];
 
 // Apply Search
 if ($search) {
     $fileWhere .= " AND n.title LIKE ?";
+    $fileParams[] = "%$search%";
+    
     $userWhere .= " AND (u.username LIKE ? OR u.email LIKE ?)";
-    $params[] = "%$search%"; // For file title
-    $params[] = "%$search%"; // For username
-    $params[] = "%$search%"; // For email
+    $userParams[] = "%$search%";
+    $userParams[] = "%$search%";
 }
 
 // Apply Type Filter
 if ($typeFilter === 'file') {
-    $userWhere .= " AND 1=0"; // Exclude users
+    $userWhere .= " AND 1=0";
 } elseif ($typeFilter === 'user') {
-    $fileWhere .= " AND 1=0"; // Exclude files
+    $fileWhere .= " AND 1=0";
 }
 
 // Apply Date
 if ($dateFilter) {
     $fileWhere .= " AND DATE(n.deleted_at) = ?";
+    $fileParams[] = $dateFilter;
+    
     $userWhere .= " AND DATE(u.deleted_at) = ?";
-    $params[] = $dateFilter;
-    $params[] = $dateFilter;
+    $userParams[] = $dateFilter;
 }
+
+// Merge params for UNION query
+$params = array_merge($fileParams, $userParams);
 
 // --- Get Total Count for Pagination ---
 $countParams = $params;
@@ -75,7 +81,8 @@ $sql = "
     n.deleted_at, 
     n.file_size, 
     'file' as type,
-    NULL as email
+    NULL as email,
+    n.thumbnail_path as photo
 FROM newspapers n
 LEFT JOIN users u ON n.deleted_by = u.id
 WHERE $fileWhere)
@@ -88,7 +95,8 @@ UNION ALL
     u.deleted_at, 
     NULL as file_size, 
     'user' as type,
-    u.email as email
+    u.email as email,
+    u.profile_photo as photo
 FROM users u
 LEFT JOIN users deleter ON u.deleted_by = deleter.id
 WHERE $userWhere)
@@ -194,6 +202,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect($_SERVER['PHP_SELF'] . '?success=restored_selected&count=' . $restoredCount);
     }
 
+    // --- DELETE SELECTED (Permanent) ---
+    if ($action === 'delete_selected') {
+        $items = json_decode($_POST['items'] ?? '[]', true);
+        $deletedCount = 0;
+
+        foreach ($items as $item) {
+            $itemId = intval($item['id']);
+            $itemType = $item['type'];
+
+            if ($itemType === 'file') {
+                $stmt = $pdo->prepare("SELECT * FROM newspapers WHERE id = ?");
+                $stmt->execute([$itemId]);
+                $file = $stmt->fetch();
+                if ($file) {
+                    if (file_exists(UPLOAD_PATH . '../' . $file['file_path'])) unlink(UPLOAD_PATH . '../' . $file['file_path']);
+                    if ($file['thumbnail_path'] && file_exists(UPLOAD_PATH . '../' . $file['thumbnail_path'])) unlink(UPLOAD_PATH . '../' . $file['thumbnail_path']);
+                    $pdo->prepare("DELETE FROM newspapers WHERE id = ?")->execute([$itemId]);
+                    $deletedCount++;
+                }
+            } elseif ($itemType === 'user') {
+                $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$itemId]);
+                $deletedCount++;
+            }
+        }
+
+        logActivity($currentUser['id'], 'permanent_delete_selected', "Permanently deleted $deletedCount items");
+        redirect($_SERVER['PHP_SELF'] . '?success=deleted_selected&count=' . $deletedCount);
+    }
+
     // --- EMPTY TRASH ---
     if ($action === 'empty_trash') {
         // Delete all files physically
@@ -241,23 +278,11 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <!-- Custom CSS -->
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/admin_pages/trash.css" rel="stylesheet">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-            font-family: 'Poppins', sans-serif;
-        }
-
         .search-bar-custom {
             background: #fff;
             border-radius: 50px;
@@ -309,27 +334,11 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             display: flex;
             align-items: center;
             gap: 8px;
-            gap: 8px;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             transition: all 0.2s;
             white-space: nowrap;
             text-decoration: none;
-            overflow: visible;
-            /* Ensure dropdowns are not clipped */
-        }
-
-
-
-        .clear-date-icon {
-            cursor: pointer;
-            transition: all 0.2s;
-            opacity: 0.6;
-        }
-
-        .clear-date-icon:hover {
-            opacity: 1;
-            transform: scale(1.1);
         }
 
         .filter-pill:hover {
@@ -363,34 +372,6 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
 
         .trash-table tr:last-child td {
             border-bottom: none;
-        }
-
-        .trash-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            border: none;
-            background: transparent;
-        }
-
-        .trash-action-btn.restore {
-            color: #3B82F6;
-        }
-
-        .trash-action-btn.restore:hover {
-            background: #EFF6FF;
-        }
-
-        .trash-action-btn.delete {
-            color: #EF4444;
-        }
-
-        .trash-action-btn.delete:hover {
-            background: #FEF2F2;
         }
 
         .pagination-circle {
@@ -460,6 +441,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             background-color: #B91C1C;
         }
     </style>
+</head>
 
 <body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
     <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
@@ -467,17 +449,17 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <main class="main-content">
         <!-- Page Header -->
         <div class="mb-4">
-            <h1 class="fw-bold m-0" style="font-size: 32px; color: #000; font-family: 'Poppins', sans-serif;">
-                Trash</h1>
-            <div class="text-dark" style="font-size: 14px;">Recover or permanently remove content</div>
+            <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529; font-family: 'Poppins', sans-serif;">
+                Trash Repository</h1>
+            <div class="text-muted small">Recover or permanently remove deleted files and user accounts</div>
         </div>
 
         <!-- Auto-Delete Info Card -->
-        <div class="card border-0 mb-4 bg-warning-subtle shadow-sm" style="border-radius: 12px;">
+        <div class="card border-0 mb-4 bg-warning-subtle shadow-sm" style="border-radius: 12px; border: 1px solid rgba(185, 28, 28, 0.1) !important;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle bg-white d-flex align-items-center justify-content-center"
-                        style="width: 40px; height: 40px; color: #b91c1c;">
+                        style="width: 40px; height: 40px; color: #b91c1c; border: 1px solid rgba(185, 28, 28, 0.1);">
                         <i class="bi bi-exclamation-triangle-fill fs-5"></i>
                     </div>
                     <div>
@@ -490,65 +472,36 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             </div>
         </div>
 
-        <!-- Alerts replaced by Modals -->
-
         <!-- Search & Filter Bar -->
         <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
             <!-- Search Bar -->
             <div class="flex-grow-1">
                 <form method="GET" id="searchForm" class="search-bar-custom">
                     <i class="bi bi-search text-muted fs-5 ms-1"></i>
-                    <input type="text" class="search-input-custom" name="search"
-                        placeholder="Search deleted documents..." value="<?= htmlspecialchars($search) ?>">
+                    <input type="text" class="search-input-custom" name="search" id="searchInput"
+                        placeholder="Search deleted documents or users..." value="<?= htmlspecialchars($search) ?>">
                     <button class="search-btn-custom" type="submit">
                         <i class="bi bi-search" style="font-size: 14px;"></i>
                     </button>
-                    <!-- Preserving other filters in search -->
-                    <?php if ($typeFilter): ?><input type="hidden" name="type"
-                            value="<?= htmlspecialchars($typeFilter) ?>"><?php endif; ?>
-                    <?php if ($dateFilter): ?><input type="hidden" name="date"
-                            value="<?= htmlspecialchars($dateFilter) ?>"><?php endif; ?>
-                    <?php if ($sortBy): ?><input type="hidden" name="sort"
-                            value="<?= htmlspecialchars($sortBy) ?>"><?php endif; ?>
-                    <?php if ($limit !== 4): ?><input type="hidden" name="limit"
-                            value="<?= htmlspecialchars($limit) ?>"><?php endif; ?>
+                    <!-- Keep hidden inputs for filters -->
+                    <?php if ($typeFilter): ?><input type="hidden" name="type" value="<?= htmlspecialchars($typeFilter) ?>"><?php endif; ?>
+                    <?php if ($sortBy): ?><input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>"><?php endif; ?>
+                    <?php if ($limit !== 4): ?><input type="hidden" name="limit" value="<?= htmlspecialchars($limit) ?>"><?php endif; ?>
                 </form>
             </div>
 
             <!-- Filters -->
             <div class="d-flex gap-2">
-                <!-- Type Filter Dropdown (Replaces Categories) -->
+                <!-- Type Filter Dropdown -->
                 <div class="dropdown">
                     <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <?= $typeFilter === 'file' ? 'Files' : ($typeFilter === 'user' ? 'Users' : 'All Types') ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm"
-                        style="font-size: 13px; z-index: 1055;">
-                        <li><a class="dropdown-item type-filter-item <?= empty($typeFilter) ? 'active' : '' ?>" href="#"
-                                data-value="">All Types</a></li>
-                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'file' ? 'active' : '' ?>"
-                                href="#" data-value="file">Files Only</a></li>
-                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'user' ? 'active' : '' ?>"
-                                href="#" data-value="user">Users Only</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 13px;">
+                        <li><a class="dropdown-item type-filter-item <?= empty($typeFilter) ? 'active' : '' ?>" href="?type=&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">All Types</a></li>
+                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'file' ? 'active' : '' ?>" href="?type=file&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">Files Only</a></li>
+                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'user' ? 'active' : '' ?>" href="?type=user&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">Users Only</a></li>
                     </ul>
-                </div>
-
-                <!-- Date Filter -->
-                <div class="dropdown">
-                    <button class="filter-pill <?= $dateFilter ? 'text-primary' : 'dropdown-toggle' ?>" type="button"
-                        data-bs-toggle="dropdown">
-                        <?= $dateFilter ? date('M d, Y', strtotime($dateFilter)) : 'Date' ?>
-                        <?php if ($dateFilter): ?>
-                            <i class="bi bi-x-lg ms-2 text-danger clear-date-icon" role="button"
-                                style="font-size: 12px;"></i>
-                        <?php endif; ?>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-sm p-3" style="width: 250px;">
-                        <label class="form-label small text-muted">Filter by Date</label>
-                        <input type="date" class="form-control form-control-sm mb-2" id="dateFilterInput"
-                            value="<?= htmlspecialchars($dateFilter) ?>">
-                        <!-- Removed clear button inside dropdown as requested -->
-                    </div>
                 </div>
 
                 <!-- Sort By -->
@@ -556,52 +509,47 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                     <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <?= $sortBy === 'oldest' ? 'Oldest First' : 'Newest First' ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm"
-                        style="font-size: 13px; z-index: 1055;">
-                        <li><a class="dropdown-item sort-filter-item <?= $sortBy === 'newest' ? 'active' : '' ?>"
-                                href="#" data-value="newest">Newest First</a></li>
-                        <li><a class="dropdown-item sort-filter-item <?= $sortBy === 'oldest' ? 'active' : '' ?>"
-                                href="#" data-value="oldest">Oldest First</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 13px;">
+                        <li><a class="dropdown-item <?= $sortBy === 'newest' ? 'active' : '' ?>" href="?sort=newest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&limit=<?= $limit ?>">Newest First</a></li>
+                        <li><a class="dropdown-item <?= $sortBy === 'oldest' ? 'active' : '' ?>" href="?sort=oldest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&limit=<?= $limit ?>">Oldest First</a></li>
                     </ul>
                 </div>
+                
+                <!-- Action Buttons: Restore All & Empty -->
+                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm d-flex align-items-center gap-2" style="font-size: 13px;" onclick="showRestoreAllModal()">
+                    <i class="bi bi-arrow-counterclockwise"></i> Restore All
+                </button>
+                <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-medium shadow-sm d-flex align-items-center gap-2" style="font-size: 13px;" onclick="showEmptyTrashModal()">
+                    <i class="bi bi-trash-fill"></i> Empty
+                </button>
             </div>
         </div>
 
-        <!-- Unified Trash Table -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-body p-0">
-                <table class="table trash-table mb-0">
+        <!-- Unified Table -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="table-responsive">
+                <table class="table trash-table mb-0 w-100">
                     <thead>
                         <tr>
-                            <th class="ps-4 py-3" style="width: 3%;">
+                            <th class="ps-4 py-3">
                                 <input type="checkbox" id="selectAll" class="form-check-input" style="cursor: pointer;">
                             </th>
-                            <th class="py-3 text-uppercase text-secondary"
-                                style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 5%;">ID</th>
-                            <th class="py-3 text-uppercase text-secondary"
-                                style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 32%;">Title</th>
-                            <th class="py-3 text-uppercase text-secondary"
-                                style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 18%;">Deleted By
-                            </th>
-                            <th class="py-3 text-uppercase text-secondary"
-                                style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 18%;">Date</th>
-                            <th class="py-3 text-uppercase text-secondary"
-                                style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 10%;">Size</th>
-                            <th class="text-end pe-4 py-3 text-uppercase text-secondary"
-                                style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; width: 10%;">Actions
-                            </th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">ID</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Item Name</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Deleted By</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Date Deleted</th>
+                            <th class="py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Size</th>
+                            <th class="text-end pe-4 py-3 text-uppercase text-secondary" style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($trashedItems)): ?>
                             <tr>
                                 <td colspan="7" class="text-center py-5">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <div class="bg-light rounded-circle p-3 mb-3">
-                                            <i class="bi bi-trash text-muted" style="font-size: 24px;"></i>
-                                        </div>
-                                        <h6 class="fw-bold text-secondary">Trash is empty</h6>
-                                        <p class="text-muted small mb-0">No deleted items found.</p>
+                                    <div class="d-flex flex-column align-items-center text-muted py-4">
+                                        <i class="bi bi-trash fs-1 mb-3 opacity-25"></i>
+                                        <h6 class="fw-bold">Trash is empty</h6>
+                                        <p class="small">No deleted items to display.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -609,63 +557,64 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                             <?php foreach ($trashedItems as $item): ?>
                                 <tr>
                                     <td class="ps-4 py-3">
-                                        <input type="checkbox" class="form-check-input item-checkbox"
+                                        <input type="checkbox" class="form-check-input item-checkbox shadow-none"
                                             data-id="<?= $item['id'] ?>" data-type="<?= $item['type'] ?>"
                                             style="cursor: pointer;">
                                     </td>
-                                    <td class="py-3 text-muted"
-                                        style="font-family: monospace; font-size: 14px; font-weight: 500;">
+                                    <td class="py-3 text-muted" style="font-family: monospace; font-size: 14px; font-weight: 500;">
                                         #<?= $item['id'] ?>
                                     </td>
                                     <td class="py-3">
                                         <div class="d-flex align-items-center gap-3">
-                                            <?php if ($item['type'] === 'file'): ?>
-                                                <i class="bi bi-file-earmark-text text-secondary opacity-75 fs-5"></i>
-                                                <div class="fw-medium text-dark" style="font-size: 14px;">
+                                            <div class="trash-type-icon d-flex align-items-center justify-content-center rounded-3 bg-light overflow-hidden" style="width: 36px; height: 36px; color: #6B7280;">
+                                                <?php if (!empty($item['photo'])): ?>
+                                                    <img src="<?= APP_URL ?>/<?= htmlspecialchars($item['photo']) ?>" alt="Thumbnail" class="trash-item-photo" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <?php else: ?>
+                                                    <i class="bi <?= $item['type'] === 'file' ? 'bi-file-earmark-text' : 'bi-person' ?> fs-5"></i>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div>
+                                                <div class="trash-item-name">
                                                     <?php
-                                                    $ht = htmlspecialchars($item['title']);
+                                                    $title = !empty($item['title']) ? $item['title'] : ($item['email'] ?? 'Unnamed');
                                                     if ($search) {
-                                                        $ht = preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', $ht);
+                                                        echo preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', htmlspecialchars($title));
+                                                    } else {
+                                                        echo htmlspecialchars($title);
                                                     }
-                                                    echo $ht;
                                                     ?>
                                                 </div>
-                                            <?php else: ?>
-                                                <i class="bi bi-person text-secondary opacity-75 fs-5"></i>
-                                                <div class="fw-medium text-dark" style="font-size: 14px;">
-                                                    <?php
-                                                    $ht = htmlspecialchars($item['title']);
-                                                    if ($search) {
-                                                        $ht = preg_replace('/(' . preg_quote(htmlspecialchars($search), '/') . ')/i', '<mark class="pub-hl">$1</mark>', $ht);
-                                                    }
-                                                    echo $ht;
-                                                    ?>
+                                                <div class="trash-item-meta">
+                                                    <?= strtoupper($item['type']) ?>
+                                                    <?php if ($item['type'] === 'user' && !empty($item['email'])): ?>
+                                                        • <?= htmlspecialchars($item['email']) ?>
+                                                    <?php endif; ?>
                                                 </div>
-                                            <?php endif; ?>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="py-3">
-                                        <div class="text-dark" style="font-size: 14px;">
-                                            <?= htmlspecialchars($item['deleted_by_name'] ?? 'Unknown') ?>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-dark" style="font-size: 14px;"><?= htmlspecialchars($item['deleted_by_name'] ?? 'Unknown Admin') ?></span>
                                         </div>
                                     </td>
                                     <td class="py-3 text-muted" style="font-size: 13px;">
-                                        <?= date('M d, Y, H:i', strtotime($item['deleted_at'])) ?>
+                                        <?= date('d M Y, H:i', strtotime($item['deleted_at'])) ?>
                                     </td>
-                                    <td class="py-3 text-muted" style="font-size: 14px;">
-                                        <?= $item['type'] === 'file' ? formatFileSize($item['file_size'] ?? 0) : '-' ?>
+                                    <td class="py-3 text-muted" style="font-size: 13px;">
+                                        <?= $item['type'] === 'file' ? formatFileSize($item['file_size'] ?? 0) : '—' ?>
                                     </td>
                                     <td class="text-end pe-4 py-3">
                                         <div class="d-flex justify-content-end gap-2">
-                                            <button type="button" class="trash-action-btn restore"
-                                                onclick="showRestoreModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'])) ?>', '<?= $item['type'] ?>')"
+                                            <button type="button" class="btn-trash-action btn-restore"
+                                                onclick="showRestoreModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'] ?? ($item['email'] ?? ''))) ?>', '<?= $item['type'] ?>')"
                                                 title="Restore">
                                                 <i class="bi bi-clock-history"></i>
                                             </button>
-                                            <button type="button" class="trash-action-btn delete"
-                                                onclick="showDeleteModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'])) ?>', '<?= $item['type'] ?>')"
+                                            <button type="button" class="btn-trash-action btn-delete-perm"
+                                                onclick="showDeleteModal(<?= $item['id'] ?>, '<?= htmlspecialchars(addslashes($item['title'] ?? ($item['email'] ?? ''))) ?>', '<?= $item['type'] ?>')"
                                                 title="Delete Permanently">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-trash3"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -674,132 +623,329 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
 
-                <!-- Pagination -->
-                <div class="px-4 py-4 d-flex justify-content-between align-items-center">
-                    <!-- Limit Selector and Showing Text -->
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="text-secondary small fw-medium">Rows per page:</span>
-                        <select class="rows-per-page-select" id="rowsPerPage">
-                            <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
-                            <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
-                            <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
-                        </select>
+            <!-- Pagination -->
+            <div class="px-4 py-4 d-flex justify-content-between align-items-center border-top">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small fw-medium">Rows per page:</span>
+                    <select class="rows-per-page-select" id="rowsPerPage">
+                        <option value="4" <?= $limit === 4 ? 'selected' : '' ?>>4</option>
+                        <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
+                        <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
+                    </select>
+                    <span class="text-secondary small ms-2">
+                        Showing <?= ($offset + 1) ?>-<?= min($offset + $limit, $totalItems) ?> of <?= $totalItems ?> items
+                    </span>
+                </div>
 
-                        <span class="text-secondary small ms-2">
-                            Showing <?= ($offset + 1) ?>-<?= min($offset + $limit, $totalItems) ?> of <?= $totalItems ?>
-                            documents
-                        </span>
-                    </div>
+                <div class="d-flex align-items-center gap-1">
+                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&search=<?= urlencode($search) ?>"
+                        class="pagination-circle <?= $page <= 1 ? 'disabled' : '' ?>">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
 
-                    <!-- Circular Pagination Controls -->
-                    <div class="d-flex align-items-center gap-1">
-                        <!-- Previous Page -->
-                        <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
-                            class="pagination-circle <?= $page <= 1 ? 'disabled' : '' ?>">
-                            <i class="bi bi-chevron-left"></i>
+                    <?php
+                    $totalPages = ceil($totalItems / $limit);
+                    $startPage = max(1, $page - 2);
+                    $endPage = min($totalPages, $page + 2);
+                    for ($i = $startPage; $i <= $endPage; $i++): ?>
+                        <a href="?page=<?= $i ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&search=<?= urlencode($search) ?>"
+                            class="pagination-circle <?= $i == $page ? 'active' : '' ?>">
+                            <?= $i ?>
                         </a>
+                    <?php endfor; ?>
 
-                        <!-- Page Numbers -->
-                        <?php
-                        $startPage = max(1, $page - 2);
-                        $endPage = min(ceil($totalItems / $limit), $page + 2);
-
-                        for ($i = $startPage; $i <= $endPage; $i++):
-                            ?>
-                            <a href="?page=<?= $i ?>&limit=<?= $limit ?>"
-                                class="pagination-circle <?= $i == $page ? 'active' : '' ?>">
-                                <?= $i ?>
-                            </a>
-                        <?php endfor; ?>
-
-                        <?php if (ceil($totalItems / $limit) > $endPage): ?>
-                            <span class="text-muted small px-1">...</span>
-                            <a href="?page=<?= ceil($totalItems / $limit) ?>&limit=<?= $limit ?>" class="pagination-circle">
-                                <?= ceil($totalItems / $limit) ?>
-                            </a>
-                        <?php endif; ?>
-
-                        <!-- Next Page -->
-                        <a href="?page=<?= min(max(1, ceil($totalItems / $limit)), $page + 1) ?>&limit=<?= $limit ?>"
-                            class="pagination-circle <?= $page >= ceil($totalItems / $limit) ? 'disabled' : '' ?>">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </div>
+                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&search=<?= urlencode($search) ?>"
+                        class="pagination-circle <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
                 </div>
             </div>
         </div>
-
-        <!-- Footer Buttons -->
-        <?php if (!empty($trashedItems)): ?>
-            <div class="d-flex justify-content-between align-items-center gap-3 mt-4">
-                <!-- Restore Selected Button (Hidden by default) -->
-                <button type="button" id="restoreSelectedBtn"
-                    class="btn btn-primary rounded-3 px-4 py-2 fw-medium shadow-sm"
-                    style="display: none; background-color: #3A9AFF; border-color: #3A9AFF;"
-                    onclick="showRestoreSelectedModal()">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i>Restore Selected (<span id="selectedCount">0</span>)
-                </button>
-
-                <div class="d-flex gap-3 ms-auto">
-                    <button type="button" class="btn btn-restore-all rounded-3 px-4 py-2 fw-medium shadow-sm"
-                        onclick="showRestoreAllModal()">
-                        <i class="bi bi-arrow-counterclockwise me-2"></i>Restore All
-                    </button>
-                    <button type="button" class="btn btn-empty-trash rounded-3 px-4 py-2 fw-medium shadow-sm"
-                        onclick="showEmptyTrashModal()">
-                        <i class="bi bi-trash-fill me-2"></i>Empty Trash
-                    </button>
-                </div>
+        
+        <!-- Selection Banner -->
+        <div id="selectionBanner" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 bg-dark text-white rounded-pill px-4 py-3 shadow-lg d-flex align-items-center gap-4" style="display: none !important; z-index: 1050; min-width: 400px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-check-lg"></i>
+                </span>
+                <span class="fw-semibold"><span id="selectedDisplayCount">0</span> items selected</span>
             </div>
-        <?php endif; ?>
+            <div class="vr opacity-25" style="height: 24px;"></div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium" onclick="showRestoreSelectedModal()">
+                    Restore
+                </button>
+                <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 fw-medium" onclick="showDeleteSelectedModal()">
+                    Delete
+                </button>
+                <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-medium" id="cancelSelection">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
     </main>
 
-    <!-- Generic Success Modal -->
-    <div class="modal fade" id="successModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content border-0 shadow" style="border-radius: 16px;">
-                <div class="modal-body text-center p-4">
-                    <div class="mb-3">
-                        <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center mx-auto"
-                            style="width: 64px; height: 64px;">
-                            <i class="bi bi-check-lg text-success" style="font-size: 32px;"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Success</h5>
-                    <p class="text-muted small mb-4" id="successMessage">Operation completed successfully.</p>
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modals (Redesigned) -->
 
-    <!-- Restore Modal -->
-    <div class="modal fade" id="restoreModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-body p-4 text-center">
-                    <div class="mb-3 text-primary">
-                        <i class="bi bi-arrow-counterclockwise display-4"></i>
+    <!-- Generic Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-standard">
+            <div class="modal-content modal-minimalist shadow-lg border-0">
+                <div class="modal-header border-0 pb-0 position-relative">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-4 shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div id="modalIconHeader" class="modal-icon mx-auto">
+                        <i id="modalIcon" class="bi"></i>
                     </div>
-                    <h5 class="fw-bold mb-2">Restore Item?</h5>
-                    <p class="text-muted small mb-4">Are you sure you want to restore "<span
-                            id="restoreItemTitle"></span>"?</p>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="restore">
-                        <input type="hidden" name="id" id="restoreItemId">
-                        <input type="hidden" name="type" id="restoreItemType">
-                        <div class="d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-light rounded-pill px-4"
-                                data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4"
-                                style="background-color: #3B82F6; border-color: #3B82F6;">Yes, Restore</button>
-                        </div>
+                </div>
+                <div class="modal-body text-center px-4">
+                    <h5 class="modal-title fw-bold mb-3" id="modalTitle">Confirm Action</h5>
+                    <p class="text-muted" id="modalMessage"></p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4 pt-0 gap-3">
+                    <button type="button" class="btn btn-cancel-minimal" data-bs-dismiss="modal">Cancel</button>
+                    <form id="modalForm" method="POST" class="d-inline">
+                        <input type="hidden" name="action" id="modalAction">
+                        <input type="hidden" name="id" id="modalItemId">
+                        <input type="hidden" name="type" id="modalItemType">
+                        <input type="hidden" name="items" id="modalItemsJson">
+                        <button type="submit" id="modalSubmitBtn" class="btn">Confirm</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm-standard">
+            <div class="modal-content modal-minimalist shadow-lg border-0">
+                <div class="modal-body text-center p-4">
+                    <div class="modal-icon icon-success mx-auto mb-3">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Success!</h5>
+                    <p class="text-muted small mb-4" id="successMessage">Operation completed successfully.</p>
+                    <button type="button" class="btn btn-dark rounded-pill px-4 w-100" data-bs-dismiss="modal">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php include __DIR__ . '/../views/layouts/footer.php'; ?>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Rows per page
+            const rowsSelect = document.getElementById('rowsPerPage');
+            if (rowsSelect) {
+                rowsSelect.addEventListener('change', function() {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('limit', this.value);
+                    url.searchParams.set('page', '1');
+                    window.location.href = url.toString();
+                });
+            }
+
+            // Selection Logic
+            const selectAll = document.getElementById('selectAll');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            const selectionBanner = document.getElementById('selectionBanner');
+            const selectedDisplayCount = document.getElementById('selectedDisplayCount');
+            const cancelSelection = document.getElementById('cancelSelection');
+
+            function updateSelectionUI() {
+                const checked = document.querySelectorAll('.item-checkbox:checked');
+                const count = checked.length;
+                
+                if (count > 0) {
+                    selectedDisplayCount.textContent = count;
+                    selectionBanner.style.setProperty('display', 'flex', 'important');
+                } else {
+                    selectionBanner.style.setProperty('display', 'none', 'important');
+                }
+                
+                if (selectAll) {
+                    const allChecked = Array.from(itemCheckboxes).every(checkbox => checkbox.checked);
+                    const someChecked = Array.from(itemCheckboxes).some(checkbox => checkbox.checked);
+                    selectAll.checked = allChecked;
+                    selectAll.indeterminate = someChecked && !allChecked;
+                }
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => cb.checked = this.checked);
+                    updateSelectionUI();
+                });
+            }
+
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectionUI);
+            });
+
+            if (cancelSelection) {
+                cancelSelection.addEventListener('click', function() {
+                    itemCheckboxes.forEach(cb => cb.checked = false);
+                    if (selectAll) {
+                        selectAll.checked = false;
+                        selectAll.indeterminate = false;
+                    }
+                    updateSelectionUI();
+                });
+            }
+
+            // Modals Logic
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalAction = document.getElementById('modalAction');
+            const modalItemId = document.getElementById('modalItemId');
+            const modalItemType = document.getElementById('modalItemType');
+            const modalSubmitBtn = document.getElementById('modalSubmitBtn');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalIconHeader = document.getElementById('modalIconHeader');
+
+            window.showRestoreModal = function(id, title, type) {
+                modalTitle.textContent = 'Restore Item?';
+                modalMessage.innerHTML = `Are you sure you want to restore <strong>"${title}"</strong>? It will be moved back to the active repository.`;
+                modalAction.value = 'restore';
+                modalItemId.value = id;
+                modalItemType.value = type;
+                modalSubmitBtn.className = 'btn btn-restore-confirm px-4 w-100';
+                modalSubmitBtn.textContent = 'Restore Item';
+                modalIcon.className = 'bi bi-arrow-clockwise';
+                modalIconHeader.className = 'modal-icon icon-primary mx-auto';
+                confirmModal.show();
+            };
+
+            window.showDeleteModal = function(id, title, type) {
+                modalTitle.textContent = 'Permanent Delete?';
+                modalMessage.innerHTML = `Confirm permanent deletion of <strong>"${title}"</strong>? This action <span class="text-danger fw-bold">CANNOT</span> be undone.`;
+                modalAction.value = 'delete';
+                modalItemId.value = id;
+                modalItemType.value = type;
+                modalSubmitBtn.className = 'btn btn-delete-confirm px-4 w-100';
+                modalSubmitBtn.textContent = 'Delete Permanently';
+                modalIcon.className = 'bi bi-trash3';
+                modalIconHeader.className = 'modal-icon icon-danger mx-auto';
+                confirmModal.show();
+            };
+
+            window.showRestoreAllModal = function() {
+                modalTitle.textContent = 'Restore Everything?';
+                modalMessage.innerHTML = 'Are you sure you want to restore <span class="fw-bold">ALL</span> items in the trash? They will be returned to their original locations.';
+                modalAction.value = 'restore_all';
+                modalItemId.value = '';
+                modalItemType.value = '';
+                modalSubmitBtn.className = 'btn btn-restore-confirm px-4 w-100';
+                modalSubmitBtn.textContent = 'Restore All';
+                modalIcon.className = 'bi bi-arrow-clockwise';
+                modalIconHeader.className = 'modal-icon icon-primary mx-auto';
+                confirmModal.show();
+            };
+
+            window.showEmptyTrashModal = function() {
+                modalTitle.textContent = 'Empty Trash?';
+                modalMessage.innerHTML = 'Are you sure you want to permanently delete <span class="fw-bold">ALL</span> items in the trash? This action <span class="text-danger fw-bold">CANNOT</span> be undone.';
+                modalAction.value = 'empty_trash';
+                modalItemId.value = '';
+                modalItemType.value = '';
+                modalSubmitBtn.className = 'btn btn-delete-confirm px-4 w-100';
+                modalSubmitBtn.textContent = 'Empty Trash Now';
+                modalIcon.className = 'bi bi-trash3';
+                modalIconHeader.className = 'modal-icon icon-danger mx-auto';
+                confirmModal.show();
+            };
+
+            window.showRestoreSelectedModal = function() {
+                const checked = document.querySelectorAll('.item-checkbox:checked');
+                const items = Array.from(checked).map(cb => ({ id: cb.dataset.id, type: cb.dataset.type }));
+                
+                modalTitle.textContent = 'Restore Selected?';
+                modalMessage.innerHTML = `Are you sure you want to restore the <span class="fw-bold">${items.length}</span> selected items?`;
+                modalAction.value = 'restore_selected';
+                document.getElementById('modalItemsJson').value = JSON.stringify(items);
+                modalSubmitBtn.className = 'btn btn-restore-confirm px-4 w-100';
+                modalSubmitBtn.textContent = 'Restore Selected';
+                modalIcon.className = 'bi bi-arrow-clockwise';
+                modalIconHeader.className = 'modal-icon icon-primary mx-auto';
+                confirmModal.show();
+            };
+
+            window.showDeleteSelectedModal = function() {
+                const checked = document.querySelectorAll('.item-checkbox:checked');
+                const items = Array.from(checked).map(cb => ({ id: cb.dataset.id, type: cb.dataset.type }));
+                
+                modalTitle.textContent = 'Delete Selected?';
+                modalMessage.innerHTML = `Confirm permanent deletion of the <span class="fw-bold">${items.length}</span> selected items? This action <span class="text-danger fw-bold">CANNOT</span> be undone.`;
+                modalAction.value = 'delete_selected';
+                document.getElementById('modalItemsJson').value = JSON.stringify(items);
+                modalSubmitBtn.className = 'btn btn-delete-confirm px-4 w-100';
+                modalSubmitBtn.textContent = 'Delete Permanently';
+                modalIcon.className = 'bi bi-trash3';
+                modalIconHeader.className = 'modal-icon icon-danger mx-auto';
+                confirmModal.show();
+            };
+
+            // Success handling via URL params
+            const successParam = new URLSearchParams(window.location.search).get('success');
+            if (successParam) {
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                const successMsg = document.getElementById('successMessage');
+                
+                const messages = {
+                    'restored': 'The item has been restored successfully.',
+                    'deleted': 'The item was permanently removed.',
+                    'restored_all': 'All items have been restored.',
+                    'emptied': 'Trash repository has been cleared.',
+                    'restored_selected': 'Selected items have been restored.',
+                    'deleted_selected': 'Selected items were permanently deleted.'
+                };
+                
+                if (messages[successParam]) {
+                    successMsg.textContent = messages[successParam];
+                    successModal.show();
+                    // Clean URL
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('success');
+                    url.searchParams.delete('count');
+                    window.history.replaceState({}, document.title, url.toString());
+                }
+            }
+
+            // Live Search with Debounce
+            let searchTimer;
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => {
+                        this.closest('form').submit();
+                    }, 600);
+                });
+                
+                if (searchInput.value) {
+                    searchInput.focus();
+                    const len = searchInput.value.length;
+                    searchInput.setSelectionRange(len, len);
+                }
+            }
+
+            // Filter helpers
+            window.updateFilter = function(name, value) {
+                const url = new URL(window.location.href);
+                url.searchParams.set(name, value);
+                url.searchParams.set('page', '1');
+                window.location.href = url.toString();
+            };
+        });
+    </script>
+</body>
+
+</html>
 
     <!-- Delete Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1">

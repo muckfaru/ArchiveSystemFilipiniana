@@ -111,7 +111,8 @@ function getActionClass($action)
         'permanent_delete' => 'action-delete',
         'login' => 'action-edit',
         'logout' => 'action-edit',
-        'settings_update' => 'action-edit'
+        'settings_update' => 'action-edit',
+        'export_report' => 'badge-export'
     ];
     return $classes[$action] ?? '';
 }
@@ -129,7 +130,8 @@ function getActionLabel($action)
         'permanent_delete' => 'Delete',
         'login' => 'Login',
         'logout' => 'Logout',
-        'settings_update' => 'Edited'
+        'settings_update' => 'Edited',
+        'export_report' => 'Export Report'
     ];
     return $labels[$action] ?? ucwords(str_replace('_', ' ', $action));
 }
@@ -296,6 +298,12 @@ function getActionLabel($action)
             color: #D97706;
         }
 
+        .badge-export {
+            background: linear-gradient(135deg, #e0d9ff 0%, #ccf5f1 100%);
+            color: #5b21b6;
+            border: 1px solid #c4b5fd;
+        }
+
         .pagination-circle {
             width: 32px;
             height: 32px;
@@ -422,6 +430,9 @@ function getActionLabel($action)
                         <li><a class="dropdown-item <?= $categoryFilter === 'delete' ? 'active' : '' ?>"
                                 href="?category=delete&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">Delete
                                 File</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item <?= $categoryFilter === 'export_report' ? 'active' : '' ?>"
+                                href="?category=export_report&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">Export Report</a></li>
                     </ul>
                 </div>
 
@@ -485,7 +496,10 @@ function getActionLabel($action)
                                         $actionLabel = 'UPDATE';
                                         $badgeClass = 'badge-update';
 
-                                        if (strpos($actionRaw, 'create') !== false || strpos($actionRaw, 'upload') !== false || strpos($actionRaw, 'restore') !== false) {
+                                        if ($actionRaw === 'export_report') {
+                                            $actionLabel = 'EXPORT';
+                                            $badgeClass = 'badge-export';
+                                        } elseif (strpos($actionRaw, 'create') !== false || strpos($actionRaw, 'upload') !== false || strpos($actionRaw, 'restore') !== false) {
                                             $actionLabel = 'CREATE';
                                             $badgeClass = 'badge-create';
                                         } elseif (strpos($actionRaw, 'delete') !== false || strpos($actionRaw, 'permanent') !== false) {

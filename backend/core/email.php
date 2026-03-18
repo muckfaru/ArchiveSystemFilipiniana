@@ -28,8 +28,11 @@ function sendEmail($to, $subject, $body)
     $mail = new PHPMailer(true);
 
     try {
-        // Enable verbose debug output (comment out in production)
-        // $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+        // Log SMTP debug output to PHP error log for troubleshooting
+        $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+        $mail->Debugoutput = function($str, $level) {
+            error_log("[PHPMailer L$level] " . trim($str));
+        };
         
         // SMTP Configuration
         $mail->isSMTP();

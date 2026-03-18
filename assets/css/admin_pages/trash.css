@@ -1,0 +1,267 @@
+/**
+ * Trash Page Styles
+ * Archive System - Quezon City Public Library
+ */
+
+/* ==================== Sidebar Consistency Fix ==================== */
+body .sidebar-title {
+    font-size: 13px !important;
+}
+
+body .nav-link {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+body .nav-link span {
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+body .nav-link i {
+    font-size: 18px !important;
+}
+
+body .nav-section-title {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+}
+
+/* ==================== Trash Page Specifics ==================== */
+
+/* Table Layout Fix */
+.trash-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.trash-table th,
+.trash-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Column Width Enforcement */
+.trash-table th:nth-child(1),
+.trash-table td:nth-child(1) {
+    width: 60px;
+}
+
+.trash-table th:nth-child(2),
+.trash-table td:nth-child(2) {
+    width: 80px;
+}
+
+.trash-table th:nth-child(3),
+.trash-table td:nth-child(3) {
+    width: 25%;
+}
+
+.trash-table th:nth-child(4),
+.trash-table td:nth-child(4) {
+    width: 15%;
+}
+
+.trash-table th:nth-child(5),
+.trash-table td:nth-child(5) {
+    width: 22%;
+    white-space: normal;
+}
+
+.trash-table th:nth-child(6),
+.trash-table td:nth-child(6) {
+    width: 10%;
+}
+
+.trash-table th:nth-child(7),
+.trash-table td:nth-child(7) {
+    width: 15%;
+}
+
+/* Day Badges / Indicators */
+.trash-item-name {
+    font-weight: 600;
+    color: #1F2937;
+    font-size: 14px;
+}
+
+.trash-item-meta {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+/* Action Buttons */
+.btn-trash-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border: 1px solid #E5E7EB;
+    background: white;
+}
+
+.btn-trash-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-restore {
+    color: #2563EB;
+}
+
+.btn-restore:hover {
+    background: #EFF6FF;
+    border-color: #BFDBFE;
+}
+
+.btn-delete-perm {
+    color: #DC2626;
+}
+
+.btn-delete-perm:hover {
+    background: #FEF2F2;
+    border-color: #FECACA;
+}
+
+/* Dark Mode Overrides */
+body.dark-mode .trash-table td {
+    background-color: transparent !important;
+    border-bottom-color: var(--border-light) !important;
+}
+
+body.dark-mode .trash-item-name {
+    color: var(--text-primary) !important;
+}
+
+body.dark-mode .trash-item-meta {
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode .btn-trash-action {
+    background: var(--bg-light);
+    border-color: var(--border-light);
+}
+
+/* Thumbnail Styling */
+.trash-item-photo {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+/* Minimalist Modals (Mockup-Based) */
+.modal-standard {
+    width: 100%;
+    max-width: 440px !important;
+}
+
+.modal-sm-standard {
+    width: 100%;
+    max-width: 380px !important;
+}
+
+.modal-minimalist,
+.modal-sm-minimalist {
+    border-radius: 32px !important;
+    padding: 2rem 1.5rem !important;
+    border: none !important;
+}
+
+.modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50% !important;
+    /* Circular for mockups */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.icon-primary {
+    background: #EBF2FE;
+    /* Light blue */
+    color: #0061F2;
+}
+
+.icon-danger {
+    background: #FFECEB;
+    /* Light red */
+    color: #D30000;
+}
+
+.icon-success {
+    background: #ECFDF5;
+    color: #059669;
+}
+
+.modal-minimalist .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-top: 1rem;
+}
+
+.modal-minimalist .modal-body p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+/* Modal Buttons */
+.modal-minimalist .btn {
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel-minimal {
+    background: #F5F5F7;
+    color: #1A1A1A;
+    border: none;
+}
+
+.btn-cancel-minimal:hover {
+    background: #EDEDEF;
+}
+
+.btn-restore-confirm {
+    background: #0061F2;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 97, 242, 0.2);
+}
+
+.btn-restore-confirm:hover {
+    background: #0052D1;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 97, 242, 0.3);
+}
+
+.btn-delete-confirm {
+    background: #C40000;
+    color: white;
+    box-shadow: 0 4px 12px rgba(196, 0, 0, 0.2);
+}
+
+.btn-delete-confirm:hover {
+    background: #A30000;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(196, 0, 0, 0.3);
+}
+
+.modal-minimalist .btn-close {
+    background-size: 0.8rem;
+    opacity: 0.5;
+}
+
+.modal-minimalist .btn-close:hover {
+    opacity: 1;
+}

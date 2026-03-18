@@ -30,22 +30,37 @@ include __DIR__ . '/layouts/header.php';
 
     /* Nav tabs */
     .md-tabs {
-        border-bottom: 2px solid #E5E7EB;
         margin-bottom: 28px;
         display: flex;
-        gap: 8px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 24px;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .md-tabs .nav-item {
+        width: auto !important;
+        margin: 0;
+        padding: 0;
     }
 
     .md-tabs .nav-link {
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 16px;
+        font-weight: 700;
         color: #6B7280;
         border: none;
-        border-bottom: 3px solid transparent;
-        padding: 10px 20px;
-        margin-bottom: -2px;
+        border-bottom: 2px solid transparent;
+        padding: 10px 0;
+        margin-bottom: -1px;
         border-radius: 0;
-        transition: color .2s;
+        transition: color .2s, border-color .2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .md-tabs .nav-link i {
+        font-size: 18px;
     }
 
     .md-tabs .nav-link.active {
@@ -55,7 +70,7 @@ include __DIR__ . '/layouts/header.php';
     }
 
     .md-tabs .nav-link:hover:not(.active) {
-        color: #374151;
+        color: #4B5563;
     }
 
     /* Two-panel layout */
@@ -326,23 +341,23 @@ include __DIR__ . '/layouts/header.php';
     /* Modal preview */
     .md-preview-modal {
         background: #FFFFFF;
-        border-radius: 14px;
+        border-radius: 12px;
         overflow: hidden;
         border: 1px solid #E5E7EB;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, .10);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
     }
 
     .md-preview-modal-header {
         display: flex;
         align-items: center;
-        gap: 14px;
-        padding: 16px 18px;
-        border-bottom: 1px solid #F3F4F6;
+        gap: 16px;
+        padding: 24px;
+        border-bottom: 1px solid #E5E7EB;
     }
 
     .md-preview-modal-thumb {
-        width: 52px;
-        height: 68px;
+        width: 64px;
+        height: 64px;
         border-radius: 8px;
         background: #E5E7EB;
         flex-shrink: 0;
@@ -351,7 +366,7 @@ include __DIR__ . '/layouts/header.php';
         align-items: center;
         justify-content: center;
         color: #9CA3AF;
-        font-size: 22px;
+        font-size: 24px;
     }
 
     .md-preview-modal-thumb img {
@@ -360,32 +375,32 @@ include __DIR__ . '/layouts/header.php';
         object-fit: cover;
     }
 
-    .file-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #111827;
-        margin-bottom: 2px;
-    }
-
     .file-cat {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: .7px;
+        letter-spacing: .5px;
         color: #6B7280;
+        margin-bottom: 4px;
+    }
+
+    .file-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 0;
     }
 
     .md-preview-modal-fields {
-        padding: 14px 18px;
+        padding: 8px 24px 24px;
     }
 
     .md-modal-field-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4px;
-        padding: 7px 0;
-        border-bottom: 1px solid #F9FAFB;
-        font-size: 11.5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #F3F4F6;
     }
 
     .md-modal-field-row:last-child {
@@ -394,16 +409,18 @@ include __DIR__ . '/layouts/header.php';
 
     .md-modal-field-label {
         color: #9CA3AF;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: .5px;
-        font-size: 10px;
+        font-size: 11px;
     }
 
     .md-modal-field-value {
         color: #1F2937;
         font-weight: 500;
+        font-size: 13px;
         text-align: right;
+        max-width: 60%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -461,12 +478,12 @@ include __DIR__ . '/layouts/header.php';
     <ul class="nav md-tabs" id="mdTabs">
         <li class="nav-item">
             <a class="nav-link active" href="#" data-tab="card">
-                <i class="bi bi-grid-3x3-gap me-1"></i>Basic Viewing
+                <i class="bi bi-eye-fill"></i>Basic Viewing
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#" data-tab="modal">
-                <i class="bi bi-layout-text-sidebar me-1"></i>Detailed Modal
+                <i class="bi bi-layers-fill"></i>Detailed Modal
             </a>
         </li>
     </ul>
@@ -565,7 +582,7 @@ include __DIR__ . '/layouts/header.php';
                                         <?php endif; ?>
                                     </div>
                                     <div>
-                                        <div class="file-cat">Document</div>
+                                        <div class="file-cat">DOCUMENT</div>
                                         <div class="file-title">
                                             <?= $sampleFile ? htmlspecialchars($sampleFile['title']) : 'Sample Document Title' ?>
                                         </div>

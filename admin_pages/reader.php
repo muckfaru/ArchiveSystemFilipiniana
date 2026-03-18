@@ -10,7 +10,16 @@ require_once __DIR__ . '/../backend/core/auth.php';
 require_once __DIR__ . '/../backend/core/functions.php';
 require_once __DIR__ . '/../backend/core/analytics.php';
 
-$fileId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$rawId = isset($_GET['id']) ? $_GET['id'] : '';
+
+// Attempt to decrypt if it looks like an encrypted string (not purely numeric)
+if (!is_numeric($rawId) && !empty($rawId)) {
+    $decryptedId = url_decrypt($rawId);
+    $fileId = $decryptedId !== null ? intval($decryptedId) : 0;
+} else {
+    // Fallback for already numeric IDs (e.g. older bookmarks)
+    $fileId = intval($rawId);
+}
 
 if (!$fileId) {
     header('Location: dashboard.php');

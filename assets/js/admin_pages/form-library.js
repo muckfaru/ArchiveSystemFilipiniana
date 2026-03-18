@@ -6,11 +6,11 @@
 const FormLibrary = {
     currentFilter: 'all',
     searchQuery: '',
-    
+
     init() {
         this.bindEvents();
     },
-    
+
     bindEvents() {
         // Create new form
         const createBtn = document.getElementById('createFormBtn');
@@ -19,7 +19,7 @@ const FormLibrary = {
                 window.location.href = 'form-builder.php';
             });
         }
-        
+
         // Filter tabs
         document.querySelectorAll('#formFilterTabs .filter-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -27,7 +27,7 @@ const FormLibrary = {
                 this.setFilter(e.target.dataset.filter);
             });
         });
-        
+
         // Search
         const searchInput = document.getElementById('formSearchInput');
         if (searchInput) {
@@ -36,7 +36,7 @@ const FormLibrary = {
                 this.applyFilters();
             });
         }
-        
+
         // Delegate events for dynamic elements
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-form')) {
@@ -69,11 +69,25 @@ const FormLibrary = {
                 this.deleteForm(formId);
             }
         });
+
+        // Toggle handling
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('set-active-toggle')) {
+                const formId = e.target.dataset.formId;
+                if (e.target.checked) {
+                    this.setActiveForm(formId, e.target);
+                } else {
+                    // Prevent unchecking the active one if it's already active
+                    // (The server logic usually handles only activation)
+                    e.target.checked = true;
+                }
+            }
+        });
     },
-    
+
     setFilter(filter) {
         this.currentFilter = filter;
-        
+
         // Update active tab
         document.querySelectorAll('#formFilterTabs .filter-tab').forEach(tab => {
             tab.classList.remove('active');
@@ -81,28 +95,28 @@ const FormLibrary = {
                 tab.classList.add('active');
             }
         });
-        
+
         this.applyFilters();
     },
-    
+
     applyFilters() {
         const rows = document.querySelectorAll('.form-template-row');
         const table = document.querySelector('.forms-table tbody');
         let visibleCount = 0;
-        
+
         rows.forEach(row => {
             const status = row.dataset.status;
             const name = row.dataset.name;
             const description = row.dataset.description;
-            
+
             // Check filter
             let matchesFilter = this.currentFilter === 'all' || status === this.currentFilter;
-            
+
             // Check search
-            let matchesSearch = this.searchQuery === '' || 
-                               name.includes(this.searchQuery) || 
-                               description.includes(this.searchQuery);
-            
+            let matchesSearch = this.searchQuery === '' ||
+                name.includes(this.searchQuery) ||
+                description.includes(this.searchQuery);
+
             if (matchesFilter && matchesSearch) {
                 row.classList.remove('d-none');
                 visibleCount++;
@@ -110,11 +124,11 @@ const FormLibrary = {
                 row.classList.add('d-none');
             }
         });
-        
+
         // Show/hide empty state and table
         const noFormsMessage = document.getElementById('noFormsMessage');
         const tableContainer = document.querySelector('.table-container');
-        
+
         if (noFormsMessage && tableContainer) {
             if (visibleCount === 0 && rows.length > 0) {
                 tableContainer.querySelector('table').classList.add('d-none');
@@ -125,32 +139,53 @@ const FormLibrary = {
             }
         }
     },
-    
-    async setActiveForm(formId) {
-        if (!confirm('Set this form as active? The current active form will be deactivated.')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch('../backend/api/form-templates.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'set_active', form_id: formId })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                location.reload();
-            } else {
-                alert('Error: ' + result.message);
+
+    async setActiveForm(formId, toggleElement = null) {
+        const modalEl = document.getElementById('confirmActiveModal');
+        if (!modalEl) return;
+
+        const modal = new bootstrap.Modal(modalEl);
+        const confirmBtn = document.getElementById('confirmActiveBtn');
+
+        // Update confirm button to handle this specific formId
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        modal.show();
+
+        // Reset toggle if modal is closed without confirmation
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            if (toggleElement && !toggleElement.disabled) {
+                toggleElement.checked = false;
             }
-        } catch (error) {
-            console.error('Error setting active form:', error);
-            alert('An error occurred');
-        }
+        }, { once: true });
+
+        newConfirmBtn.addEventListener('click', async () => {
+            modal.hide();
+
+            try {
+                const response = await fetch('../backend/api/form-templates.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'set_active', form_id: formId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                    if (toggleElement) toggleElement.checked = false;
+                }
+            } catch (error) {
+                console.error('Error setting active form:', error);
+                alert('An error occurred');
+                if (toggleElement) toggleElement.checked = false;
+            }
+        });
     },
-    
+
     async duplicateForm(formId) {
         try {
             const response = await fetch('../backend/api/form-templates.php', {
@@ -158,9 +193,9 @@ const FormLibrary = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'duplicate', form_id: formId })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 location.reload();
             } else {
@@ -171,21 +206,21 @@ const FormLibrary = {
             alert('An error occurred');
         }
     },
-    
+
     async archiveForm(formId) {
         if (!confirm('Archive this form template?')) {
             return;
         }
-        
+
         try {
             const response = await fetch('../backend/api/form-templates.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'archive', form_id: formId })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 location.reload();
             } else {
@@ -196,55 +231,68 @@ const FormLibrary = {
             alert('An error occurred');
         }
     },
-    
+
     async deleteForm(formId) {
-        if (!confirm('Delete this form template? This action cannot be undone.')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch('../backend/api/form-templates.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'delete', form_id: formId })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                location.reload();
-            } else if (result.requires_confirmation) {
-                // Form has associated values, ask for confirmation
-                if (confirm(result.message + '\n\nProceed with deletion?')) {
-                    // Retry with confirmation
-                    const confirmResponse = await fetch('../backend/api/form-templates.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'delete', form_id: formId, confirm: true })
-                    });
-                    
-                    const confirmResult = await confirmResponse.json();
-                    
-                    if (confirmResult.success) {
-                        location.reload();
-                    } else {
-                        alert('Error: ' + confirmResult.message);
+        const modalEl = document.getElementById('confirmDeleteModal');
+        if (!modalEl) return;
+
+        const modal = new bootstrap.Modal(modalEl);
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+        // Update confirm button to handle this specific formId
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        modal.show();
+
+        newConfirmBtn.addEventListener('click', async () => {
+            modal.hide();
+
+            try {
+                const response = await fetch('../backend/api/form-templates.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', form_id: formId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    location.reload();
+                } else if (result.requires_confirmation) {
+                    // Form has associated values, ask for confirmation
+                    // For now keeping this as second alert or we could update modal text
+                    if (confirm(result.message + '\n\nProceed with deletion?')) {
+                        // Retry with confirmation
+                        const confirmResponse = await fetch('../backend/api/form-templates.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'delete', form_id: formId, confirm: true })
+                        });
+
+                        const confirmResult = await confirmResponse.json();
+
+                        if (confirmResult.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + confirmResult.message);
+                        }
                     }
+                } else {
+                    alert('Error: ' + result.message);
                 }
-            } else {
-                alert('Error: ' + result.message);
+            } catch (error) {
+                console.error('Error deleting form:', error);
+                alert('An error occurred');
             }
-        } catch (error) {
-            console.error('Error deleting form:', error);
-            alert('An error occurred');
-        }
+        });
     },
-    
+
     async previewForm(formId) {
         try {
             const response = await fetch(`../backend/api/form-templates.php?action=get&form_id=${formId}`);
             const result = await response.json();
-            
+
             if (result.success) {
                 this.showPreviewModal(result.template, result.fields);
             } else {
@@ -255,18 +303,18 @@ const FormLibrary = {
             alert('An error occurred');
         }
     },
-    
+
     showPreviewModal(template, fields) {
         const modalBody = document.getElementById('previewModalBody');
-        
+
         let html = `<h4 class="mb-3">${template.name}</h4>`;
-        
+
         if (template.description) {
             html += `<p class="text-muted mb-4">${template.description}</p>`;
         }
-        
+
         html += '<div class="form-preview">';
-        
+
         fields.forEach(field => {
             html += '<div class="mb-3">';
             html += `<label class="form-label">${field.field_label}`;
@@ -274,11 +322,11 @@ const FormLibrary = {
                 html += ' <span class="text-danger">*</span>';
             }
             html += '</label>';
-            
+
             if (field.help_text) {
                 html += `<div class="form-text mb-2">${field.help_text}</div>`;
             }
-            
+
             // Render field based on type
             switch (field.field_type) {
                 case 'text':
@@ -337,14 +385,14 @@ const FormLibrary = {
                     html += '<button style="background:#3A9AFF;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;" disabled>Add</button></div>';
                     break;
             }
-            
+
             html += '</div>';
         });
-        
+
         html += '</div>';
-        
+
         modalBody.innerHTML = html;
-        
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('previewModal'));
         modal.show();

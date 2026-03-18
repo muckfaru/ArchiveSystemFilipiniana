@@ -105,7 +105,8 @@
         }
 
         // Read Now link → user reader (public access, no login required)
-        readBtn.href = APP_URL + '/user_pages/reader.php?id=' + encodeURIComponent(d.id);
+        // d.id is now encrypted securely and URL-safe Base64
+        readBtn.href = APP_URL + '/user_pages/reader.php?id=' + d.id;
 
         // Show backdrop
         backdrop.classList.add('active');
@@ -117,7 +118,7 @@
         if (!val) return '—';
         var d = new Date(val);
         if (isNaN(d.getTime())) return val; // return as-is if not parseable
-        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
     }
 
@@ -153,169 +154,123 @@
     attachCardListeners();
 
     // ── Catalog shelf scroll arrows ───────────────────────────────────────────
-    document.querySelectorAll('.catalog-shelf-track-wrap').forEach(wrap => {
-        const track = wrap.querySelector('.catalog-shelf-track');
-        const leftBtn = wrap.querySelector('.catalog-scroll-left');
-        const rightBtn = wrap.querySelector('.catalog-scroll-right');
-        if (!track || !leftBtn || !rightBtn) return;
+    function initCatalogScroll() {
+        document.querySelectorAll('.catalog-shelf-track-wrap').forEach(wrap => {
+            const track = wrap.querySelector('.catalog-shelf-track');
+            const leftBtn = wrap.querySelector('.catalog-scroll-left');
+            const rightBtn = wrap.querySelector('.catalog-scroll-right');
+            if (!track || !leftBtn || !rightBtn) return;
 
-        const scrollAmount = 400;
+            const scrollAmount = 400;
 
-        function updateArrows() {
-            leftBtn.classList.toggle('hidden', track.scrollLeft <= 10);
-            rightBtn.classList.toggle('hidden', track.scrollLeft + track.clientWidth >= track.scrollWidth - 10);
-        }
+            function updateArrows() {
+                leftBtn.classList.toggle('hidden', track.scrollLeft <= 10);
+                rightBtn.classList.toggle('hidden', track.scrollLeft + track.clientWidth >= track.scrollWidth - 10);
+            }
 
-        leftBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            // Remove previous event listeners if initialized before
+            const newLeftBtn = leftBtn.cloneNode(true);
+            const newRightBtn = rightBtn.cloneNode(true);
+            leftBtn.parentNode.replaceChild(newLeftBtn, leftBtn);
+            rightBtn.parentNode.replaceChild(newRightBtn, rightBtn);
+
+            newLeftBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+            newRightBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            track.addEventListener('scroll', updateArrows);
+            // Initial check
+            setTimeout(updateArrows, 100);
+            window.addEventListener('resize', updateArrows);
         });
-        rightBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        });
+    }
+    initCatalogScroll();
 
-        track.addEventListener('scroll', updateArrows);
-        // Initial check
-        setTimeout(updateArrows, 100);
-        window.addEventListener('resize', updateArrows);
-    });
-
-    // ── Live search (debounced) ───────────────────────────────────────────────
+    // ── Live search (debounced) & Auto Reset ──────────────────────────────────
     const searchInput = document.getElementById('publicSearchInput');
-    const advPanel = document.getElementById('advSearchPanel');
-    const advKeyword = document.getElementById('advKeyword');
-    const advDateFrom = document.getElementById('advDateFrom');
-    const advDateTo = document.getElementById('advDateTo');
-    const advApplyBtn = document.getElementById('advApplyBtn');
-    const advResetBtn = document.getElementById('advResetBtn');
+    const searchForm = document.getElementById('publicSearchForm');
     const clearBtn = document.getElementById('publicSearchClear');
+
+    function performLiveSearch() {
+        if (!searchForm) return;
+        const formData = new FormData(searchForm);
+        const params = new URLSearchParams(formData).toString();
+        const url = APP_URL + '/user_pages/public.php?' + params;
+
+        const contentArea = document.getElementById('publicContentArea');
+        if (contentArea) contentArea.style.opacity = '0.5';
+
+        fetch(url)
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContentArea = doc.getElementById('publicContentArea');
+
+                if (newContentArea && contentArea) {
+                    contentArea.innerHTML = newContentArea.innerHTML;
+                    contentArea.style.opacity = '1';
+
+                    // Reattach event listeners for newly added DOM elements
+                    attachCardListeners();
+                    initCatalogScroll();
+                }
+
+                // Update URL without reloading (optional, for shareability)
+                window.history.replaceState({}, '', url);
+            })
+            .catch(err => {
+                console.error('Search failed', err);
+                if (contentArea) contentArea.style.opacity = '1';
+            });
+    }
 
     // ── Clear (X) button ──────────────────────────────────────────────────────
     if (clearBtn) {
         clearBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            window.location.href = APP_URL + '/user_pages/public.php';
-        });
-    }
-
-    // ── Show advanced search on focus / click ─────────────────────────────────
-    function showAdvPanel() {
-        if (!advPanel) return;
-        advPanel.classList.add('active');
-        // Sync keyword from main input
-        if (advKeyword && searchInput) {
-            advKeyword.value = searchInput.value;
-        }
-    }
-
-    function hideAdvPanel() {
-        if (!advPanel) return;
-        advPanel.classList.remove('active');
-    }
-
-    if (searchInput) {
-        // Show advanced panel on focus
-        searchInput.addEventListener('focus', showAdvPanel);
-
-        // Show on click too (in case already focused)
-        searchInput.addEventListener('click', showAdvPanel);
-
-        // Sync typing from main input to adv keyword
-        searchInput.addEventListener('input', function () {
-            if (advKeyword) advKeyword.value = this.value;
-        });
-
-        // Prevent form submit when adv panel is open — use adv search instead
-        const form = document.getElementById('publicSearchForm');
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                if (advPanel && advPanel.classList.contains('active')) {
-                    e.preventDefault();
-                    doAdvancedSearch();
-                }
-            });
-        }
-    }
-
-    // Close adv panel on outside click
-    document.addEventListener('click', function (e) {
-        if (!advPanel || !advPanel.classList.contains('active')) return;
-        const wrapper = document.querySelector('.public-search-wrapper');
-        if (wrapper && !wrapper.contains(e.target)) {
-            hideAdvPanel();
-        }
-    });
-
-    // ── Date input auto-format (mm/dd/yyyy) ───────────────────────────────────
-    function autoFormatDate(input) {
-        if (!input) return;
-        input.addEventListener('input', function (e) {
-            let v = this.value.replace(/[^\d]/g, '');
-            if (v.length > 8) v = v.slice(0, 8);
-            let formatted = '';
-            if (v.length > 4) {
-                formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
-            } else if (v.length > 2) {
-                formatted = v.slice(0, 2) + '/' + v.slice(2);
-            } else {
-                formatted = v;
-            }
-            this.value = formatted;
-        });
-    }
-    autoFormatDate(advDateFrom);
-    autoFormatDate(advDateTo);
-
-    // ── Convert mm/dd/yyyy → YYYY-MM-DD for query string ──────────────────────
-    function toIsoDate(mmddyyyy) {
-        if (!mmddyyyy) return '';
-        var parts = mmddyyyy.split('/');
-        if (parts.length !== 3) return '';
-        var mm = parts[0].padStart(2, '0');
-        var dd = parts[1].padStart(2, '0');
-        var yyyy = parts[2];
-        if (yyyy.length !== 4) return '';
-        return yyyy + '-' + mm + '-' + dd;
-    }
-
-    // ── Apply advanced search → navigate to browse.php ────────────────────────
-    function doAdvancedSearch() {
-        var params = [];
-        var kw = (advKeyword ? advKeyword.value.trim() : '') || (searchInput ? searchInput.value.trim() : '');
-        if (kw) params.push('q=' + encodeURIComponent(kw));
-        var df = advDateFrom ? toIsoDate(advDateFrom.value.trim()) : '';
-        var dt = advDateTo ? toIsoDate(advDateTo.value.trim()) : '';
-        if (df) params.push('date_from=' + encodeURIComponent(df));
-        if (dt) params.push('date_to=' + encodeURIComponent(dt));
-
-        window.location.href = APP_URL + '/user_pages/browse.php' + (params.length ? '?' + params.join('&') : '');
-    }
-
-    if (advApplyBtn) {
-        advApplyBtn.addEventListener('click', doAdvancedSearch);
-    }
-
-    // ── Reset advanced search fields ──────────────────────────────────────────
-    if (advResetBtn) {
-        advResetBtn.addEventListener('click', function () {
-            if (advKeyword) advKeyword.value = '';
-            if (advDateFrom) advDateFrom.value = '';
-            if (advDateTo) advDateTo.value = '';
             if (searchInput) searchInput.value = '';
+            performLiveSearch();
         });
     }
 
-    // ── Enter key in advanced fields triggers search ──────────────────────────
-    [advKeyword, advDateFrom, advDateTo].forEach(function (el) {
-        if (!el) return;
-        el.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doAdvancedSearch();
-            }
+    // ── Auto-submit on type (Debounced / True Live Search AJAX) ───────────────
+    let debounceTimer;
+    if (searchInput && searchForm) {
+        // Keeps user interaction smooth by restoring focus where left off
+        if (searchInput.value.length > 0) {
+            searchInput.focus();
+            const val = searchInput.value;
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+
+        // Hook into form submit to prevent traditional action and use AJAX
+        searchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            clearTimeout(debounceTimer);
+            performLiveSearch();
         });
-    });
+
+        searchInput.addEventListener('input', function () {
+            // Auto-reset when user clears the searchbox manually
+            if (this.value.trim() === '') {
+                clearTimeout(debounceTimer);
+                performLiveSearch();
+                return;
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                performLiveSearch();
+            }, 600); // 600ms debounce
+        });
+    }
 
     // ── Live update polling (reflects admin upload/delete) ────────────────────
     // Read the initial archive count embedded by PHP in the grid/catalog container.
