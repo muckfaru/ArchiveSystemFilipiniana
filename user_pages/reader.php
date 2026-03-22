@@ -38,8 +38,8 @@ if (!$file) {
     exit;
 }
 
-// Record view for analytics (silent failure - won't break page rendering)
-recordNewspaperView($pdo, $fileId);
+// Record view for analytics after the response is sent so public reading opens faster.
+recordNewspaperViewDeferred($pdo, $fileId);
 
 // Fetch custom metadata for this file
 $customMetadata = getCustomMetadataValues($fileId);
@@ -47,6 +47,10 @@ $customMetadata = getCustomMetadataValues($fileId);
 // Log activity (only if user is authenticated)
 if (isset($currentUser) && $currentUser) {
     logActivity($currentUser['id'], 'read', $file['title']);
+}
+
+if (session_status() === PHP_SESSION_ACTIVE && function_exists('session_write_close')) {
+    session_write_close();
 }
 
 $fileType = strtolower($file['file_type']);
@@ -83,7 +87,7 @@ $pdfViewerUrl = '';
 
 if ($fileType === 'pdf') {
     $readerType = 'pdf';
-    $pdfViewerUrl = route_url('public-pdf-viewer', ['file' => $file['file_path']]);
+    $pdfViewerUrl = route_url('serve-file', ['file' => $file['file_path']]);
 } elseif ($fileType === 'epub' || ($fileType === 'mobi' && $epubUrl)) {
     $readerType = 'epub';
 } elseif ($fileType === 'mobi' && $needsConversion) {
@@ -140,8 +144,8 @@ $formatLabel = match (true) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <?php if ($readerType === 'epub'): ?>
-        <script src="../assets/js/jszip.min.js"></script>
-        <script src="../assets/js/epub.min.js"></script>
+        <script src="<?= APP_URL ?>/assets/js/jszip.min.js"></script>
+        <script src="<?= APP_URL ?>/assets/js/epub.min.js"></script>
     <?php endif; ?>
 
     <style>

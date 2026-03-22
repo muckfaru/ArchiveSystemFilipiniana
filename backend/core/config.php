@@ -29,6 +29,7 @@ if (!function_exists('route_url')) {
             'browse' => '/browse',
             'collections' => '/collections',
             'reader' => '/read',
+            'public-open' => '/open',
             'public-pdf-viewer' => '/pdf-viewer',
             'serve-file' => '/serve-file',
             'user-convert-mobi' => '/convert-mobi',

@@ -96,12 +96,8 @@ if ($editMode) {
         }
     }
 } else {
-    // Load from session draft if exists
-    if (isset($_SESSION['upload_draft']) && is_array($_SESSION['upload_draft'])) {
-        foreach ($_SESSION['upload_draft'] as $fieldId => $value) {
-            $customMetadataValues[$fieldId] = $value;
-        }
-    }
+    // Always start a fresh upload form on non-edit visits.
+    unset($_SESSION['upload_draft']);
 }
 
 function isAjaxRequest()
@@ -189,6 +185,33 @@ function ensureUploadDirectory($directory)
     }
 }
 
+function fileHasExpectedMobiSignature($tmpPath)
+{
+    $handle = @fopen($tmpPath, 'rb');
+    if (!$handle) {
+        return false;
+    }
+
+    $header = (string) fread($handle, 512);
+    fclose($handle);
+
+    if (strlen($header) < 68) {
+        return false;
+    }
+
+    $type = substr($header, 60, 4);
+    $creator = substr($header, 64, 4);
+
+    // MOBI/KF8 files are Palm database containers. Some valid ebook files use
+    // adjacent Palm creator codes, so accept the known ebook variants here
+    // instead of only the exact BOOKMOBI combination.
+    if ($type === 'BOOK' && in_array($creator, ['MOBI', 'TEXt', 'READ'], true)) {
+        return true;
+    }
+
+    return preg_match('/BOOK(MOBI|TEXt|READ)/', substr($header, 0, 128)) === 1;
+}
+
 function fileHasExpectedSignature($tmpPath, $extension)
 {
     $handle = @fopen($tmpPath, 'rb');
@@ -213,7 +236,7 @@ function fileHasExpectedSignature($tmpPath, $extension)
         case 'tiff':
             return substr($header, 0, 4) === "II*\x00" || substr($header, 0, 4) === "MM\x00*";
         case 'mobi':
-            return strlen($header) >= 64 && substr($header, 60, 8) === 'BOOKMOBI';
+            return fileHasExpectedMobiSignature($tmpPath);
         case 'txt':
             return true;
         case 'epub':

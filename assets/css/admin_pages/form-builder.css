@@ -181,11 +181,26 @@
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
     display: flex;
     flex-direction: column;
+    min-height: 0;
     /* Stick to viewport top and fill remaining height */
     position: sticky;
     top: 70px;
     max-height: calc(100vh - 90px);
     overflow: hidden;
+}
+
+/* The settings column can become taller than the viewport when editing
+   existing metadata fields with many options. Let the page scroll naturally
+   instead of clipping the panel to the viewport height. */
+.builder-settings-panel {
+    position: static;
+    top: auto;
+    max-height: none;
+    overflow: visible;
+}
+
+.builder-settings-panel .builder-panel-body {
+    overflow: visible;
 }
 
 .builder-panel-header {
@@ -214,8 +229,11 @@
 /* Scrollable body */
 .builder-panel-body {
     padding: 0.75rem;
+    min-height: 0;
     overflow-y: auto;
     flex: 1;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     /* Custom thin scrollbar */
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;

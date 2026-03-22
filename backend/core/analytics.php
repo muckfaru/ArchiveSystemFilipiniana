@@ -45,6 +45,27 @@ function ensureNewspaperViewsTable($pdo): bool {
     }
 }
 
+function isMissingNewspaperViewsTableError(PDOException $e): bool {
+    $errorInfo = $e->errorInfo ?? [];
+    $sqlState = $errorInfo[0] ?? $e->getCode();
+    $driverCode = $errorInfo[1] ?? null;
+
+    return $sqlState === '42S02' || (int) $driverCode === 1146;
+}
+
+function ensureAnalyticsSessionAvailable(): bool {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return true;
+    }
+
+    if (headers_sent()) {
+        return false;
+    }
+
+    @session_start();
+    return session_status() === PHP_SESSION_ACTIVE;
+}
+
 /**
  * Check if a newspaper has been viewed in the current session
  * 
@@ -52,9 +73,8 @@ function ensureNewspaperViewsTable($pdo): bool {
  * @return bool True if already viewed in this session
  */
 function hasViewedInSession($newspaperId): bool {
-    // Ensure session is started
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+    if (!ensureAnalyticsSessionAvailable()) {
+        return false;
     }
     
     // Check if session key exists for this newspaper
@@ -69,14 +89,93 @@ function hasViewedInSession($newspaperId): bool {
  * @return void
  */
 function markViewedInSession($newspaperId): void {
-    // Ensure session is started
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+    if (!ensureAnalyticsSessionAvailable()) {
+        return;
     }
     
     // Set session key for this newspaper
     $sessionKey = "viewed_newspaper_{$newspaperId}";
     $_SESSION[$sessionKey] = true;
+}
+
+function insertNewspaperViewRecord($pdo, int $newspaperId, string $ipAddress): bool {
+    $insertView = function () use ($pdo, $newspaperId, $ipAddress): void {
+        $stmt = $pdo->prepare("
+            INSERT INTO newspaper_views (newspaper_id, ip_address, view_date)
+            VALUES (?, ?, NOW())
+        ");
+        $stmt->execute([$newspaperId, $ipAddress]);
+    };
+
+    try {
+        $insertView();
+        return true;
+    } catch (PDOException $e) {
+        if (!isMissingNewspaperViewsTableError($e)) {
+            error_log("Analytics view recording failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return false;
+        }
+
+        $insertView();
+        return true;
+    } catch (PDOException $e) {
+        error_log("Analytics view recording failed after table ensure: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Queue view recording after the response has been sent so the reader opens
+ * without waiting on the analytics write.
+ *
+ * @param PDO $pdo Database connection
+ * @param int $newspaperId The newspaper ID being viewed
+ * @return void
+ */
+function recordNewspaperViewDeferred($pdo, $newspaperId): void {
+    // Only record views for public users (not logged-in admins)
+    if (function_exists('isLoggedIn') && isLoggedIn()) {
+        return;
+    }
+
+    $newspaperId = intval($newspaperId);
+    if ($newspaperId <= 0) {
+        return;
+    }
+
+    if (hasViewedInSession($newspaperId)) {
+        return;
+    }
+
+    markViewedInSession($newspaperId);
+
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    if (!filter_var($ipAddress, FILTER_VALIDATE_IP)) {
+        error_log("Invalid IP address: $ipAddress");
+        $ipAddress = '0.0.0.0';
+    }
+
+    register_shutdown_function(function () use ($pdo, $newspaperId, $ipAddress) {
+        if (function_exists('ignore_user_abort')) {
+            @ignore_user_abort(true);
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE && function_exists('session_write_close')) {
+            @session_write_close();
+        }
+
+        if (function_exists('fastcgi_finish_request')) {
+            @fastcgi_finish_request();
+        }
+
+        insertNewspaperViewRecord($pdo, $newspaperId, $ipAddress);
+    });
 }
 
 /**
@@ -92,44 +191,32 @@ function recordNewspaperView($pdo, $newspaperId): bool {
         return false;
     }
 
-    try {
-        if (!ensureNewspaperViewsTable($pdo)) {
-            return false;
-        }
-
-        // Validate newspaper ID is positive integer
-        $newspaperId = intval($newspaperId);
-        if ($newspaperId <= 0) {
-            error_log("Invalid newspaper ID: $newspaperId");
-            return false;
-        }
-        
-        // Get IP address from $_SERVER['REMOTE_ADDR'] with fallback to '0.0.0.0'
-        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        
-        // Validate IP address using filter_var
-        if (!filter_var($ipAddress, FILTER_VALIDATE_IP)) {
-            error_log("Invalid IP address: $ipAddress");
-            $ipAddress = '0.0.0.0'; // Fallback to default
-        }
-        
-        // Insert view record - every view is now recorded (no session limit)
-        $stmt = $pdo->prepare("
-            INSERT INTO newspaper_views (newspaper_id, ip_address, view_date)
-            VALUES (?, ?, NOW())
-        ");
-        $stmt->execute([$newspaperId, $ipAddress]);
-        
-        // Mark in session is kept for other potential UI logic, 
-        // but recordNewspaperView no longer checks it.
-        markViewedInSession($newspaperId);
-        
-        return true;
-        
-    } catch (PDOException $e) {
-        error_log("Analytics view recording failed: " . $e->getMessage());
+    // Validate newspaper ID is positive integer
+    $newspaperId = intval($newspaperId);
+    if ($newspaperId <= 0) {
+        error_log("Invalid newspaper ID: $newspaperId");
         return false;
     }
+
+    if (hasViewedInSession($newspaperId)) {
+        return false;
+    }
+    
+    // Get IP address from $_SERVER['REMOTE_ADDR'] with fallback to '0.0.0.0'
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    
+    // Validate IP address using filter_var
+    if (!filter_var($ipAddress, FILTER_VALIDATE_IP)) {
+        error_log("Invalid IP address: $ipAddress");
+        $ipAddress = '0.0.0.0';
+    }
+
+    if (insertNewspaperViewRecord($pdo, $newspaperId, $ipAddress)) {
+        markViewedInSession($newspaperId);
+        return true;
+    }
+
+    return false;
 }
 
 /**

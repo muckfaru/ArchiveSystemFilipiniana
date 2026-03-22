@@ -8,6 +8,10 @@
 require_once __DIR__ . '/backend/core/config.php';
 require_once __DIR__ . '/backend/core/functions.php';
 
+if (session_status() === PHP_SESSION_ACTIVE && function_exists('session_write_close')) {
+    session_write_close();
+}
+
 $file = $_GET['file'] ?? '';
 $file = str_replace(['..', '\\'], '', $file); // Sanitize path traversal
 

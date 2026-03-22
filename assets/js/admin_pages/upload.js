@@ -400,9 +400,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderTabs();
             } else {
                 updateButtons();
-                // Save draft for individual upload
-                const isEdit = document.querySelector('input[name="action"]').value === 'edit';
-                if (!isEdit) saveDraft();
             }
         });
     });
@@ -828,10 +825,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
 
-            // Check content type
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                const result = await response.json();
+            const rawBody = await response.text();
+            let result = null;
+
+            try {
+                result = rawBody ? JSON.parse(rawBody) : null;
+            } catch (parseError) {
+                result = null;
+            }
+
+            if (result && typeof result === 'object') {
                 if (result.success) {
                     window.isNavigatingAway = true;
                     const isEdit = document.querySelector('input[name="action"]').value === 'edit';
@@ -864,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         window.location.href = APP_URL + '/dashboard?success=upload';
                     }
                 } else {
-                    throw new Error('Server returned ' + response.status);
+                    throw new Error(rawBody || ('Server returned ' + response.status));
                 }
             }
         } catch (error) {

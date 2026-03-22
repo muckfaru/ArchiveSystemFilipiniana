@@ -104,9 +104,9 @@
             modalNoImg.style.display = '';
         }
 
-        // Read Now link → user reader (public access, no login required)
-        // d.id is now encrypted securely and URL-safe Base64
-        readBtn.href = APP_URL + '/read?id=' + d.id;
+        // Open the public reader directly to avoid the extra redirect/database
+        // hop that was making public reads noticeably slower than admin.
+        readBtn.href = APP_URL + '/read?id=' + encodeURIComponent(d.id);
 
         // Show backdrop
         backdrop.classList.add('active');
