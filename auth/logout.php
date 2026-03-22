@@ -19,5 +19,5 @@ if (isLoggedIn()) {
 session_destroy();
 
 // Redirect to public landing page
-header("Location: " . APP_URL . "/user_pages/public.php");
+header("Location: " . route_url('home'));
 exit;

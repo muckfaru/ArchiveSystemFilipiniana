@@ -14,7 +14,7 @@ require_once __DIR__ . '/../backend/core/functions.php';
 
 // If already logged in, go to dashboard
 if (isLoggedIn()) {
-    redirect(APP_URL . '/admin_pages/dashboard.php');
+    redirect(route_url('dashboard'));
 }
 
 // Include the login view

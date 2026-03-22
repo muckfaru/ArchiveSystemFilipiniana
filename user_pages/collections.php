@@ -18,6 +18,30 @@ $formatFilters = isset($_GET['format']) ? (array) $_GET['format'] : []; // Array
 $sortBy = $_GET['sort'] ?? 'newest';
 $searchQuery = $_GET['q'] ?? '';
 
+$formatLabelMap = [
+    'mobi' => '.MOBI',
+    'pdf' => 'PDF',
+    'images' => 'IMAGES',
+];
+
+$selectedFormatLabels = [];
+foreach ($formatFilters as $formatFilter) {
+    $formatKey = strtolower(trim($formatFilter));
+    if (isset($formatLabelMap[$formatKey])) {
+        $selectedFormatLabels[] = $formatLabelMap[$formatKey];
+    }
+}
+$selectedFormatLabels = array_values(array_unique($selectedFormatLabels));
+
+$activeFilterSummary = [];
+if ($categoryFilter && $categoryFilter !== 'all') {
+    $activeFilterSummary[] = $categoryFilter;
+}
+if (!empty($selectedFormatLabels)) {
+    $activeFilterSummary[] = implode(', ', $selectedFormatLabels);
+}
+$activeFilterSummaryText = implode(' | ', $activeFilterSummary);
+
 // --- Fetch Categories with Counts ---
 // Get categories from custom metadata "Category" field
 $catSql = "SELECT DISTINCT cmv.field_value as name, COUNT(DISTINCT n.id) as count 
@@ -323,6 +347,9 @@ include __DIR__ . '/../views/layouts/header.php';
                     <?= $totalResults > 0 ? ($pagination['offset'] + 1) : 0 ?>-
                     <?= min($pagination['offset'] + $limit, $totalResults) ?> of
                     <?= number_format($totalResults) ?> results
+                <?php endif; ?>
+                <?php if ($activeFilterSummaryText !== ''): ?>
+                    for <strong><?= htmlspecialchars($activeFilterSummaryText) ?></strong>
                 <?php endif; ?>
             </div>
 

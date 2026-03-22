@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 
 // Redirect if already logged in (shouldn't happen for API usually, but good check)
 if (isLoggedIn()) {
-    echo json_encode(['status' => 'success', 'message' => 'Already logged in', 'redirect' => APP_URL . '/admin_pages/dashboard.php']);
+    echo json_encode(['status' => 'success', 'message' => 'Already logged in', 'redirect' => route_url('dashboard')]);
     exit;
 }
 
@@ -52,7 +52,7 @@ if ($user && password_verify($password, $user['password'])) {
     // Log activity
     logActivity($user['id'], 'login', $user['username']);
 
-    echo json_encode(['status' => 'success', 'message' => 'Login successful', 'redirect' => APP_URL . '/admin_pages/dashboard.php']);
+        echo json_encode(['status' => 'success', 'message' => 'Login successful', 'redirect' => route_url('dashboard')]);
 } else {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Invalid username or password.']);

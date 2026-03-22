@@ -6,6 +6,9 @@
 
 require_once __DIR__ . '/../backend/core/auth.php';
 require_once __DIR__ . '/../backend/core/functions.php';
+require_once __DIR__ . '/../backend/core/analytics.php';
+
+ensureNewspaperViewsTable($pdo);
 
 // Get stats
 $totalArchives = countArchives();
@@ -59,7 +62,6 @@ if (!empty($recentNewspapers)) {
 }
 
 // Analytics: attach view counts for recent items and fetch top reads
-require_once __DIR__ . '/../backend/core/analytics.php';
 $topReads = [];
 if (!empty($recentNewspapers)) {
     foreach ($recentNewspapers as &$n) {

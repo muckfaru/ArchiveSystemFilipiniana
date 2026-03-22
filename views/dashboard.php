@@ -125,7 +125,7 @@
                                 <i class="bi bi-trash3"></i> Delete
                             </button>
                         <?php endif; ?>
-                        <a href="<?= APP_URL ?>/user_pages/collections.php" class="view-all-link m-0">View all</a>
+                <a href="<?= route_url('collections') ?>" class="view-all-link m-0">View all</a>
                     </div>
                 </div>
 
@@ -136,7 +136,7 @@
                         </div>
                         <h5 class="empty-state-title">No Archives Yet</h5>
                         <p class="empty-state-text">Start building your repository by uploading documents.</p>
-                        <a href="<?= APP_URL ?>/admin_pages/upload.php" class="btn btn-primary empty-state-btn">
+                    <a href="<?= route_url('upload') ?>" class="btn btn-primary empty-state-btn">
                             <i class="bi bi-plus-lg me-2"></i>Upload Now
                         </a>
                     </div>
@@ -347,7 +347,7 @@
                 <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 1px;">
                     <?= count($searchResults) ?> Documents Found
                 </span>
-                <a href="<?= APP_URL ?>/admin_pages/dashboard.php" class="text-uppercase fw-bold text-decoration-none"
+                        <a href="<?= route_url('dashboard') ?>" class="text-uppercase fw-bold text-decoration-none"
                     style="color: #3A9AFF; font-size: 11px; letter-spacing: 1px;">
                     Clear Search
                 </a>
@@ -360,7 +360,7 @@
                 </div>
                 <h5 class="fw-bold text-secondary">No Results Found</h5>
                 <p class="text-muted small">We couldn't find any documents matching your criteria.</p>
-                <a href="<?= APP_URL ?>/admin_pages/dashboard.php" class="btn btn-outline-secondary btn-sm mt-2 rounded-pill px-4">
+                        <a href="<?= route_url('dashboard') ?>" class="btn btn-outline-secondary btn-sm mt-2 rounded-pill px-4">
                     Clear Filters
                 </a>
             </div>

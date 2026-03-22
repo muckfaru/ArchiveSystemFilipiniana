@@ -21,7 +21,7 @@ if (!is_numeric($rawId) && !empty($rawId)) {
 }
 
 if (!$fileId) {
-    header('Location: ../user_pages/public.php');
+    header('Location: ' . route_url('home'));
     exit;
 }
 
@@ -34,7 +34,7 @@ $stmt->execute([$fileId]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$file) {
-    header('Location: ../user_pages/public.php');
+    header('Location: ' . route_url('home'));
     exit;
 }
 
@@ -50,7 +50,7 @@ if (isset($currentUser) && $currentUser) {
 }
 
 $fileType = strtolower($file['file_type']);
-$fileUrl = '../serve_file.php?file=' . urlencode($file['file_path']);
+$fileUrl = route_url('serve-file', ['file' => $file['file_path']]);
 $filePath = __DIR__ . '/../' . $file['file_path'];
 
 // Handle MOBI → EPUB conversion (admin only)
@@ -67,7 +67,7 @@ if ($fileType === 'mobi') {
     if ($existingEpub) {
         // EPUB already exists, use it immediately (instant load)
         $epubRelativePath = preg_replace('/\.mobi$/i', '.epub', $file['file_path']);
-        $epubUrl = '../serve_file.php?file=' . urlencode($epubRelativePath);
+        $epubUrl = route_url('serve-file', ['file' => $epubRelativePath]);
     } elseif (isCalibreAvailable()) {
         // Calibre is installed, mark for conversion
         $needsConversion = true;
@@ -83,7 +83,7 @@ $pdfViewerUrl = '';
 
 if ($fileType === 'pdf') {
     $readerType = 'pdf';
-    $pdfViewerUrl = 'pdf_viewer.php?file=' . urlencode($file['file_path']);
+    $pdfViewerUrl = route_url('public-pdf-viewer', ['file' => $file['file_path']]);
 } elseif ($fileType === 'epub' || ($fileType === 'mobi' && $epubUrl)) {
     $readerType = 'epub';
 } elseif ($fileType === 'mobi' && $needsConversion) {
@@ -808,7 +808,7 @@ $formatLabel = match (true) {
     <!-- ======= TOP CHROME ======= -->
     <div class="reader-top" id="readerTop">
         <div class="chrome-left">
-            <a href="../user_pages/public.php" class="back-link" title="Back">
+                    <a href="<?= route_url('home') ?>" class="back-link" title="Back">
                 <i class="bi bi-arrow-left"></i>
                 <span class="d-none d-sm-inline">Back</span>
             </a>
@@ -839,7 +839,7 @@ $formatLabel = match (true) {
 
         <?php if ($readerType === 'pdf'): ?>
             <iframe id="pdfFrame" class="pdf-frame"
-                src="public_pdf_viewer.php?file=<?= urlencode($file['file_path']) ?>"></iframe>
+                        src="<?= htmlspecialchars($pdfViewerUrl) ?>"></iframe>
 
         <?php elseif ($readerType === 'mobi-converting'): ?>
             <div class="conversion-screen" id="conversionScreen">
@@ -1041,7 +1041,7 @@ $formatLabel = match (true) {
         <?php if ($readerType === 'mobi-converting'): ?>
         async function convertMobiFile() {
             try {
-                const response = await fetch(APP_URL + `/user_pages/convert_mobi.php?file_id=${FILE_ID}`);
+                    const response = await fetch(APP_URL + `/convert-mobi?file_id=${FILE_ID}`);
                 const data = await response.json();
                 
                 if (data.success) {
@@ -1050,12 +1050,12 @@ $formatLabel = match (true) {
                 } else {
                     // On error, show alert and go back
                     alert('Conversion failed: ' + data.error);
-                    window.location.href = '../user_pages/public.php';
+                            window.location.href = '<?= route_url('home') ?>';
                 }
             } catch (error) {
                 // On error, show alert and go back
                 alert('Error: ' + error.message);
-                window.location.href = '../user_pages/public.php';
+                        window.location.href = '<?= route_url('home') ?>';
             }
         }
         
@@ -1223,9 +1223,9 @@ $formatLabel = match (true) {
                 if (!galImages.length) return;
                 const src = galImages[galIndex];
                 if (IS_CBZ) {
-                    galImg.src = APP_URL + '/user_pages/serve_cbz_image.php?file_id=' + FILE_ID + '&image_path=' + encodeURIComponent(src);
+                        galImg.src = APP_URL + '/serve-cbz-image?file_id=' + FILE_ID + '&image_path=' + encodeURIComponent(src);
                 } else {
-                    galImg.src = APP_URL + '/serve_file.php?file=' + encodeURIComponent(src);
+                        galImg.src = '<?= route_url('serve-file') ?>?file=' + encodeURIComponent(src);
                 }
                 const pct = Math.round(((galIndex + 1) / galImages.length) * 100);
                 progressBar.style.width = pct + '%';

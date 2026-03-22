@@ -7,11 +7,14 @@ const FormBuilder = {
     fields: [],
     selectedFieldIndex: null,
     sortable: null,
+    isEditMode: false,
 
     init() {
+        this.isEditMode = this.checkEditMode();
         this.loadExistingFields();
         this.initSortable();
         this.bindEvents();
+        this.notifyEditMode();
 
         // If we have existing fields, render them
         if (this.fields.length > 0) {
@@ -19,70 +22,139 @@ const FormBuilder = {
         }
     },
 
+    checkEditMode() {
+        const isEditModeInput = document.getElementById('isEditMode');
+        return !!(isEditModeInput && isEditModeInput.value === '1');
+    },
+
+    notifyEditMode() {
+        const isEditModeInput = document.getElementById('isEditMode');
+        if (!isEditModeInput || isEditModeInput.value !== '1') {
+            return;
+        }
+
+        this.showToast('You are editing an existing custom metadata form.', 'info');
+    },
+
     loadExistingFields() {
-        const fieldsData = document.getElementById('formFieldsData').value;
-        if (fieldsData && fieldsData !== '[]') {
-            this.fields = JSON.parse(fieldsData);
+        const fieldsInput = document.getElementById('formFieldsData');
+        const fieldsData = fieldsInput ? fieldsInput.value : '[]';
+
+        if (!fieldsData || fieldsData === '[]') {
+            this.fields = [];
+            return;
+        }
+
+        try {
+            const parsedFields = JSON.parse(fieldsData);
+            this.fields = Array.isArray(parsedFields) ? parsedFields.map((field, index) => ({
+                id: field.id ?? null,
+                field_label: field.field_label || `Field ${index + 1}`,
+                field_type: field.field_type || 'text',
+                field_options: field.field_options ?? null,
+                is_required: Number(field.is_required) ? 1 : 0,
+                display_order: Number.isInteger(field.display_order) ? field.display_order : index,
+                help_text: field.help_text ?? null
+            })) : [];
+        } catch (error) {
+            console.error('Error loading existing form fields:', error);
+            this.fields = [];
+            this.showToast('Unable to load existing metadata fields.', 'error');
         }
     },
 
     initSortable() {
         const canvas = document.getElementById('formCanvas');
+        if (!canvas) return;
 
-        // Initialize SortableJS for drag-and-drop within canvas
-        this.sortable = new Sortable(canvas, {
-            animation: 150,
-            handle: '.field-drag-handle',
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            onEnd: (evt) => {
-                this.reorderFields(evt.oldIndex, evt.newIndex);
-            }
-        });
-
-        // Make field types draggable
-        document.querySelectorAll('.field-type-item').forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('fieldType', item.dataset.fieldType);
+        // ── Sidebar Sortables ──
+        // Each .field-type-list gets a Sortable with pull:'clone' so items
+        // can be dragged into the canvas.  sort:false keeps sidebar order fixed.
+        document.querySelectorAll('.field-type-list').forEach(sidebar => {
+            new Sortable(sidebar, {
+                group: {
+                    name: 'field-builder',
+                    pull: 'clone', // clone the element when dragging out
+                    put: false     // nothing can be dropped back here
+                },
+                animation: 150,
+                sort: false,       // items in the sidebar don't reorder
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onStart: () => {
+                    canvas.classList.add('drag-over');
+                },
+                onEnd: () => {
+                    canvas.classList.remove('drag-over');
+                }
             });
         });
 
-        // Make canvas accept drops
-        canvas.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
+        // ── Canvas Sortable ──
+        // Handles BOTH:
+        //   1. Reordering existing fields via the drag handle
+        //   2. Receiving new fields dragged from the sidebar (onAdd)
+        this.sortable = new Sortable(canvas, {
+            group: {
+                name: 'field-builder',
+                pull: false, // cannot drag canvas items back to sidebar
+                put: true    // accept items dragged from the sidebar
+            },
+            animation: 150,
+            handle: '.field-drag-handle', // only the grip icon triggers reorder
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
 
-        canvas.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const fieldType = e.dataTransfer.getData('fieldType');
-            if (fieldType) {
-                this.addField(fieldType);
+            // Fires when an item from the SIDEBAR is dropped onto the canvas
+            onAdd: (evt) => {
+                // SortableJS inserts a clone of the sidebar item into the canvas DOM.
+                // We manage our own DOM via renderCanvas(), so remove the clone.
+                if (evt.item && evt.item.parentNode) {
+                    evt.item.remove();
+                }
+                canvas.classList.remove('drag-over');
+
+                // The dragged element retains data-field-type from the sidebar HTML
+                const fieldType = evt.item.dataset.fieldType;
+                if (fieldType) {
+                    this.addField(fieldType);
+                }
+            },
+
+            // Fires when an existing canvas item is dropped after reordering
+            onEnd: (evt) => {
+                // Guard: only treat as an intra-canvas reorder
+                if (evt.from === canvas && evt.to === canvas) {
+                    this.reorderFields(evt.oldIndex, evt.newIndex);
+                }
+                canvas.classList.remove('drag-over');
             }
         });
     },
 
     bindEvents() {
         // Save buttons with confirmation
-        document.getElementById('saveDraftBtn').addEventListener('click', () => {
-            this.showConfirmation(
-                'Save as Draft',
-                'Save this form as a draft? You can publish it later.',
-                () => this.saveForm('draft')
-            );
-        });
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        if (saveDraftBtn) {
+            saveDraftBtn.addEventListener('click', () => {
+                this.showConfirmation(
+                    'Save as Draft',
+                    'Save this form as a draft? You can publish it later.',
+                    () => this.saveForm('draft')
+                );
+            });
+        }
 
         document.getElementById('publishFormBtn').addEventListener('click', () => {
             this.showConfirmation(
-                'Publish Form',
-                'Publish this form? It will be available for use immediately.',
+                this.isEditMode ? 'Save Changes' : 'Publish Form',
+                this.isEditMode
+                    ? 'Apply your changes to this existing custom metadata form? The updated version will be available immediately.'
+                    : 'Publish this form? It will be available for use immediately.',
                 () => this.saveForm('active'),
-                'Publish',
+                this.isEditMode ? 'Save Changes' : 'Publish',
                 'btn-primary'
             );
-        });
-
-        document.getElementById('previewFormBtn').addEventListener('click', () => {
-            this.previewForm();
         });
 
         // Field configuration - Auto-save on Enter key for field label
@@ -118,6 +190,26 @@ const FormBuilder = {
 
         // Delegate events
         document.addEventListener('click', (e) => {
+            // + button on a field type card
+            const addFieldButton = e.target.closest('.field-type-add-btn');
+            if (addFieldButton) {
+                e.preventDefault();
+                e.stopPropagation();
+                const fieldTypeItem = addFieldButton.closest('.field-type-item');
+                if (fieldTypeItem && fieldTypeItem.dataset.fieldType) {
+                    this.addField(fieldTypeItem.dataset.fieldType);
+                }
+                return;
+            }
+
+            // Click anywhere on a field type card (but not the + button)
+            const fieldTypeItem = e.target.closest('.field-type-item');
+            if (fieldTypeItem && !e.target.closest('.field-type-add-btn')) {
+                this.addField(fieldTypeItem.dataset.fieldType);
+                return;
+            }
+
+            // Click on a canvas field (not the delete button)
             if (e.target.closest('.form-field-item') && !e.target.closest('.delete-field')) {
                 const fieldItem = e.target.closest('.form-field-item');
                 const items = Array.from(document.querySelectorAll('.form-field-item'));
@@ -125,6 +217,7 @@ const FormBuilder = {
                 this.selectField(index);
             }
 
+            // Delete button on a canvas field
             if (e.target.closest('.delete-field')) {
                 e.stopPropagation();
                 const fieldItem = e.target.closest('.form-field-item');
@@ -133,6 +226,7 @@ const FormBuilder = {
                 this.confirmDeleteField(index);
             }
 
+            // Remove option button in the settings panel
             if (e.target.closest('.remove-option')) {
                 const index = parseInt(e.target.closest('.remove-option').dataset.index);
                 this.removeOption(index);
@@ -172,6 +266,7 @@ const FormBuilder = {
         };
 
         this.fields.push(newField);
+        this.normalizeFieldOrder();
         this.renderCanvas();
         this.selectField(this.fields.length - 1);
     },
@@ -222,7 +317,7 @@ const FormBuilder = {
 
         const field = this.fields[this.selectedFieldIndex];
         const newLabel = document.getElementById('fieldLabel').value;
-        
+
         // Don't save if label is empty
         if (!newLabel || !newLabel.trim()) {
             return;
@@ -257,11 +352,7 @@ const FormBuilder = {
 
     deleteField(index) {
         this.fields.splice(index, 1);
-
-        // Update display_order
-        this.fields.forEach((f, i) => {
-            f.display_order = i;
-        });
+        this.normalizeFieldOrder();
 
         this.renderCanvas();
 
@@ -274,17 +365,29 @@ const FormBuilder = {
     },
 
     reorderFields(oldIndex, newIndex) {
+        if (oldIndex === newIndex || oldIndex < 0 || newIndex < 0) {
+            return;
+        }
+
         const field = this.fields.splice(oldIndex, 1)[0];
         this.fields.splice(newIndex, 0, field);
-
-        // Update display_order
-        this.fields.forEach((f, i) => {
-            f.display_order = i;
-        });
+        this.normalizeFieldOrder();
 
         // Update selected index if needed
         if (this.selectedFieldIndex === oldIndex) {
             this.selectedFieldIndex = newIndex;
+        } else if (this.selectedFieldIndex !== null) {
+            const movedForward = oldIndex < newIndex;
+            if (movedForward && this.selectedFieldIndex > oldIndex && this.selectedFieldIndex <= newIndex) {
+                this.selectedFieldIndex -= 1;
+            } else if (!movedForward && this.selectedFieldIndex >= newIndex && this.selectedFieldIndex < oldIndex) {
+                this.selectedFieldIndex += 1;
+            }
+        }
+
+        this.renderCanvas();
+        if (this.selectedFieldIndex !== null) {
+            this.selectField(this.selectedFieldIndex);
         }
     },
 
@@ -294,19 +397,23 @@ const FormBuilder = {
         if (this.fields.length === 0) {
             canvas.innerHTML = `
                 <div class="canvas-empty-state text-center py-5">
-                    <i class="bi bi-cursor" style="font-size: 3rem; color: #dee2e6;"></i>
-                    <p class="text-muted mt-3">Drag field types here to build your form</p>
+                    <div class="canvas-empty-icon">
+                        <i class="bi bi-plus-square-dotted"></i>
+                    </div>
+                    <p class="canvas-empty-title">Start building your metadata form</p>
+                    <p class="text-muted mt-2 mb-0">Drag field types here or click the <code>+</code> button from the left panel.</p>
                 </div>
             `;
             return;
         }
 
         canvas.innerHTML = this.fields.map((field, index) => `
-            <div class="form-field-item ${index === this.selectedFieldIndex ? 'selected' : ''}">
+            <div class="form-field-item ${index === this.selectedFieldIndex ? 'selected' : ''}" data-field-index="${index}" data-field-id="${field.id || ''}">
                 <div class="field-item-header">
-                    <span class="field-drag-handle">
+                    <span class="field-drag-handle" title="Drag to reorder">
                         <i class="bi bi-grip-vertical"></i>
                     </span>
+                    <span class="field-order-badge">${index + 1}</span>
                     <span class="field-label">${this.escapeHtml(field.field_label)}</span>
                     <span class="field-type-badge badge bg-secondary">${field.field_type}</span>
                     ${field.is_required ? '<span class="badge bg-danger">Required</span>' : ''}
@@ -316,6 +423,12 @@ const FormBuilder = {
                 </div>
             </div>
         `).join('');
+    },
+
+    normalizeFieldOrder() {
+        this.fields.forEach((field, index) => {
+            field.display_order = index;
+        });
     },
 
     toggleOptionsField(fieldType) {
@@ -333,7 +446,7 @@ const FormBuilder = {
         sampleTags.forEach(tag => {
             html += `<span style="display:inline-flex;align-items:center;gap:4px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;">${tag} <span style="cursor:pointer;opacity:.6;">×</span></span>`;
         });
-        html += '</div><div style="border:1px solid #E5E7EB;border-radius:8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;margin-top:4px;"><input type="text" placeholder="Type a tag & press Enter" style="border:none;outline:none;flex:1;font-size:13px;" disabled><button style="background:#3A9AFF;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;" disabled>Add</button></div>';
+        html += '</div><div style="border:1px solid #E5E7EB;border-radius:8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;margin-top:4px;"><input type="text" placeholder="Type a tag &amp; press Enter" style="border:none;outline:none;flex:1;font-size:13px;" disabled><button style="background:#3A9AFF;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;" disabled>Add</button></div>';
         return html;
     },
 
@@ -392,26 +505,51 @@ const FormBuilder = {
             return;
         }
 
+        if (this.isEditMode && !formId) {
+            alert('Unable to save changes because the form ID is missing.');
+            return;
+        }
+
         const data = {
             action: formId ? 'update' : 'create',
             form_id: formId || null,
             name: formName,
             description: formDescription,
             status: status,
-            fields: this.fields
+            fields: this.fields.map((field, index) => ({
+                id: field.id || null,
+                field_label: field.field_label,
+                field_type: field.field_type,
+                field_options: field.field_options,
+                is_required: field.is_required ? 1 : 0,
+                display_order: index,
+                help_text: field.help_text ?? null
+            }))
         };
 
         try {
-            const response = await fetch('../backend/api/form-templates.php', {
+            const response = await fetch(`${APP_URL}/backend/api/form-templates.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
-            const result = await response.json();
+            const rawResponse = await response.text();
+            let result;
+
+            try {
+                result = JSON.parse(rawResponse);
+            } catch (parseError) {
+                console.error('Invalid save response:', rawResponse);
+                throw new Error('The server returned an invalid response while saving the form.');
+            }
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Unable to save the form.');
+            }
 
             if (result.success) {
-                window.location.href = 'form-library.php';
+                window.location.href = APP_URL + '/form-library';
             } else {
                 alert('Error: ' + result.message);
             }
@@ -419,125 +557,6 @@ const FormBuilder = {
             console.error('Error saving form:', error);
             alert('An error occurred while saving');
         }
-    },
-
-    previewForm() {
-        const formName = document.getElementById('formName').value.trim();
-        const formDescription = document.getElementById('formDescription').value.trim();
-
-        if (!formName) {
-            alert('Please enter a form name');
-            return;
-        }
-
-        if (this.fields.length === 0) {
-            alert('Please add at least one field to preview');
-            return;
-        }
-
-        // Create preview HTML
-        let html = `<h4 class="mb-3">${this.escapeHtml(formName)}</h4>`;
-
-        if (formDescription) {
-            html += `<p class="text-muted mb-4">${this.escapeHtml(formDescription)}</p>`;
-        }
-
-        html += '<div class="form-preview">';
-
-        this.fields.forEach(field => {
-            html += '<div class="mb-3">';
-            html += `<label class="form-label">${this.escapeHtml(field.field_label)}`;
-            if (field.is_required) {
-                html += ' <span class="text-danger">*</span>';
-            }
-            html += '</label>';
-
-            // Render field based on type
-            switch (field.field_type) {
-                case 'text':
-                    html += `<input type="text" class="form-control" placeholder="${this.escapeHtml(field.help_text || '')}" disabled>`;
-                    break;
-                case 'textarea':
-                    html += `<textarea class="form-control" rows="3" placeholder="${this.escapeHtml(field.help_text || '')}" disabled></textarea>`;
-                    break;
-                case 'number':
-                    html += `<input type="number" step="any" class="form-control" placeholder="${this.escapeHtml(field.help_text || '')}" disabled>`;
-                    break;
-                case 'date':
-                    html += '<input type="date" class="form-control" disabled>';
-                    break;
-                case 'select':
-                    html += '<select class="form-select" disabled>';
-                    html += '<option>Select an option...</option>';
-                    if (field.field_options) {
-                        try {
-                            const options = JSON.parse(field.field_options);
-                            options.forEach(opt => {
-                                html += `<option>${this.escapeHtml(opt)}</option>`;
-                            });
-                        } catch (e) {
-                            console.error('Error parsing options:', e);
-                        }
-                    }
-                    html += '</select>';
-                    break;
-                case 'checkbox':
-                    if (field.field_options) {
-                        try {
-                            const options = JSON.parse(field.field_options);
-                            options.forEach(opt => {
-                                html += '<div class="form-check">';
-                                html += '<input class="form-check-input" type="checkbox" disabled>';
-                                html += `<label class="form-check-label">${this.escapeHtml(opt)}</label>`;
-                                html += '</div>';
-                            });
-                        } catch (e) {
-                            console.error('Error parsing options:', e);
-                        }
-                    }
-                    break;
-                case 'radio':
-                    if (field.field_options) {
-                        try {
-                            const options = JSON.parse(field.field_options);
-                            options.forEach(opt => {
-                                html += '<div class="form-check">';
-                                html += '<input class="form-check-input" type="radio" disabled>';
-                                html += `<label class="form-check-label">${this.escapeHtml(opt)}</label>`;
-                                html += '</div>';
-                            });
-                        } catch (e) {
-                            console.error('Error parsing options:', e);
-                        }
-                    }
-                    break;
-                case 'tags':
-                    html += this.renderTagsPreview();
-                    break;
-            }
-
-            html += '</div>';
-        });
-
-        html += '</div>';
-
-        // Show in alert (simple preview)
-        const previewWindow = window.open('', 'Form Preview', 'width=600,height=800');
-        previewWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Form Preview</title>
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                <style>
-                    body { padding: 2rem; font-family: 'Poppins', sans-serif; }
-                </style>
-            </head>
-            <body>
-                ${html}
-            </body>
-            </html>
-        `);
     },
 
     escapeHtml(text) {

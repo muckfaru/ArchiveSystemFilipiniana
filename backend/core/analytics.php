@@ -8,6 +8,44 @@
  */
 
 /**
+ * Ensure the analytics storage table exists.
+ *
+ * Some deployments import an older database snapshot and never run migrations.
+ * This keeps report/reader analytics working without a manual repair step.
+ *
+ * @param PDO $pdo Database connection
+ * @return bool
+ */
+function ensureNewspaperViewsTable($pdo): bool {
+    static $ensured = false;
+
+    if ($ensured) {
+        return true;
+    }
+
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS newspaper_views (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                newspaper_id INT NOT NULL,
+                ip_address VARCHAR(45) NOT NULL,
+                view_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_newspaper_date (newspaper_id, view_date),
+                INDEX idx_view_date (view_date),
+                CONSTRAINT fk_newspaper_views_newspaper
+                    FOREIGN KEY (newspaper_id) REFERENCES newspapers(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $ensured = true;
+        return true;
+    } catch (PDOException $e) {
+        error_log("Analytics table ensure failed: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Check if a newspaper has been viewed in the current session
  * 
  * @param int $newspaperId The newspaper ID to check
@@ -55,6 +93,10 @@ function recordNewspaperView($pdo, $newspaperId): bool {
     }
 
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return false;
+        }
+
         // Validate newspaper ID is positive integer
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) {
@@ -99,6 +141,10 @@ function recordNewspaperView($pdo, $newspaperId): bool {
  */
 function getDailyViews($pdo, $newspaperId): int {
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return 0;
+        }
+
         // Validate newspaper ID is positive integer
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) {
@@ -135,6 +181,10 @@ function getDailyViews($pdo, $newspaperId): int {
  */
 function getWeeklyViews($pdo, $newspaperId): int {
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return 0;
+        }
+
         // Validate newspaper ID is positive integer
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) {
@@ -171,6 +221,10 @@ function getWeeklyViews($pdo, $newspaperId): int {
  */
 function getMonthlyViews($pdo, $newspaperId): int {
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return 0;
+        }
+
         // Validate newspaper ID is positive integer
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) {
@@ -209,6 +263,10 @@ function getMonthlyViews($pdo, $newspaperId): int {
  */
 function getYearlyViews($pdo, $newspaperId): int {
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return 0;
+        }
+
         // Validate newspaper ID is positive integer
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) {
@@ -260,6 +318,10 @@ function getNewspaperAnalytics($pdo, $newspaperId): array {
  */
 function getTopReadNewspapers($pdo, $period = 'all'): array {
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return [];
+        }
+
         $whereClause = "n.deleted_at IS NULL";
         $params = [];
 
@@ -324,6 +386,10 @@ function getTopReadNewspapers($pdo, $period = 'all'): array {
  */
 function getTotalViews($pdo, $newspaperId): int {
     try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return 0;
+        }
+
         $newspaperId = intval($newspaperId);
         if ($newspaperId <= 0) return 0;
 

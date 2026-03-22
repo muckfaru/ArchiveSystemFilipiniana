@@ -24,3 +24,10 @@ debug*.log
 # Temporary files
 *.tmp
 *.temp
+
+# User-uploaded/generated files
+uploads/**
+!uploads/newspapers/
+!uploads/thumbnails/
+!uploads/newspapers/.gitignore
+!uploads/thumbnails/.gitignore

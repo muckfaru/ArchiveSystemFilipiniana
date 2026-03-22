@@ -9,7 +9,7 @@ require_once __DIR__ . '/functions.php';
 
 // Check if user is logged in
 if (!isLoggedIn()) {
-    redirect(APP_URL . '/auth/login.php');
+        redirect(route_url('login'));
 }
 
 // Check session timeout
@@ -17,7 +17,7 @@ if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 
     // Session expired
     session_unset();
     session_destroy();
-    redirect(APP_URL . '/auth/login.php?expired=1');
+        redirect(route_url('login', ['expired' => 1]));
 }
 $_SESSION['LAST_ACTIVITY'] = time(); // update last activity time stamp
 
@@ -27,5 +27,5 @@ $currentUser = getCurrentUser();
 // Check if user exists and is active
 if (!$currentUser || $currentUser['status'] !== 'active') {
     session_destroy();
-    redirect(APP_URL . '/auth/login.php');
+        redirect(route_url('login'));
 }

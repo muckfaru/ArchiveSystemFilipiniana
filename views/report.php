@@ -7,14 +7,18 @@
 include __DIR__ . '/layouts/header.php';
 ?>
 
-<div class="container-fluid py-4">
+<div class="container-fluid report-page">
     <!-- Page Header -->
     <div class="page-header d-flex justify-content-between align-items-center">
         <div>
             <h1 class="page-title">Report</h1>
             <p class="page-subtitle mb-0">View analytics and reading statistics for archived files.</p>
         </div>
-        <div>
+        <div class="report-header-actions">
+            <div class="current-datetime-display d-flex flex-column text-end pe-4">
+                <div id="currentDate" class="fw-bold text-dark mb-0 report-current-date">Monday, 21 October 2024</div>
+                <div id="currentTime" class="text-muted report-current-time">14:32:05 PM</div>
+            </div>
             <button id="exportCsvBtn" class="btn btn-primary d-flex align-items-center gap-2" style="border-radius: 8px; font-weight: 500;">
                 <i class="bi bi-file-earmark-spreadsheet"></i> Export to CSV
             </button>
@@ -114,6 +118,96 @@ include __DIR__ . '/layouts/header.php';
     const APP_URL = '<?= APP_URL ?>';
 </script>
 <script src="<?= APP_URL ?>/assets/js/admin_pages/report.js?v=<?= time() ?>"></script>
+
+<!-- File Preview Modal -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content public-modal-content">
+            <div class="modal-body p-0">
+                <div class="public-modal">
+                    <div class="public-modal-left">
+                        <div class="public-modal-img-container">
+                            <img id="photoViewerImg" src="" class="public-modal-img" alt="File Preview" style="display: none;">
+                            <div id="noPreviewIcon" class="public-modal-no-img" style="display: none;">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>No preview available</span>
+                            </div>
+                        </div>
+                        <div class="public-modal-actions">
+                            <a id="readNowBtn" href="#" target="_blank" class="public-read-btn">
+                                <i class="bi bi-book-half"></i> Read Full Document
+                            </a>
+                            <div class="admin-action-buttons">
+                                <a href="#" id="editBtn" class="admin-action-btn admin-edit-btn">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <button type="button" id="deleteBtn" class="admin-action-btn admin-delete-btn">
+                                    <i class="bi bi-trash3"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="public-modal-right">
+                        <button type="button" class="public-modal-close" data-bs-dismiss="modal" title="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+
+                        <span id="previewCategory" class="public-modal-category-badge">CATEGORY</span>
+                        <h2 id="previewTitle" class="public-modal-title">File Title</h2>
+
+                        <div id="metaDescriptionWrap" class="public-modal-description-wrap" style="display: none;">
+                            <p id="metaDescription" class="public-modal-description"></p>
+                        </div>
+
+                        <p class="public-modal-meta-section-title">Document Details</p>
+                        <div id="reportPreviewMetaRows"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-standard">
+        <div class="modal-content modal-minimalist">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon icon-danger">
+                    <i class="bi bi-trash3"></i>
+                </div>
+                <h5 class="modal-title">Confirm Delete</h5>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to move this item to trash? This action can be undone from the Trash page.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash3 me-1"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Success Modal -->
+<div class="modal fade" id="deleteSuccessModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm-standard">
+        <div class="modal-content modal-sm-minimalist">
+            <div class="modal-icon icon-success">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <h5 class="modal-title">Item Deleted</h5>
+            <div class="modal-body">
+                <p>The item has been moved to trash successfully.</p>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Export CSV Confirmation Modal -->
 <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">

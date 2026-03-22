@@ -11,7 +11,7 @@ require_once __DIR__ . '/../backend/core/functions.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    redirect(APP_URL . '/admin_pages/dashboard.php');
+    redirect(route_url('dashboard'));
 }
 
 // --- Pagination & Filters ---

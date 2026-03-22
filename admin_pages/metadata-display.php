@@ -13,7 +13,7 @@ require_once __DIR__ . '/../backend/core/functions.php';
 
 // Check admin permissions
 if (!in_array($currentUser['role'], ['super_admin', 'admin'])) {
-    redirect('dashboard.php?error=' . urlencode('Access denied'));
+    redirect(route_url('dashboard', ['error' => 'Access denied']));
 }
 
 // Ensure metadata_display_config table exists with the correct schema (form_field_id)

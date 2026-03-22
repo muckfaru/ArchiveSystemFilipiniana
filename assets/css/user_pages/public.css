@@ -1199,6 +1199,31 @@ mark.pub-hl {
     animation: adminModalIn 0.22s ease;
 }
 
+.admin-login-modal.admin-forgot-success {
+    max-width: 620px;
+    padding-top: 34px;
+    padding-bottom: 30px;
+}
+
+.admin-login-modal.admin-forgot-success #adminViewForgot {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.admin-login-modal.admin-forgot-success .admin-login-heading {
+    margin-bottom: 10px;
+}
+
+.admin-login-modal.admin-forgot-success #adminForgotAlert {
+    margin-top: 10px;
+    margin-bottom: 18px;
+}
+
+.admin-login-modal.admin-forgot-success .admin-forgot-actions {
+    margin-top: 0;
+}
+
 @keyframes adminModalIn {
     from {
         opacity: 0;
@@ -1450,14 +1475,54 @@ button.public-admin-login-btn {
 .admin-login-success {
     background: #D1FAE5;
     color: #065F46;
-    border-radius: 8px;
-    padding: 10px 13px;
+    border-radius: 12px;
+    padding: 14px 18px;
     font-size: 13px;
     font-family: 'Poppins', sans-serif;
-    margin-bottom: 16px;
+    margin-bottom: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+.admin-login-success i {
+    flex-shrink: 0;
+}
+
+.admin-login-success span {
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.admin-forgot-actions {
+    text-align: center;
+    margin-top: 14px;
+    width: 100%;
+}
+
+.admin-back-to-home-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    padding: 16px 24px;
+    border: 1px solid #3A9AFF;
+    border-radius: 12px;
+    background: #3A9AFF;
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(58, 154, 255, 0.24);
+}
+
+.admin-back-to-home-btn-primary:hover {
+    background: #1F7AE0;
+    color: #FFFFFF;
+    border-color: #1F7AE0;
 }
 
 
@@ -3446,7 +3511,7 @@ button.public-admin-login-btn {
 .catalog-container {
     max-width: 1320px;
     margin: 0 auto;
-    padding: 10px 0 60px;
+    padding: 10px 20px 60px;
 }
 
 /* ── Shelf Section ── */
@@ -3458,7 +3523,7 @@ button.public-admin-login-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 48px;
+    padding: 0;
     margin-bottom: 20px;
 }
 
@@ -3528,7 +3593,7 @@ button.public-admin-login-btn {
 /* ── Scroll Track ── */
 .catalog-shelf-track-wrap {
     position: relative;
-    padding: 0 48px;
+    padding: 0;
 }
 
 .catalog-shelf-track {
@@ -3692,10 +3757,10 @@ button.public-admin-login-btn {
 /* ── Responsive: Catalog Shelves ── */
 @media (max-width: 1024px) {
     .catalog-shelf-header {
-        padding: 0 28px;
+        padding: 0;
     }
     .catalog-shelf-track-wrap {
-        padding: 0 28px;
+        padding: 0;
     }
     .catalog-scroll-arrow.catalog-scroll-left { left: 2px; }
     .catalog-scroll-arrow.catalog-scroll-right { right: 2px; }
@@ -3709,10 +3774,10 @@ button.public-admin-login-btn {
 
 @media (max-width: 768px) {
     .catalog-shelf-header {
-        padding: 0 18px;
+        padding: 0;
     }
     .catalog-shelf-track-wrap {
-        padding: 0 18px;
+        padding: 0;
     }
     .catalog-shelf-title {
         font-size: 18px;
@@ -3734,13 +3799,13 @@ button.public-admin-login-btn {
 
 @media (max-width: 480px) {
     .catalog-shelf-header {
-        padding: 0 14px;
+        padding: 0;
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
     }
     .catalog-shelf-track-wrap {
-        padding: 0 14px;
+        padding: 0;
     }
     .catalog-card.public-file-card {
         flex: 0 0 140px !important;

@@ -11,6 +11,7 @@ ob_start();
 require_once __DIR__ . '/../core/config.php';
 require_once __DIR__ . '/../core/auth.php';
 require_once __DIR__ . '/../core/functions.php';
+require_once __DIR__ . '/../core/analytics.php';
 
 // Ensure user is logged in
 if (!isLoggedIn()) {
@@ -22,6 +23,8 @@ if (!isLoggedIn()) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
+        ensureNewspaperViewsTable($pdo);
+
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
         $period = isset($_GET['period']) ? $_GET['period'] : 'all';
         $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
@@ -124,21 +127,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         // Fetch specific Publication Type for these newspapers directly from custom metadata
         $pubTypes = [];
+        $publicationDates = [];
         if (!empty($files)) {
             $fileIds = array_column($files, 'id');
             $placeholders = implode(',', array_fill(0, count($fileIds), '?'));
             $ptsStmt = $pdo->prepare("
-                SELECT cmv.file_id, cmv.field_value 
+                SELECT cmv.file_id, cmv.field_value, LOWER(ff.field_label) AS field_label
                 FROM custom_metadata_values cmv
                 INNER JOIN form_fields ff ON cmv.field_id = ff.id
                 WHERE cmv.file_id IN ($placeholders) 
-                  AND ( LOWER(ff.field_label) = 'publication type' OR LOWER(ff.field_label) = 'category' )
+                  AND (
+                      LOWER(ff.field_label) = 'publication type'
+                      OR LOWER(ff.field_label) = 'category'
+                      OR LOWER(ff.field_label) = 'publication date'
+                      OR LOWER(ff.field_label) = 'date published'
+                      OR LOWER(ff.field_label) = 'date issued'
+                      OR LOWER(ff.field_label) = 'date'
+                  )
             ");
             $ptsStmt->execute($fileIds);
             while ($row = $ptsStmt->fetch(PDO::FETCH_ASSOC)) {
-                // Keep the first matching value
-                if (!isset($pubTypes[$row['file_id']])) {
+                if (
+                    in_array($row['field_label'], ['publication type', 'category'], true)
+                    && !isset($pubTypes[$row['file_id']])
+                ) {
                     $pubTypes[$row['file_id']] = $row['field_value'];
+                }
+
+                if (
+                    in_array($row['field_label'], ['publication date', 'date published', 'date issued', 'date'], true)
+                    && !isset($publicationDates[$row['file_id']])
+                ) {
+                    $publicationDates[$row['file_id']] = $row['field_value'];
                 }
             }
         }
@@ -146,8 +166,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         foreach ($files as &$file) {
             $file['rank'] = $currentRank++;
             $file['view_count'] = intval($file['view_count']);
-            $file['thumbnail_url'] = APP_URL . '/' . ltrim($file['thumbnail_path'], '/');
+            $file['thumbnail_url'] = !empty($file['thumbnail_path'])
+                ? APP_URL . '/' . ltrim($file['thumbnail_path'], '/')
+                : '';
             $file['publication_type'] = $pubTypes[$file['id']] ?? ('Document');
+            $file['publication_date'] = !empty($publicationDates[$file['id']])
+                ? formatPublicationDate($publicationDates[$file['id']], true)
+                : '';
             
             // Just return empty custom_metadata to not break JS
             $file['custom_metadata'] = [];

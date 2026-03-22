@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <h2 class="recent-activities-title mb-0">Recent Activities</h2>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <a href="${APP_URL}/user_pages/collections.php" class="view-all-link m-0">View all</a>
+                    <a href="${APP_URL}/collections" class="view-all-link m-0">View all</a>
                 </div>
             </div>
             <div class="empty-state-container">
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <h5 class="empty-state-title">No Archives Yet</h5>
                 <p class="empty-state-text">Start building your repository by uploading documents.</p>
-                <a href="${APP_URL}/admin_pages/upload.php" class="btn btn-primary empty-state-btn">
+                <a href="${APP_URL}/upload" class="btn btn-primary empty-state-btn">
                     <i class="bi bi-plus-lg me-2"></i>Upload Now
                 </a>
             </div>
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (readNowBtn) {
                     readNowBtn.style.display = 'flex';
-                    readNowBtn.href = APP_URL + `/admin_pages/reader.php?id=${id}`;
+                    readNowBtn.href = APP_URL + `/admin/read?id=${id}`;
                     readNowBtn.target = '_blank';
                 }
 
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     readNowBtn.style.display = 'flex';
                     // Update Read Now Link (Normal Mode)
                     if (format === 'pdf' || format === 'epub' || format === 'mobi') {
-                        readNowBtn.href = APP_URL + `/admin_pages/reader.php?id=${id}`;
+                        readNowBtn.href = APP_URL + `/admin/read?id=${id}`;
                         readNowBtn.target = '_blank';
                     } else {
                         readNowBtn.href = file;
@@ -208,10 +208,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Update Links
-            if (!isBulk && readNowBtn) readNowBtn.href = APP_URL + '/admin_pages/reader.php?id=' + id;
+            if (!isBulk && readNowBtn) readNowBtn.href = APP_URL + '/admin/read?id=' + id;
 
             const editBtn = document.getElementById('editBtn');
-            if (editBtn) editBtn.href = APP_URL + '/admin_pages/upload.php?edit=' + (rawId || id);
+            if (editBtn) editBtn.href = APP_URL + '/upload?edit=' + (rawId || id);
 
             // Bind delete button
             const deleteBtn = document.getElementById('deleteBtn');
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.value = '';
-            window.location.href = APP_URL + '/admin_pages/dashboard.php';
+            window.location.href = APP_URL + '/dashboard';
         }
     }
 

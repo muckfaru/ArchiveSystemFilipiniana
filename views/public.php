@@ -26,7 +26,7 @@
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
-        <a href="<?= APP_URL ?>/user_pages/public.php" class="public-header-brand">
+        <a href="<?= route_url('home') ?>" class="public-header-brand">
             <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
             <span class="public-header-brand-name">Quezon City Public Library</span>
         </a>
@@ -38,11 +38,11 @@
         
         <!-- Navigation -->
         <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
-            <a href="<?= APP_URL ?>/user_pages/public.php" class="public-nav-link <?= !isset($_GET['view']) || $_GET['view'] !== 'browse' ? 'active' : '' ?>">
+            <a href="<?= route_url('home') ?>" class="public-nav-link <?= !isset($_GET['view']) || $_GET['view'] !== 'browse' ? 'active' : '' ?>">
                 <i class="bi bi-house-door"></i>
                 Home
             </a>
-            <a href="<?= APP_URL ?>/user_pages/public.php?view=browse" class="public-nav-link <?= isset($_GET['view']) && $_GET['view'] === 'browse' ? 'active' : '' ?>">
+            <a href="<?= route_url('browse') ?>" class="public-nav-link <?= isset($_GET['view']) && $_GET['view'] === 'browse' ? 'active' : '' ?>">
                 <i class="bi bi-grid-3x3-gap"></i>
                 Browse
             </a>
@@ -103,7 +103,7 @@
                         </strong> results
                     <?php endif; ?>
                 </span>
-                <a href="<?= APP_URL ?>/user_pages/public.php" class="text-decoration-none"
+                <a href="<?= route_url('home') ?>" class="text-decoration-none"
                     style="font-size: 12px; color: #3A9AFF; font-weight: 600;">
                     <i class="bi bi-x-circle me-1"></i>Clear filters
                 </a>
@@ -132,7 +132,7 @@
                     <i class="bi bi-search"></i>
                     <h5>No Results Found</h5>
                     <p style="font-size: 14px;">We couldn't find any documents matching your criteria.</p>
-                    <a href="<?= APP_URL ?>/user_pages/public.php" class="public-read-btn"
+                    <a href="<?= route_url('home') ?>" class="public-read-btn"
                         style="width: auto; display: inline-flex; margin-top: 16px; padding: 10px 24px;">
                         Browse All
                     </a>
@@ -274,11 +274,11 @@
                                 <span class="catalog-shelf-count"><?= number_format($shelf['total']) ?></span>
                             </div>
                             <?php if ($shelf['type'] !== 'All Archives'): ?>
-                                <a href="<?= APP_URL ?>/user_pages/browse.php?publication_type=<?= urlencode($shelf['type']) ?>" class="catalog-see-all">
+                                <a href="<?= route_url('browse', ['publication_type' => $shelf['type']]) ?>" class="catalog-see-all">
                                     See All <i class="bi bi-arrow-right"></i>
                                 </a>
                             <?php else: ?>
-                                <a href="<?= APP_URL ?>/user_pages/browse.php" class="catalog-see-all">
+                                <a href="<?= route_url('browse') ?>" class="catalog-see-all">
                                     Browse All <i class="bi bi-arrow-right"></i>
                                 </a>
                             <?php endif; ?>
@@ -447,7 +447,7 @@
             <!-- FORGOT PASSWORD VIEW -->
             <div id="adminViewForgot" style="display:none;">
                 <h2 class="admin-login-heading">Forgot Password</h2>
-                <p class="admin-login-subtext">Enter your email and we'll send you a reset link.</p>
+                <p class="admin-login-subtext" id="adminForgotSubtext">Enter your email and we'll send you a reset link.</p>
 
                 <div id="adminForgotAlert"></div>
 
@@ -462,7 +462,7 @@
                         <span id="adminForgotBtnText">Send Reset Link</span>
                     </button>
                 </form>
-                <div style="text-align:center; margin-top:14px;">
+                <div class="admin-forgot-actions">
                     <button type="button" id="adminBackToHomeForgot" class="admin-back-to-home-btn">
                         <i class="bi bi-house-door"></i> Back to Home
                     </button>
@@ -501,6 +501,8 @@
             const forgotSpinner = document.getElementById('adminForgotSpinner');
             const forgotBtnText = document.getElementById('adminForgotBtnText');
             const forgotSubmit = document.getElementById('adminForgotSubmit');
+            const forgotEmailField = document.querySelector('#adminForgotForm .admin-login-field');
+            const forgotSubtext = document.getElementById('adminForgotSubtext');
 
             function showView(view) {
                 viewLogin.style.display = view === 'login' ? '' : 'none';
@@ -512,6 +514,18 @@
                 document.body.style.overflow = 'hidden';
                 showView('login');
                 setTimeout(() => document.getElementById('adminUsername').focus(), 80);
+            }
+
+            function openModalWithView(view) {
+                backdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                showView(view);
+                setTimeout(() => {
+                    const target = view === 'forgot'
+                        ? document.getElementById('adminForgotEmail')
+                        : document.getElementById('adminUsername');
+                    if (target) target.focus();
+                }, 80);
             }
 
             function closeModal() {
@@ -527,6 +541,11 @@
                 forgotSpinner.classList.add('d-none');
                 forgotBtnText.textContent = 'Send Reset Link';
                 forgotSubmit.disabled = false;
+                forgotForm.style.display = '';
+                if (forgotEmailField) forgotEmailField.style.display = '';
+                if (forgotSubtext) forgotSubtext.style.display = '';
+                backToHomeForgot.classList.remove('admin-back-to-home-btn-primary');
+                backdrop.querySelector('.admin-login-modal')?.classList.remove('admin-forgot-success');
                 showView('login');
             }
 
@@ -542,6 +561,13 @@
                 showView('forgot');
                 setTimeout(() => document.getElementById('adminForgotEmail').focus(), 60);
             });
+
+            const adminMode = new URLSearchParams(window.location.search).get('admin');
+            if (adminMode === 'forgot') {
+                openModalWithView('forgot');
+            } else if (adminMode === 'login') {
+                openModalWithView('login');
+            }
 
             // Back to Home buttons
             const backToHome = document.getElementById('adminBackToHome');
@@ -597,11 +623,27 @@
                 try {
                     const fd = new FormData();
                     fd.append('email', document.getElementById('adminForgotEmail').value);
-                    await fetch(`${APP_URL}/forgot-password.php`, { method: 'POST', body: fd });
-                    forgotAlert.innerHTML = `<div class="admin-login-success"><i class="bi bi-check-circle-fill"></i> If that email is registered, a reset link has been sent.</div>`;
+                    const res = await fetch(`<?= route_url('forgot-password') ?>`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: fd
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.message || 'Failed to send reset email.');
+                    }
+                    forgotAlert.innerHTML = `<div class="admin-login-success"><i class="bi bi-check-circle-fill"></i><span>If that email is registered, a reset link has been sent.</span></div>`;
                     forgotForm.reset();
+                    if (forgotEmailField) forgotEmailField.style.display = 'none';
+                    forgotSubmit.style.display = 'none';
+                    if (forgotSubtext) forgotSubtext.style.display = 'none';
+                    backToHomeForgot.classList.add('admin-back-to-home-btn-primary');
+                    backdrop.querySelector('.admin-login-modal')?.classList.add('admin-forgot-success');
                 } catch (err) {
-                    forgotAlert.innerHTML = `<div class="admin-login-error"><i class="bi bi-exclamation-circle-fill"></i> Failed to send. Please try again.</div>`;
+                    forgotAlert.innerHTML = `<div class="admin-login-error"><i class="bi bi-exclamation-circle-fill"></i> ${err.message}</div>`;
                 } finally {
                     forgotSubmit.disabled = false;
                     forgotSpinner.classList.add('d-none');

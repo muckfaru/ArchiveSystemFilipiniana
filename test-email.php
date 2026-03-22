@@ -26,6 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['to'])) {
     ob_start();
 
     $mail = new PHPMailer(true);
+    $smtpUsername = trim((string) SMTP_USERNAME);
+    $smtpPassword = preg_replace('/\s+/', '', (string) SMTP_PASSWORD);
+    $smtpPort = (int) SMTP_PORT;
     try {
         // Full debug output
         $mail->SMTPDebug = SMTP::DEBUG_SERVER;
@@ -37,10 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['to'])) {
         $mail->isSMTP();
         $mail->Host       = SMTP_HOST;
         $mail->SMTPAuth   = true;
-        $mail->Username   = SMTP_USERNAME;
-        $mail->Password   = SMTP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = SMTP_PORT;
+        $mail->Username   = $smtpUsername;
+        $mail->Password   = $smtpPassword;
+        $mail->SMTPSecure = $smtpPort === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = $smtpPort;
         $mail->SMTPOptions = [
             'ssl' => [
                 'verify_peer'       => false,
@@ -50,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['to'])) {
         ];
         $mail->CharSet = 'UTF-8';
 
-        $mail->setFrom(SMTP_USERNAME, SMTP_FROM_NAME);
+        $mail->setFrom($smtpUsername, SMTP_FROM_NAME);
         $mail->addAddress($testTo);
 
         $mail->isHTML(true);

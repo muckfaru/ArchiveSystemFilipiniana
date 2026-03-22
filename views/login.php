@@ -190,42 +190,83 @@
             gap: 8px;
             font-family: 'Poppins', sans-serif;
         }
+
+        .success-alert {
+            background: #DCFCE7;
+            color: #166534;
+            border-radius: 8px;
+            padding: 10px 13px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
     </style>
 </head>
 
 <body>
     <div class="login-card">
-        <h1 class="login-heading">Admin Login</h1>
-        <p class="login-subtext">Please login to continue</p>
+        <div id="loginView">
+            <h1 class="login-heading">Admin Login</h1>
+            <p class="login-subtext">Please login to continue</p>
 
-        <div id="alert-container"></div>
+            <div id="alert-container"></div>
 
-        <form id="loginForm" novalidate>
-            <div class="login-field">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter your username"
-                    autocomplete="username" required>
-            </div>
-
-            <div class="login-field">
-                <label for="password">Password</label>
-                <div class="pass-wrap">
-                    <input type="password" id="password" name="password" placeholder="Enter your password"
-                        autocomplete="current-password" required>
-                    <button type="button" class="eye-btn" id="togglePassword" tabindex="-1">
-                        <i class="bi bi-eye" id="eyeIcon"></i>
-                    </button>
+            <form id="loginForm" novalidate>
+                <div class="login-field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username"
+                        autocomplete="username" required>
                 </div>
-                <div class="forgot-link-wrap">
-                    <a href="<?= APP_URL ?>/auth/forgot-password.php" class="forgot-link">Forgot password?</a>
-                </div>
-            </div>
 
-            <button type="submit" class="login-btn">
-                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                <span class="btn-text">Login</span>
-            </button>
-        </form>
+                <div class="login-field">
+                    <label for="password">Password</label>
+                    <div class="pass-wrap">
+                        <input type="password" id="password" name="password" placeholder="Enter your password"
+                            autocomplete="current-password" required>
+                        <button type="button" class="eye-btn" id="togglePassword" tabindex="-1">
+                            <i class="bi bi-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                    <div class="forgot-link-wrap">
+                        <button type="button" id="showForgotPassword" class="forgot-link">Forgot password?</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    <span class="btn-text">Login</span>
+                </button>
+            </form>
+        </div>
+
+        <div id="forgotView" style="display:none;">
+            <h1 class="login-heading">Forgot Password</h1>
+            <p class="login-subtext">Enter your email and we'll send you a reset link.</p>
+
+            <div id="forgot-alert-container"></div>
+
+            <form id="forgotPasswordForm" novalidate>
+                <div class="login-field">
+                    <label for="forgotEmail">Email Address</label>
+                    <input type="email" id="forgotEmail" name="email" placeholder="Enter your email"
+                        autocomplete="email" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="forgotSubmitBtn">
+                    <span class="spinner-border spinner-border-sm d-none" id="forgotSpinner" role="status" aria-hidden="true"></span>
+                    <span id="forgotBtnText">Send Reset Link</span>
+                </button>
+            </form>
+
+            <div class="forgot-link-wrap" style="margin-top:14px;">
+                <button type="button" id="backToLogin" class="forgot-link">
+                    <i class="bi bi-arrow-left"></i> Back to Login
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->

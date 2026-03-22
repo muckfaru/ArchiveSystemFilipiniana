@@ -10,7 +10,7 @@ require_once __DIR__ . '/../backend/core/functions.php';
 
 $file = $_GET['file'] ?? '';
 $file = str_replace(['..', '\\'], '', $file);
-$fileUrl = APP_URL . '/serve_file.php?file=' . urlencode($file);
+$fileUrl = route_url('serve-file', ['file' => $file]);
 ?>
 <!DOCTYPE html>
 <html lang="en">

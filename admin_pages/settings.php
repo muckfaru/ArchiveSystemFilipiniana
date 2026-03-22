@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Destroy session and redirect
             session_destroy();
-            header("Location: " . APP_URL . "/auth/login.php");
+            header("Location: " . route_url('login'));
             exit;
         }
         redirect($_SERVER['PHP_SELF']);

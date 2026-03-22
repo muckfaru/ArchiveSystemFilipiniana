@@ -54,7 +54,7 @@ if ($existingEpub) {
     echo json_encode([
         'success' => true,
         'already_exists' => true,
-        'epub_url' => '../serve_file.php?file=' . urlencode($epubRelativePath)
+            'epub_url' => route_url('serve-file', ['file' => $epubRelativePath])
     ]);
     exit;
 }
@@ -74,7 +74,7 @@ if ($result['success']) {
     echo json_encode([
         'success' => true,
         'already_exists' => false,
-        'epub_url' => '../serve_file.php?file=' . urlencode($epubRelativePath)
+            'epub_url' => route_url('serve-file', ['file' => $epubRelativePath])
     ]);
 } else {
     http_response_code(500);

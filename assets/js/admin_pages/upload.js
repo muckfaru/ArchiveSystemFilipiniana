@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
                 if (isEdit) {
                     window.isNavigatingAway = true;
-                    window.location.href = APP_URL + '/admin_pages/dashboard.php';
+                    window.location.href = APP_URL + '/dashboard';
                 } else if (typeof window.resetForm === 'function') {
                     window.resetForm();
                 }
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            fetch(APP_URL + '/admin_pages/upload.php', {
+                fetch(APP_URL + '/upload', {
                 method: 'POST',
                 body: formData,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -596,10 +596,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isEdit) {
                 window.isNavigatingAway = true;
                 window.hasUnsavedChanges = () => false;
-                window.location.href = APP_URL + '/admin_pages/dashboard.php';
+                window.location.href = APP_URL + '/dashboard';
             } else {
                 // Clear session draft on discard
-                fetch(APP_URL + '/admin_pages/upload.php', {
+                fetch(APP_URL + '/upload', {
                     method: 'POST',
                     body: new URLSearchParams({ 'action': 'clear_draft' }),
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' }
@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         window.isNavigatingAway = true;
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/admin_pages/dashboard.php?success=upload&count=' + successCount;
+                        window.location.href = APP_URL + '/dashboard?success=upload&count=' + successCount;
                     } else {
                         showAlert('danger', `Upload failed. ${errorCount} errors.`);
                         resetBtn(confirmUploadBtn, originalText);
@@ -838,11 +838,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (isEdit) {
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/admin_pages/dashboard.php?success=edit';
+                        window.location.href = APP_URL + '/dashboard?success=edit';
                     } else {
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/admin_pages/dashboard.php?success=upload';
+                        window.location.href = APP_URL + '/dashboard?success=upload';
                     }
                 } else {
                     showAlert('danger', result.message || 'Upload failed');
@@ -857,11 +857,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (isEdit) {
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/admin_pages/dashboard.php?success=edit';
+                        window.location.href = APP_URL + '/dashboard?success=edit';
                     } else {
                         window.hasUnsavedChanges = function () { return false; };
                         window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/admin_pages/dashboard.php?success=upload';
+                        window.location.href = APP_URL + '/dashboard?success=upload';
                     }
                 } else {
                     throw new Error('Server returned ' + response.status);

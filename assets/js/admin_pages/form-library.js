@@ -6,6 +6,7 @@
 const FormLibrary = {
     currentFilter: 'all',
     searchQuery: '',
+    apiUrl: `${APP_URL}/backend/api/form-templates.php`,
 
     init() {
         this.bindEvents();
@@ -16,7 +17,7 @@ const FormLibrary = {
         const createBtn = document.getElementById('createFormBtn');
         if (createBtn) {
             createBtn.addEventListener('click', () => {
-                window.location.href = 'form-builder.php';
+    window.location.href = APP_URL + '/form-builder';
             });
         }
 
@@ -41,7 +42,7 @@ const FormLibrary = {
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-form')) {
                 const formId = e.target.closest('.edit-form').dataset.formId;
-                window.location.href = `form-builder.php?id=${formId}`;
+    window.location.href = `${APP_URL}/form-builder?id=${formId}`;
             }
             if (e.target.closest('.preview-form')) {
                 e.preventDefault();
@@ -164,13 +165,13 @@ const FormLibrary = {
             modal.hide();
 
             try {
-                const response = await fetch('../backend/api/form-templates.php', {
+                const response = await fetch(this.apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'set_active', form_id: formId })
                 });
 
-                const result = await response.json();
+                const result = await this.parseApiResponse(response);
 
                 if (result.success) {
                     location.reload();
@@ -180,7 +181,7 @@ const FormLibrary = {
                 }
             } catch (error) {
                 console.error('Error setting active form:', error);
-                alert('An error occurred');
+                alert(error.message || 'An error occurred');
                 if (toggleElement) toggleElement.checked = false;
             }
         });
@@ -188,13 +189,13 @@ const FormLibrary = {
 
     async duplicateForm(formId) {
         try {
-            const response = await fetch('../backend/api/form-templates.php', {
+            const response = await fetch(this.apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'duplicate', form_id: formId })
             });
 
-            const result = await response.json();
+            const result = await this.parseApiResponse(response);
 
             if (result.success) {
                 location.reload();
@@ -203,7 +204,7 @@ const FormLibrary = {
             }
         } catch (error) {
             console.error('Error duplicating form:', error);
-            alert('An error occurred');
+            alert(error.message || 'An error occurred');
         }
     },
 
@@ -213,13 +214,13 @@ const FormLibrary = {
         }
 
         try {
-            const response = await fetch('../backend/api/form-templates.php', {
+            const response = await fetch(this.apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'archive', form_id: formId })
             });
 
-            const result = await response.json();
+            const result = await this.parseApiResponse(response);
 
             if (result.success) {
                 location.reload();
@@ -228,7 +229,7 @@ const FormLibrary = {
             }
         } catch (error) {
             console.error('Error archiving form:', error);
-            alert('An error occurred');
+            alert(error.message || 'An error occurred');
         }
     },
 
@@ -249,13 +250,13 @@ const FormLibrary = {
             modal.hide();
 
             try {
-                const response = await fetch('../backend/api/form-templates.php', {
+                const response = await fetch(this.apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'delete', form_id: formId })
                 });
 
-                const result = await response.json();
+                const result = await this.parseApiResponse(response);
 
                 if (result.success) {
                     location.reload();
@@ -264,13 +265,13 @@ const FormLibrary = {
                     // For now keeping this as second alert or we could update modal text
                     if (confirm(result.message + '\n\nProceed with deletion?')) {
                         // Retry with confirmation
-                        const confirmResponse = await fetch('../backend/api/form-templates.php', {
+                        const confirmResponse = await fetch(this.apiUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action: 'delete', form_id: formId, confirm: true })
                         });
 
-                        const confirmResult = await confirmResponse.json();
+                        const confirmResult = await this.parseApiResponse(confirmResponse);
 
                         if (confirmResult.success) {
                             location.reload();
@@ -283,15 +284,15 @@ const FormLibrary = {
                 }
             } catch (error) {
                 console.error('Error deleting form:', error);
-                alert('An error occurred');
+                alert(error.message || 'An error occurred');
             }
         });
     },
 
     async previewForm(formId) {
         try {
-            const response = await fetch(`../backend/api/form-templates.php?action=get&form_id=${formId}`);
-            const result = await response.json();
+            const response = await fetch(`${this.apiUrl}?action=get&form_id=${formId}`);
+            const result = await this.parseApiResponse(response);
 
             if (result.success) {
                 this.showPreviewModal(result.template, result.fields);
@@ -300,8 +301,26 @@ const FormLibrary = {
             }
         } catch (error) {
             console.error('Error loading form preview:', error);
-            alert('An error occurred');
+            alert(error.message || 'An error occurred');
         }
+    },
+
+    async parseApiResponse(response) {
+        const raw = await response.text();
+        let result;
+
+        try {
+            result = JSON.parse(raw);
+        } catch (error) {
+            console.error('Invalid API response:', raw);
+            throw new Error('The server returned an invalid response.');
+        }
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Request failed.');
+        }
+
+        return result;
     },
 
     showPreviewModal(template, fields) {

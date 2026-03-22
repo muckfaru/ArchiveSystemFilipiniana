@@ -12,14 +12,14 @@ require_once __DIR__ . '/../backend/core/functions.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    redirect(APP_URL . '/admin_pages/dashboard.php');
+    redirect(route_url('dashboard'));
 }
 
 // Check if browse view is requested
 $view = $_GET['view'] ?? 'home';
 
 if ($view === 'browse') {
-    header('Location: ' . APP_URL . '/user_pages/browse.php');
+    header('Location: ' . route_url('browse'));
     exit;
 }
 

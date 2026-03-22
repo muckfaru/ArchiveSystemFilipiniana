@@ -2,6 +2,24 @@
  * Login Page Logic
  */
 
+const loginView = document.getElementById('loginView');
+const forgotView = document.getElementById('forgotView');
+const showForgotPassword = document.getElementById('showForgotPassword');
+const backToLogin = document.getElementById('backToLogin');
+
+if (showForgotPassword && loginView && forgotView) {
+    showForgotPassword.addEventListener('click', function () {
+        window.location.href = `${APP_URL}/?admin=forgot`;
+    });
+}
+
+if (backToLogin && loginView && forgotView) {
+    backToLogin.addEventListener('click', function () {
+        forgotView.style.display = 'none';
+        loginView.style.display = 'block';
+    });
+}
+
 // Toggle password visibility
 const togglePassword = document.querySelector('#togglePassword');
 const password = document.querySelector('#password');
@@ -74,6 +92,58 @@ if (loginForm) {
             btn.disabled = false;
             spinner.classList.add('d-none');
             btnText.textContent = 'LOGIN';
+        }
+    });
+}
+
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('forgotSubmitBtn');
+        const spinner = document.getElementById('forgotSpinner');
+        const btnText = document.getElementById('forgotBtnText');
+        const alertContainer = document.getElementById('forgot-alert-container');
+
+        submitBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Sending...';
+        alertContainer.innerHTML = '';
+
+        try {
+            const formData = new FormData(this);
+            const response = await fetch(`${APP_URL}/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Failed to send reset email.');
+            }
+
+            alertContainer.innerHTML = `
+                <div class="success-alert">
+                    <i class="bi bi-check-circle-fill"></i> ${result.message}
+                </div>
+            `;
+            this.reset();
+        } catch (error) {
+            alertContainer.innerHTML = `
+                <div class="error-alert">
+                    <i class="bi bi-exclamation-circle-fill"></i> ${error.message}
+                </div>
+            `;
+        } finally {
+            submitBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = 'Send Reset Link';
         }
     });
 }

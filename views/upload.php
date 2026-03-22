@@ -192,7 +192,7 @@
                 <!-- Alert Container -->
                 <div id="alertContainer"><?php if (isset($_GET['error'])): ?><div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="bi bi-exclamation-circle me-2"></i><?= htmlspecialchars($_GET['error']) ?><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><?php endif; ?><?php if ($alert): ?><div class="alert alert-<?= $alert['type'] ?> alert-dismissible fade show" role="alert"><i class="bi bi-<?= $alert['type'] == 'success' ? 'check-circle' : 'exclamation-circle' ?> me-2"></i><?= htmlspecialchars($alert['message']) ?><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div><?php endif; ?></div>
     
-                <form id="uploadForm" action="<?= APP_URL ?>/admin_pages/upload.php" method="POST" enctype="multipart/form-data">
+        <form id="uploadForm" action="<?= route_url('upload') ?>" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="<?= $editMode ? 'edit' : 'upload' ?>">
                     <?php if ($editMode): ?>
                         <input type="hidden" name="edit_id" value="<?= $editItem['id'] ?>">
@@ -224,7 +224,7 @@
                                 Please customize your metadata structure to start uploading archives.<br>
                                 Define fields like Author, Date, and Keywords to keep your library organized.
                             </p>
-                            <a href="<?= APP_URL ?>/admin_pages/form-library.php" class="btn btn-primary mt-3">
+                    <a href="<?= route_url('form-library') ?>" class="btn btn-primary mt-3">
                                 <i class="bi bi-gear"></i> Configure Metadata Fields
                             </a>
                         </div>

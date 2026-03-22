@@ -26,6 +26,10 @@ require_once __DIR__ . '/PHPMailer/SMTP.php';
 function sendEmail($to, $subject, $body)
 {
     $mail = new PHPMailer(true);
+    $smtpHost = trim((string) SMTP_HOST);
+    $smtpUsername = trim((string) SMTP_USERNAME);
+    $smtpPassword = preg_replace('/\s+/', '', (string) SMTP_PASSWORD);
+    $smtpPort = (int) SMTP_PORT;
 
     try {
         // Log SMTP debug output to PHP error log for troubleshooting
@@ -36,18 +40,18 @@ function sendEmail($to, $subject, $body)
         
         // SMTP Configuration
         $mail->isSMTP();
-        $mail->Host = SMTP_HOST;
+        $mail->Host = $smtpHost;
         $mail->SMTPAuth = true;
-        $mail->Username = SMTP_USERNAME;
-        $mail->Password = SMTP_PASSWORD;
+        $mail->Username = $smtpUsername;
+        $mail->Password = $smtpPassword;
         
         // Use SMTPS (SSL) for port 465, STARTTLS for port 587
-        if (SMTP_PORT == 465) {
+        if ($smtpPort === 465) {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         } else {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         }
-        $mail->Port = SMTP_PORT;
+        $mail->Port = $smtpPort;
         
         // Additional SMTP options for better compatibility
         $mail->SMTPOptions = array(
@@ -59,7 +63,7 @@ function sendEmail($to, $subject, $body)
         );
 
         // Sender
-        $mail->setFrom(SMTP_USERNAME, SMTP_FROM_NAME);
+        $mail->setFrom($smtpUsername, SMTP_FROM_NAME);
 
         // Recipient
         $mail->addAddress($to);

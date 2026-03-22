@@ -493,7 +493,7 @@ include __DIR__ . '/layouts/header.php';
             <i class="bi bi-info-circle-fill" style="font-size:1.4rem"></i>
             <div>
                 <strong>No custom metadata fields found.</strong><br>
-                <span style="font-size:13px">Go to <a href="form-builder.php" class="fw-semibold">Custom Metadata</a> and
+                                        <span style="font-size:13px">Go to <a href="<?= route_url('form-builder') ?>" class="fw-semibold">Custom Metadata</a> and
                     create some fields first — they will automatically appear here.</span>
             </div>
         </div>

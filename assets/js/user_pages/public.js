@@ -106,7 +106,7 @@
 
         // Read Now link → user reader (public access, no login required)
         // d.id is now encrypted securely and URL-safe Base64
-        readBtn.href = APP_URL + '/user_pages/reader.php?id=' + d.id;
+        readBtn.href = APP_URL + '/read?id=' + d.id;
 
         // Show backdrop
         backdrop.classList.add('active');
@@ -200,7 +200,8 @@
         if (!searchForm) return;
         const formData = new FormData(searchForm);
         const params = new URLSearchParams(formData).toString();
-        const url = APP_URL + '/user_pages/public.php?' + params;
+        const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+        const url = currentPath + (params ? '?' + params : '');
 
         const contentArea = document.getElementById('publicContentArea');
         if (contentArea) contentArea.style.opacity = '0.5';

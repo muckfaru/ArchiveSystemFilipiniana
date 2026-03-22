@@ -22,7 +22,7 @@ if (!is_numeric($rawId) && !empty($rawId)) {
 }
 
 if (!$fileId) {
-    header('Location: dashboard.php');
+    header('Location: ' . route_url('dashboard'));
     exit;
 }
 
@@ -35,7 +35,7 @@ $stmt->execute([$fileId]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$file) {
-    header('Location: dashboard.php');
+    header('Location: ' . route_url('dashboard'));
     exit;
 }
 
@@ -46,7 +46,7 @@ $customMetadata = getCustomMetadataValues($fileId);
 logActivity($currentUser['id'], 'read', $file['title']);
 
 $fileType = strtolower($file['file_type']);
-$fileUrl = '../serve_file.php?file=' . urlencode($file['file_path']);
+$fileUrl = route_url('admin-serve-file', ['file' => $file['file_path']]);
 $filePath = __DIR__ . '/../' . $file['file_path'];
 
 // Handle MOBI → EPUB conversion (admin only)
@@ -63,7 +63,7 @@ if ($fileType === 'mobi') {
     if ($existingEpub) {
         // EPUB already exists, use it immediately (instant load)
         $epubRelativePath = preg_replace('/\.mobi$/i', '.epub', $file['file_path']);
-        $epubUrl = '../serve_file.php?file=' . urlencode($epubRelativePath);
+        $epubUrl = route_url('admin-serve-file', ['file' => $epubRelativePath]);
     } elseif (isCalibreAvailable()) {
         // Calibre is installed, mark for conversion
         $needsConversion = true;
@@ -79,7 +79,7 @@ $pdfViewerUrl = '';
 
 if ($fileType === 'pdf') {
     $readerType = 'pdf';
-    $pdfViewerUrl = 'pdf_viewer.php?file=' . urlencode($file['file_path']);
+    $pdfViewerUrl = route_url('admin-pdf-viewer', ['file' => $file['file_path']]);
 } elseif ($fileType === 'epub' || ($fileType === 'mobi' && $epubUrl)) {
     $readerType = 'epub';
 } elseif ($fileType === 'mobi' && $needsConversion) {
@@ -822,7 +822,7 @@ $formatLabel = match (true) {
     <!-- ======= TOP CHROME ======= -->
     <div class="reader-top" id="readerTop">
         <div class="chrome-left">
-            <a href="dashboard.php" class="back-link" title="Back">
+                    <a href="<?= route_url('dashboard') ?>" class="back-link" title="Back">
                 <i class="bi bi-arrow-left"></i>
                 <span class="d-none d-sm-inline">Back</span>
             </a>
@@ -853,7 +853,7 @@ $formatLabel = match (true) {
 
         <?php if ($readerType === 'pdf'): ?>
             <iframe id="pdfFrame" class="pdf-frame"
-                src="pdf_viewer.php?file=<?= urlencode($file['file_path']) ?>"></iframe>
+                        src="<?= htmlspecialchars($pdfViewerUrl) ?>"></iframe>
 
         <?php elseif ($readerType === 'mobi-converting'): ?>
             <div class="conversion-screen" id="conversionScreen">
@@ -1083,7 +1083,7 @@ $formatLabel = match (true) {
         <?php if ($readerType === 'mobi-converting'): ?>
         async function convertMobiFile() {
             try {
-                const response = await fetch(`convert_mobi.php?file_id=${FILE_ID}`);
+                    const response = await fetch(`<?= route_url('admin-convert-mobi') ?>?file_id=${FILE_ID}`);
                 const data = await response.json();
                 
                 if (data.success) {
@@ -1092,12 +1092,12 @@ $formatLabel = match (true) {
                 } else {
                     // On error, show alert and go back to dashboard
                     alert('Conversion failed: ' + data.error);
-                    window.location.href = 'dashboard.php';
+                            window.location.href = '<?= route_url('dashboard') ?>';
                 }
             } catch (error) {
                 // On error, show alert and go back to dashboard
                 alert('Error: ' + error.message);
-                window.location.href = 'dashboard.php';
+                        window.location.href = '<?= route_url('dashboard') ?>';
             }
         }
         
@@ -1265,7 +1265,7 @@ $formatLabel = match (true) {
                 if (!galImages.length) return;
                 const src = galImages[galIndex];
                 if (IS_CBZ) {
-                    galImg.src = 'serve_cbz_image.php?file_id=' + FILE_ID + '&image_path=' + encodeURIComponent(src);
+                        galImg.src = '<?= route_url('admin-serve-cbz-image') ?>?file_id=' + FILE_ID + '&image_path=' + encodeURIComponent(src);
                 } else {
                     galImg.src = '../' + src;
                 }

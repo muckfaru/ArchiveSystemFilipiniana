@@ -1,0 +1,38 @@
+RewriteEngine On
+Options -MultiViews
+
+# Keep direct access to existing files and directories working.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Clean route rewrites.
+RewriteRule ^$ index.php [L,QSA]
+RewriteRule ^browse/?$ user_pages/browse.php [L,QSA]
+RewriteRule ^collections/?$ user_pages/collections.php [L,QSA]
+RewriteRule ^read/?$ user_pages/reader.php [L,QSA]
+RewriteRule ^pdf-viewer/?$ user_pages/public_pdf_viewer.php [L,QSA]
+RewriteRule ^serve-file/?$ serve_file.php [L,QSA]
+RewriteRule ^convert-mobi/?$ user_pages/convert_mobi.php [L,QSA]
+RewriteRule ^serve-cbz-image/?$ user_pages/serve_cbz_image.php [L,QSA]
+RewriteRule ^login/?$ auth/login.php [L,QSA]
+RewriteRule ^forgot-password/?$ auth/forgot-password.php [L,QSA]
+RewriteRule ^reset-password/?$ auth/reset-password.php [L,QSA]
+RewriteRule ^logout/?$ auth/logout.php [L,QSA]
+RewriteRule ^dashboard/?$ admin_pages/dashboard.php [L,QSA]
+RewriteRule ^users/?$ admin_pages/users.php [L,QSA]
+RewriteRule ^history/?$ admin_pages/history.php [L,QSA]
+RewriteRule ^trash/?$ admin_pages/trash.php [L,QSA]
+RewriteRule ^upload/?$ admin_pages/upload.php [L,QSA]
+RewriteRule ^form-library/?$ admin_pages/form-library.php [L,QSA]
+RewriteRule ^form-builder/?$ admin_pages/form-builder.php [L,QSA]
+RewriteRule ^metadata-display/?$ admin_pages/metadata-display.php [L,QSA]
+RewriteRule ^report/?$ admin_pages/report.php [L,QSA]
+RewriteRule ^settings/?$ admin_pages/settings.php [L,QSA]
+RewriteRule ^admin/read/?$ admin_pages/reader.php [L,QSA]
+RewriteRule ^admin/pdf-viewer/?$ admin_pages/pdf_viewer.php [L,QSA]
+RewriteRule ^admin/convert-mobi/?$ admin_pages/convert_mobi.php [L,QSA]
+RewriteRule ^admin/serve-cbz-image/?$ admin_pages/serve_cbz_image.php [L,QSA]
+RewriteRule ^admin/serve-file/?$ admin_pages/serve_file.php [L,QSA]
+RewriteRule ^admin/worker/?$ admin_pages/worker.php [L,QSA]
+RewriteRule ^admin/check-user-availability/?$ admin_pages/check_user_availability.php [L,QSA]

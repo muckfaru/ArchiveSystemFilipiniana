@@ -49,6 +49,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         .browse-list-view .public-file-description {
             margin-bottom: 14px !important;
         }
+        .browse-list-view .public-file-date {
+            display: none !important;
+        }
         .browse-meta-item {
             display: flex !important;
             flex-direction: column !important;
@@ -94,7 +97,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
-        <a href="<?= APP_URL ?>/user_pages/public.php" class="public-header-brand">
+        <a href="<?= route_url('home') ?>" class="public-header-brand">
             <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
             <span class="public-header-brand-name">Quezon City Public Library</span>
         </a>
@@ -106,11 +109,11 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         
         <!-- Navigation -->
         <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
-            <a href="<?= APP_URL ?>/user_pages/public.php" class="public-nav-link">
+            <a href="<?= route_url('home') ?>" class="public-nav-link">
                 <i class="bi bi-house-door"></i>
                 Home
             </a>
-            <a href="<?= APP_URL ?>/user_pages/browse.php" class="public-nav-link active">
+            <a href="<?= route_url('browse') ?>" class="public-nav-link active">
                 <i class="bi bi-grid-3x3-gap"></i>
                 Browse
             </a>
@@ -130,7 +133,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             <div class="browse-sidebar-header">
                 <h3 class="browse-sidebar-title">Filters</h3>
                 <?php if ($searchQuery || $categoryFilter || $languageFilter || $editionFilter || $dateFrom || $dateTo || $publicationType): ?>
-                    <a href="<?= APP_URL ?>/user_pages/browse.php" class="browse-clear-all">
+                    <a href="<?= route_url('browse') ?>" class="browse-clear-all">
                         <i class="bi bi-x-circle"></i>
                         Clear all
                     </a>
@@ -367,7 +370,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <?= $filterTag ?>
                         <?php endforeach; ?>
                     </div>
-                    <a href="<?= APP_URL ?>/user_pages/browse.php" class="clear-filters-btn">
+                        <a href="<?= route_url('browse') ?>" class="clear-filters-btn">
                         <i class="bi bi-x-circle me-1"></i>Clear All Filters
                     </a>
                 </div>
@@ -379,7 +382,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                     <i class="bi bi-search"></i>
                     <h5>No Results Found</h5>
                     <p>We couldn't find any documents matching your criteria.</p>
-                    <a href="<?= APP_URL ?>/user_pages/browse.php" class="browse-clear-btn">Clear Filters</a>
+                        <a href="<?= route_url('browse') ?>" class="browse-clear-btn">Clear Filters</a>
                 </div>
             <?php else: ?>
                 <div class="browse-grid-compact">
@@ -434,14 +437,13 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                 <div class="public-file-title">
                                     <?= highlightSearch($paper['title'], $searchQuery) ?>
                                 </div>
-                                
+
                                 <?php if (!empty($pubDateVal)): ?>
-                                    <div class="public-file-date" style="font-size: 13px; color: #6B7280; margin-top: 4px;">
-                                        <i class="bi bi-calendar3 me-1"></i>
+                                    <div class="public-file-date">
                                         <?= htmlspecialchars(formatPublicationDate($pubDateVal, true)) ?>
                                     </div>
                                 <?php endif; ?>
-
+                                
                                 <!-- Description -->
                                 <?php $descVal = $ml['description'] ?? ''; ?>
                                 <?php if (!empty($descVal)): ?>
@@ -930,11 +932,22 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                 try {
                     const fd = new FormData();
                     fd.append('email', document.getElementById('adminForgotEmail').value);
-                    await fetch(`${APP_URL}/forgot-password.php`, { method: 'POST', body: fd });
-                    forgotAlert.innerHTML = `<div class="admin-login-success"><i class="bi bi-check-circle-fill"></i> If that email is registered, a reset link has been sent.</div>`;
+                    const res = await fetch(`<?= route_url('forgot-password') ?>`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: fd
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.message || 'Failed to send reset email.');
+                    }
+                    forgotAlert.innerHTML = `<div class="admin-login-success"><i class="bi bi-check-circle-fill"></i> ${data.message}</div>`;
                     forgotForm.reset();
                 } catch (err) {
-                    forgotAlert.innerHTML = `<div class="admin-login-error"><i class="bi bi-exclamation-circle-fill"></i> Failed to send. Please try again.</div>`;
+                    forgotAlert.innerHTML = `<div class="admin-login-error"><i class="bi bi-exclamation-circle-fill"></i> ${err.message}</div>`;
                 } finally {
                     forgotSubmit.disabled = false;
                     forgotSpinner.classList.add('d-none');

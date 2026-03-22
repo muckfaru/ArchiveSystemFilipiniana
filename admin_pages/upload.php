@@ -53,7 +53,7 @@ if ($editMode) {
     $editItem = $stmt->fetch();
 
     if (!$editItem) {
-        redirect('upload.php?error=' . urlencode('Document not found.'));
+        redirect(route_url('upload', ['error' => 'Document not found.']));
     }
 
     // Get existing custom metadata values for this file
@@ -148,7 +148,158 @@ function rejectInvalidPublicationDate()
         exit;
     }
 
-    redirect('upload.php?error=' . urlencode($message));
+    redirect(route_url('upload', ['error' => $message]));
+}
+
+function getAllowedUploadMimeTypes()
+{
+    return [
+        'pdf' => ['application/pdf'],
+        'epub' => ['application/epub+zip', 'application/zip'],
+        'mobi' => ['application/x-mobipocket-ebook', 'application/octet-stream'],
+        'txt' => ['text/plain'],
+        'jpg' => ['image/jpeg'],
+        'jpeg' => ['image/jpeg'],
+        'png' => ['image/png'],
+        'webp' => ['image/webp'],
+        'tif' => ['image/tiff'],
+        'tiff' => ['image/tiff'],
+    ];
+}
+
+function getUploadErrorMessage($errorCode)
+{
+    $messages = [
+        UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the server upload size limit.',
+        UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the allowed form size.',
+        UPLOAD_ERR_PARTIAL => 'The file upload was incomplete.',
+        UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+        UPLOAD_ERR_NO_TMP_DIR => 'The server is missing a temporary upload directory.',
+        UPLOAD_ERR_CANT_WRITE => 'The server could not write the uploaded file.',
+        UPLOAD_ERR_EXTENSION => 'A server extension blocked the upload.',
+    ];
+
+    return $messages[$errorCode] ?? 'The upload failed.';
+}
+
+function ensureUploadDirectory($directory)
+{
+    if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+        throw new RuntimeException('Unable to create upload directory.');
+    }
+}
+
+function fileHasExpectedSignature($tmpPath, $extension)
+{
+    $handle = @fopen($tmpPath, 'rb');
+    if (!$handle) {
+        return false;
+    }
+
+    $header = (string) fread($handle, 64);
+    fclose($handle);
+
+    switch ($extension) {
+        case 'pdf':
+            return strncmp($header, "%PDF-", 5) === 0;
+        case 'png':
+            return substr($header, 0, 8) === "\x89PNG\x0D\x0A\x1A\x0A";
+        case 'jpg':
+        case 'jpeg':
+            return substr($header, 0, 3) === "\xFF\xD8\xFF";
+        case 'webp':
+            return substr($header, 0, 4) === 'RIFF' && substr($header, 8, 4) === 'WEBP';
+        case 'tif':
+        case 'tiff':
+            return substr($header, 0, 4) === "II*\x00" || substr($header, 0, 4) === "MM\x00*";
+        case 'mobi':
+            return strlen($header) >= 64 && substr($header, 60, 8) === 'BOOKMOBI';
+        case 'txt':
+            return true;
+        case 'epub':
+            if (substr($header, 0, 2) !== 'PK') {
+                return false;
+            }
+
+            if (!class_exists('ZipArchive')) {
+                return true;
+            }
+
+            $zip = new ZipArchive();
+            if ($zip->open($tmpPath) !== true) {
+                return false;
+            }
+
+            $mimetype = $zip->getFromName('mimetype');
+            $zip->close();
+
+            return trim((string) $mimetype) === 'application/epub+zip';
+        default:
+            return false;
+    }
+}
+
+function validateUploadedFile(array $file, array $allowedExtensions, $maxSize = MAX_UPLOAD_SIZE, $requireImage = false)
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => getUploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE))];
+    }
+
+    $tmpPath = $file['tmp_name'] ?? '';
+    if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+        return ['ok' => false, 'message' => 'Invalid upload source.'];
+    }
+
+    $originalName = (string) ($file['name'] ?? '');
+    $extension = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+    if ($extension === '' || !in_array($extension, $allowedExtensions, true)) {
+        return ['ok' => false, 'message' => 'File type not allowed.'];
+    }
+
+    $fileSize = (int) ($file['size'] ?? 0);
+    if ($fileSize <= 0) {
+        return ['ok' => false, 'message' => 'The uploaded file is empty.'];
+    }
+
+    if ($maxSize !== null && $fileSize > $maxSize) {
+        return ['ok' => false, 'message' => 'File too large. Maximum size: ' . formatFileSize($maxSize)];
+    }
+
+    $mimeTypes = getAllowedUploadMimeTypes();
+    $detectedMime = null;
+
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $detectedMime = finfo_file($finfo, $tmpPath) ?: null;
+            finfo_close($finfo);
+        }
+    }
+
+    $allowedMimes = $mimeTypes[$extension] ?? [];
+    if ($detectedMime !== null && !in_array($detectedMime, $allowedMimes, true)) {
+        return ['ok' => false, 'message' => 'File content does not match the selected file type.'];
+    }
+
+    if (!fileHasExpectedSignature($tmpPath, $extension)) {
+        return ['ok' => false, 'message' => 'File signature validation failed.'];
+    }
+
+    if ($requireImage) {
+        $imageInfo = @getimagesize($tmpPath);
+        if ($imageInfo === false || empty($imageInfo['mime'])) {
+            return ['ok' => false, 'message' => 'Uploaded image is invalid or unreadable.'];
+        }
+    }
+
+    return [
+        'ok' => true,
+        'extension' => $extension,
+        'mime' => $detectedMime,
+        'size' => $fileSize,
+        'name' => $originalName,
+        'tmp_name' => $tmpPath,
+    ];
 }
 
 // Handle form submissions
@@ -263,7 +414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 exit;
             }
-            redirect('upload.php?error=' . urlencode('Validation failed: ' . implode(', ', $customFieldErrors)));
+            redirect(route_url('upload', ['error' => 'Validation failed: ' . implode(', ', $customFieldErrors)]));
         }
 
 
@@ -271,35 +422,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'upload') {
             // Handle file upload
             if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-                $file = $_FILES['file'];
-                $fileName = $file['name'];
-                $fileSize = $file['size'];
-                $fileTmp = $file['tmp_name'];
-
-
-
-                // Get file extension
-                $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                // Check allowed extensions
-                if (!in_array($fileExt, ALLOWED_EXTENSIONS)) {
-                    // ... existing error handling ...
-
-                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-                        echo json_encode(['success' => false, 'message' => 'File type not allowed. Allowed: ' . implode(', ', ALLOWED_EXTENSIONS)]);
+                $fileValidation = validateUploadedFile($_FILES['file'], ALLOWED_EXTENSIONS);
+                if (!$fileValidation['ok']) {
+                    if (isAjaxRequest()) {
+                        http_response_code(400);
+                        echo json_encode(['success' => false, 'message' => $fileValidation['message']]);
                         exit;
                     }
-                    redirect('upload.php?error=' . urlencode('File type not allowed.'));
+                    redirect(route_url('upload', ['error' => $fileValidation['message']]));
                 }
 
-                // Check file size
-                if ($fileSize > MAX_UPLOAD_SIZE) {
-                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-                        echo json_encode(['success' => false, 'message' => 'File too large. Maximum size: ' . formatFileSize(MAX_UPLOAD_SIZE)]);
-                        exit;
-                    }
-                    redirect('upload.php?error=' . urlencode('File too large.'));
-                }
+                $fileName = $fileValidation['name'];
+                $fileSize = $fileValidation['size'];
+                $fileTmp = $fileValidation['tmp_name'];
+                $fileExt = $fileValidation['extension'];
 
                 // Check for duplicates
                 if (checkDuplicateFile($fileName)) {
@@ -307,7 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo json_encode(['success' => false, 'message' => 'A file with this name already exists.']);
                         exit;
                     }
-                    redirect('upload.php?error=' . urlencode('A file with this name already exists.'));
+                    redirect(route_url('upload', ['error' => 'A file with this name already exists.']));
                 }
 
                 // Generate organized path based on date and file type
@@ -331,9 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Create directory structure: uploads/newspapers/YYYY/MM/filetype/
                 $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$typeFolder}/";
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+                ensureUploadDirectory($uploadDir);
 
                 // Generate unique filename
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
@@ -342,25 +476,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Move file
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
+                    @chmod($uploadPath, 0644);
                     // Handle thumbnail upload - organized by year/month
                     $thumbnailPath = null;
                     if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                        $thumbFile = $_FILES['thumbnail'];
-                        $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
+                        $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png'], 10 * 1024 * 1024, true);
 
-                        if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
-                            // Create thumbnail directory: uploads/newspapers/YYYY/MM/thumbnails/
-                            $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/thumbnails/";
-                            if (!is_dir($thumbDir)) {
-                                mkdir($thumbDir, 0777, true);
+                        if (!$thumbValidation['ok']) {
+                            if (file_exists($uploadPath)) {
+                                unlink($uploadPath);
                             }
 
-                            $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                            $thumbPath = $thumbDir . $thumbFileName;
-
-                            if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                                $thumbnailPath = "uploads/newspapers/{$year}/{$month}/thumbnails/" . $thumbFileName;
+                            if (isAjaxRequest()) {
+                                http_response_code(400);
+                                echo json_encode(['success' => false, 'message' => $thumbValidation['message']]);
+                                exit;
                             }
+
+                            redirect(route_url('upload', ['error' => $thumbValidation['message']]));
+                        }
+
+                        $thumbExt = $thumbValidation['extension'];
+
+                        // Create thumbnail directory: uploads/newspapers/YYYY/MM/thumbnails/
+                        $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/thumbnails/";
+                        ensureUploadDirectory($thumbDir);
+
+                        $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
+                        $thumbPath = $thumbDir . $thumbFileName;
+
+                        if (move_uploaded_file($thumbValidation['tmp_name'], $thumbPath)) {
+                            @chmod($thumbPath, 0644);
+                            $thumbnailPath = "uploads/newspapers/{$year}/{$month}/thumbnails/" . $thumbFileName;
                         }
                     }
 
@@ -434,7 +581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             exit;
                         }
 
-                        redirect(APP_URL . '/admin_pages/dashboard.php?success=upload');
+            redirect(route_url('dashboard', ['success' => 'upload']));
                     } else {
                         // DB Insert Failed
                         $errorInfo = $stmt->errorInfo();
@@ -450,7 +597,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             echo json_encode(['success' => false, 'message' => 'Database error: ' . $errorInfo[2]]);
                             exit;
                         }
-                        redirect('upload.php?error=' . urlencode('Database error: ' . $errorInfo[2]));
+                        redirect(route_url('upload', ['error' => 'Database error: ' . $errorInfo[2]]));
                     }
                 } else {
                     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -458,7 +605,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo json_encode(['success' => false, 'message' => 'Failed to move uploaded file']);
                         exit;
                     }
-                    redirect('upload.php?error=' . urlencode('Failed to upload file.'));
+                    redirect(route_url('upload', ['error' => 'Failed to upload file.']));
                 }
             } else {
                 // File missing or upload error
@@ -468,7 +615,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     echo json_encode(['success' => false, 'message' => 'No file selected or file too large (Server Limit).']);
                     exit;
                 }
-                redirect('upload.php?error=' . urlencode('No file selected or file too large.'));
+                redirect(route_url('upload', ['error' => 'No file selected or file too large.']));
             }
         }
     }
@@ -503,28 +650,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Create directory structure: uploads/newspapers/YYYY/MM/images/
                 $bulkDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/images";
 
-                if (!is_dir($bulkDir)) {
-                    mkdir($bulkDir, 0777, true);
-                }
+                ensureUploadDirectory($bulkDir);
 
                 // Process each file sequentially to maintain order
                 for ($i = 0; $i < $fileCount; $i++) {
-                    if ($_FILES['files']['error'][$i] === UPLOAD_ERR_OK) {
-                        $tmpName = $_FILES['files']['tmp_name'][$i];
-                        $name = $_FILES['files']['name'][$i];
-                        $size = $_FILES['files']['size'][$i];
-                        $totalSize += $size;
+                    $bulkFile = [
+                        'name' => $_FILES['files']['name'][$i] ?? '',
+                        'type' => $_FILES['files']['type'][$i] ?? '',
+                        'tmp_name' => $_FILES['files']['tmp_name'][$i] ?? '',
+                        'error' => $_FILES['files']['error'][$i] ?? UPLOAD_ERR_NO_FILE,
+                        'size' => $_FILES['files']['size'][$i] ?? 0,
+                    ];
 
-                        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
-                            // Generate safe sequential filename
-                            $cleanName = sprintf("%03d_%s_%s", $i + 1, time(), generateRandomString(5)) . '.' . $ext;
-                            $destination = $bulkDir . '/' . $cleanName;
+                    $bulkValidation = validateUploadedFile($bulkFile, ['jpg', 'jpeg', 'png', 'webp'], 20 * 1024 * 1024, true);
+                    if ($bulkValidation['ok']) {
+                        $totalSize += $bulkValidation['size'];
+                        $ext = $bulkValidation['extension'];
 
-                            if (move_uploaded_file($tmpName, $destination)) {
-                                $relativePath = "uploads/newspapers/{$year}/{$month}/images/" . $cleanName;
-                                $savedPaths[] = $relativePath;
-                            }
+                        // Generate safe sequential filename
+                        $cleanName = sprintf("%03d_%s_%s", $i + 1, time(), generateRandomString(5)) . '.' . $ext;
+                        $destination = $bulkDir . '/' . $cleanName;
+
+                        if (move_uploaded_file($bulkValidation['tmp_name'], $destination)) {
+                            @chmod($destination, 0644);
+                            $relativePath = "uploads/newspapers/{$year}/{$month}/images/" . $cleanName;
+                            $savedPaths[] = $relativePath;
                         }
                     }
                 }
@@ -537,20 +687,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Handle Custom Thumbnail (if selected) or use first image as fallback
                 if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                    $thumbFile = $_FILES['thumbnail'];
-                    $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
-                    if (in_array($thumbExt, ['jpg', 'jpeg', 'png', 'webp'])) {
-                        // Create thumbnail directory: uploads/newspapers/YYYY/MM/thumbnails/
-                        $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/thumbnails/";
-                        if (!is_dir($thumbDir)) {
-                            mkdir($thumbDir, 0777, true);
+                    $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png', 'webp'], 10 * 1024 * 1024, true);
+                    if (!$thumbValidation['ok']) {
+                        foreach ($savedPaths as $path) {
+                            $fullPath = __DIR__ . '/../' . $path;
+                            if (file_exists($fullPath)) {
+                                unlink($fullPath);
+                            }
                         }
 
-                        $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                        $thumbPath = $thumbDir . $thumbFileName;
-                        if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                            $thumbnailPath = "uploads/newspapers/{$year}/{$month}/thumbnails/" . $thumbFileName;
-                        }
+                        http_response_code(400);
+                        echo json_encode(['success' => false, 'message' => $thumbValidation['message']]);
+                        exit;
+                    }
+
+                    $thumbExt = $thumbValidation['extension'];
+                    // Create thumbnail directory: uploads/newspapers/YYYY/MM/thumbnails/
+                    $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/thumbnails/";
+                    ensureUploadDirectory($thumbDir);
+
+                    $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
+                    $thumbPath = $thumbDir . $thumbFileName;
+                    if (move_uploaded_file($thumbValidation['tmp_name'], $thumbPath)) {
+                        @chmod($thumbPath, 0644);
+                        $thumbnailPath = "uploads/newspapers/{$year}/{$month}/thumbnails/" . $thumbFileName;
                     }
                 } else {
                     $thumbnailPath = $savedPaths[0]; // Fallback to first uploaded image in sequence
@@ -648,38 +808,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $thumbnailPath = $_POST['existing_thumbnail'] ?? null;
         if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-            $thumbFile = $_FILES['thumbnail'];
-            $thumbExt = strtolower(pathinfo($thumbFile['name'], PATHINFO_EXTENSION));
-
-            if (in_array($thumbExt, ['jpg', 'jpeg', 'png'])) {
-                // Get current date for folder organization
-                $currentDate = date('Y-m-d');
-                list($year, $month) = explode('-', $currentDate);
-
-                // Create thumbnail directory: uploads/newspapers/YYYY/MM/thumbnails/
-                $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/thumbnails/";
-                if (!is_dir($thumbDir)) {
-                    mkdir($thumbDir, 0777, true);
+            $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png'], 10 * 1024 * 1024, true);
+            if (!$thumbValidation['ok']) {
+                if (isAjaxRequest()) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $thumbValidation['message']]);
+                    exit;
                 }
+                redirect(route_url('upload', ['error' => $thumbValidation['message'], 'edit' => $editId]));
+            }
 
-                $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbExt;
-                $thumbPath = $thumbDir . $thumbFileName;
+            // Get current date for folder organization
+            $currentDate = date('Y-m-d');
+            list($year, $month) = explode('-', $currentDate);
 
-                if (move_uploaded_file($thumbFile['tmp_name'], $thumbPath)) {
-                    $thumbnailPath = "uploads/newspapers/{$year}/{$month}/thumbnails/" . $thumbFileName;
-                }
+            // Create thumbnail directory: uploads/newspapers/YYYY/MM/thumbnails/
+            $thumbDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/thumbnails/";
+            ensureUploadDirectory($thumbDir);
+
+            $thumbFileName = time() . '_thumb_' . generateRandomString(8) . '.' . $thumbValidation['extension'];
+            $thumbPath = $thumbDir . $thumbFileName;
+
+            if (move_uploaded_file($thumbValidation['tmp_name'], $thumbPath)) {
+                @chmod($thumbPath, 0644);
+                $thumbnailPath = "uploads/newspapers/{$year}/{$month}/thumbnails/" . $thumbFileName;
             }
         }
 
         // Handle file replacement - organized by year/month/type
         if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-            $file = $_FILES['file'];
-            $fileName = $file['name'];
-            $fileSize = $file['size'];
-            $fileTmp = $file['tmp_name'];
-            $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $fileValidation = validateUploadedFile($_FILES['file'], ALLOWED_EXTENSIONS);
+            if (!$fileValidation['ok']) {
+                if (isAjaxRequest()) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $fileValidation['message']]);
+                    exit;
+                }
+                redirect(route_url('upload', ['error' => $fileValidation['message'], 'edit' => $editId]));
+            }
 
-            if (in_array($fileExt, ALLOWED_EXTENSIONS) && $fileSize <= MAX_UPLOAD_SIZE) {
+            $fileName = $fileValidation['name'];
+            $fileSize = $fileValidation['size'];
+            $fileTmp = $fileValidation['tmp_name'];
+            $fileExt = $fileValidation['extension'];
+
+            if (in_array($fileExt, ALLOWED_EXTENSIONS, true) && $fileSize <= MAX_UPLOAD_SIZE) {
                 // Get current date for folder organization
                 $currentDate = date('Y-m-d');
                 list($year, $month) = explode('-', $currentDate);
@@ -700,15 +873,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Create directory structure: uploads/newspapers/YYYY/MM/filetype/
                 $uploadDir = UPLOAD_PATH . "newspapers/{$year}/{$month}/{$typeFolder}/";
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+                ensureUploadDirectory($uploadDir);
 
                 $newFileName = time() . '_' . generateRandomString(8) . '.' . $fileExt;
                 $uploadPath = $uploadDir . $newFileName;
                 $relativeFilePath = "uploads/newspapers/{$year}/{$month}/{$typeFolder}/" . $newFileName;
 
                 if (move_uploaded_file($fileTmp, $uploadPath)) {
+                    @chmod($uploadPath, 0644);
                     // Update with new file (only core file fields, metadata goes to custom_metadata_values)
                     $stmt = $pdo->prepare("
                             UPDATE newspapers SET title = ?, file_path = ?, file_name = ?, file_type = ?, file_size = ?, thumbnail_path = ?
@@ -798,7 +970,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['success' => true, 'message' => 'Document updated successfully']);
             exit;
         }
-        redirect('upload.php?success=edit&edit=' . $editId);
+        redirect(route_url('upload', ['success' => 'edit', 'edit' => $editId]));
     }
 }
 

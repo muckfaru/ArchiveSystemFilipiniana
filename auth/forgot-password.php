@@ -10,7 +10,7 @@ require_once __DIR__ . '/../backend/core/email.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    redirect(APP_URL . '/admin_pages/dashboard.php');
+    redirect(route_url('dashboard'));
 }
 
 // Create password_resets table if not exists (Lazy migration check)
@@ -34,6 +34,26 @@ try {
 $showSuccessModal = false;
 $showErrorModal = false;
 $errorMessage = '';
+
+function forgotPasswordWantsJson(): bool
+{
+    $acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
+    $requestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+
+    return stripos($acceptHeader, 'application/json') !== false
+        || strcasecmp($requestedWith, 'XMLHttpRequest') === 0;
+}
+
+function forgotPasswordRespondJson(bool $success, string $message, int $statusCode = 200): void
+{
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode([
+        'success' => $success,
+        'message' => $message
+    ]);
+    exit;
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -60,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($token) {
                 // Generate reset link
-                $resetLink = APP_URL . '/auth/reset-password.php?token=' . $token;
+                $resetLink = route_url('reset-password', ['token' => $token]);
                 
                 // Log the reset link for debugging
                 error_log("Reset link generated: $resetLink");
@@ -88,6 +108,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // For security, show success even if email doesn't exist
             $showSuccessModal = true;
         }
+    }
+
+    if (forgotPasswordWantsJson()) {
+        if ($showErrorModal) {
+            forgotPasswordRespondJson(false, $errorMessage, 400);
+        }
+
+        forgotPasswordRespondJson(true, 'If that email is registered, a reset link has been sent.');
     }
 }
 

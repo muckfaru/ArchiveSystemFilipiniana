@@ -246,7 +246,7 @@
                 <h2 class="rp-heading">Password Reset!</h2>
                 <p class="rp-subtext">Your password has been successfully changed.<br>You can now login with your new
                     password.</p>
-                <a href="<?= APP_URL ?>/auth/login.php" class="rp-btn">Login Now</a>
+                <a href="<?= route_url('login') ?>" class="rp-btn">Login Now</a>
             </div>
 
         <?php elseif (!$validToken): ?>
@@ -255,9 +255,9 @@
                 <div class="rp-err-icon"><i class="bi bi-x-lg"></i></div>
                 <h2 class="rp-heading">Invalid Link</h2>
                 <p class="rp-subtext">This password reset link is invalid or has expired.</p>
-                <a href="<?= APP_URL ?>/auth/forgot-password.php" class="rp-btn">Request New Link</a>
+                <a href="<?= route_url('forgot-password') ?>" class="rp-btn">Request New Link</a>
                 <br>
-                <a href="<?= APP_URL ?>/auth/login.php" class="rp-back"><i class="bi bi-arrow-left"></i> Back to Login</a>
+                <a href="<?= route_url('login') ?>" class="rp-back"><i class="bi bi-arrow-left"></i> Back to Login</a>
             </div>
 
         <?php else: ?>
@@ -294,7 +294,7 @@
                 <button type="submit" class="rp-btn" id="submitBtn">Reset Password</button>
             </form>
 
-            <a href="<?= APP_URL ?>/auth/login.php" class="rp-back"><i class="bi bi-arrow-left"></i> Back to Login</a>
+            <a href="<?= route_url('login') ?>" class="rp-back"><i class="bi bi-arrow-left"></i> Back to Login</a>
         <?php endif; ?>
 
     </div>

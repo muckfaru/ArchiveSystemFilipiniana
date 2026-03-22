@@ -21,6 +21,52 @@ define('APP_NAME', 'Quezon City Public Library - Archive System');
 define('APP_URL', 'http://localhost/qcpl/ArchiveSystemFilipiniana');
 define('APP_VERSION', '1.0.0');
 
+if (!function_exists('route_url')) {
+    function route_url(string $name = 'home', array $query = []): string
+    {
+        static $routes = [
+            'home' => '/',
+            'browse' => '/browse',
+            'collections' => '/collections',
+            'reader' => '/read',
+            'public-pdf-viewer' => '/pdf-viewer',
+            'serve-file' => '/serve-file',
+            'user-convert-mobi' => '/convert-mobi',
+            'user-serve-cbz-image' => '/serve-cbz-image',
+            'login' => '/login',
+            'forgot-password' => '/forgot-password',
+            'reset-password' => '/reset-password',
+            'logout' => '/logout',
+            'dashboard' => '/dashboard',
+            'users' => '/users',
+            'history' => '/history',
+            'trash' => '/trash',
+            'upload' => '/upload',
+            'form-library' => '/form-library',
+            'form-builder' => '/form-builder',
+            'metadata-display' => '/metadata-display',
+            'report' => '/report',
+            'settings' => '/settings',
+            'admin-reader' => '/admin/read',
+            'admin-pdf-viewer' => '/admin/pdf-viewer',
+            'admin-convert-mobi' => '/admin/convert-mobi',
+            'admin-serve-cbz-image' => '/admin/serve-cbz-image',
+            'admin-serve-file' => '/admin/serve-file',
+            'worker' => '/admin/worker',
+            'check-user-availability' => '/admin/check-user-availability',
+        ];
+
+        $path = $routes[$name] ?? '/' . ltrim($name, '/');
+        $url = rtrim(APP_URL, '/') . $path;
+
+        if (!empty($query)) {
+            $url .= '?' . http_build_query($query);
+        }
+
+        return $url;
+    }
+}
+
 // File upload settings
 define('UPLOAD_PATH', __DIR__ . '/../../uploads/');
 define('MAX_UPLOAD_SIZE', 100 * 1024 * 1024); // 100MB
@@ -34,7 +80,7 @@ define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png'
 // Mac: /Applications/calibre.app/Contents/MacOS/ebook-convert
 // Linux: /usr/bin/ebook-convert
 // Leave empty string '' if Calibre is not installed (MOBI files will offer download instead)
-define('CALIBRE_CONVERT_PATH', 'C:\xampp\htdocs\CalibrePortable\Calibre\\ebook-convert.exe');
+define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
 
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:
