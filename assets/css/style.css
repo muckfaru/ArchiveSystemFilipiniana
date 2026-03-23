@@ -3,7 +3,7 @@
  * Quezon City Public Library
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=IM+Fell+English&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 /* ==================== CSS Variables ==================== */
 :root {
@@ -1841,6 +1841,324 @@ a {
     border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Manrope', sans-serif;
     border: none;
+}
+
+/* ==================== 2026 Admin Theme Override ==================== */
+:root {
+    --admin-ink: #182230;
+    --admin-muted: #627081;
+    --admin-line: rgba(24, 34, 48, 0.1);
+    --admin-border: rgba(24, 34, 48, 0.08);
+    --admin-accent: #3A9AFF;
+    --admin-accent-deep: #1F7AE0;
+    --admin-soft: #eef6ff;
+    --admin-shadow-soft: 0 10px 30px rgba(24, 34, 48, 0.06);
+}
+
+body:not(.public-page):not(.theme-dark) {
+    background:
+        radial-gradient(circle at top left, rgba(139, 196, 255, 0.14), transparent 24%),
+        linear-gradient(180deg, #eef6ff 0%, #f2f7fc 28%, #f8fafc 100%);
+    color: var(--admin-ink);
+    font-family: 'Manrope', sans-serif;
+}
+
+.sidebar {
+    width: 250px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(242, 248, 255, 0.96) 100%);
+    border-right: 1px solid var(--admin-border);
+    box-shadow: 8px 0 28px rgba(24, 34, 48, 0.05);
+}
+
+.sidebar-header {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.logo-container {
+    padding: 4px 0 2px;
+}
+
+.sidebar-logo {
+    width: 164px;
+}
+
+.nav-section-title,
+.sidebar-user-role {
+    color: #7a8796;
+    letter-spacing: 0.14em;
+}
+
+.nav-link {
+    margin: 3px 12px;
+    border-radius: 14px;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, rgba(58, 154, 255, 0.12) 0%, rgba(139, 196, 255, 0.18) 100%);
+    color: var(--admin-accent-deep);
+    border-left-color: var(--admin-accent);
+}
+
+.nav-link.active i,
+.sidebar-submenu .sub-nav-link.active {
+    color: var(--admin-accent-deep);
+}
+
+.sidebar-footer {
+    margin: 12px;
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.sidebar-avatar {
+    background: linear-gradient(135deg, rgba(58, 154, 255, 0.14) 0%, rgba(139, 196, 255, 0.2) 100%);
+    color: var(--admin-accent-deep);
+}
+
+.sidebar-user-name,
+.page-title,
+.modal-minimalist .modal-title,
+.modal-sm-minimalist .modal-title {
+    color: var(--admin-ink);
+    font-family: 'Fraunces', serif;
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 32px;
+}
+
+.page-header {
+    margin-bottom: 26px;
+    padding: 24px 28px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid var(--admin-border);
+    box-shadow: var(--admin-shadow-soft);
+}
+
+.page-header h1,
+.page-title {
+    color: var(--admin-ink);
+    font-family: 'Fraunces', serif;
+    letter-spacing: -0.04em;
+}
+
+.page-header p,
+.page-subtitle {
+    color: var(--admin-muted);
+}
+
+.admin-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.admin-page-header .page-title {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 2.5rem);
+    line-height: 1;
+}
+
+.admin-page-header .page-subtitle {
+    margin: 6px 0 0;
+    font-size: 0.96rem;
+}
+
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-stat-card,
+.admin-toolbar-card,
+.admin-note-card,
+.admin-data-card {
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: var(--admin-shadow-soft);
+}
+
+.admin-stat-card {
+    border-radius: 22px;
+}
+
+.admin-toolbar-card {
+    border-radius: 22px;
+    padding: 18px 20px;
+}
+
+.admin-toolbar-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-toolbar-split {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: nowrap;
+    flex-direction: row;
+}
+
+.admin-toolbar-split .admin-toolbar-search {
+    flex: 0 1 50%;
+    max-width: 50%;
+    min-width: 320px;
+    margin-right: auto;
+}
+
+.admin-toolbar-split .admin-toolbar-filters {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: nowrap;
+    margin-left: 0;
+}
+
+.admin-note-card {
+    border-radius: 18px;
+}
+
+.admin-data-card {
+    border-radius: 22px;
+    overflow: hidden;
+}
+
+.btn-primary,
+.btn-success {
+    background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-deep) 100%);
+    border-color: transparent;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+    background: linear-gradient(135deg, #2d87ef 0%, #1a68c2 100%);
+    border-color: transparent;
+}
+
+.form-control,
+.form-select,
+.form-control-custom {
+    font-family: 'Manrope', sans-serif;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-control-custom:focus {
+    border-color: rgba(58, 154, 255, 0.42);
+    box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
+}
+
+.modal-content.modal-minimalist,
+.modal-content.modal-sm-minimalist {
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 24px 60px rgba(24, 34, 48, 0.14);
+}
+
+.modal-minimalist .modal-header,
+.modal-sm-minimalist .modal-header {
+    position: relative;
+    width: 100%;
+    gap: 12px;
+    text-align: center;
+}
+
+.modal-minimalist .modal-icon,
+.modal-sm-minimalist .modal-icon {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.modal-minimalist .modal-title,
+.modal-sm-minimalist .modal-title {
+    width: 100%;
+    text-align: center;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.modal-minimalist .modal-body,
+.modal-sm-minimalist .modal-body,
+.modal-minimalist .modal-footer .btn,
+.modal-sm-minimalist .btn {
+    font-family: 'Manrope', sans-serif;
+}
+
+.modal-minimalist .modal-body p,
+.modal-sm-minimalist .modal-body p {
+    max-width: 32ch;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#logoutModal .modal-title {
+    font-size: 1.28rem !important;
+    font-weight: 600 !important;
+    line-height: 1.1 !important;
+    margin-top: 0.35rem !important;
+}
+
+#logoutModal .modal-body p {
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+}
+
+#logoutModal .modal-footer .btn {
+    font-size: 0.9rem !important;
+}
+
+@media (max-width: 991px) {
+    .sidebar {
+        width: 250px;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 18px;
+    }
+
+    .page-header {
+        padding: 20px;
+        border-radius: 18px;
+    }
+
+    .admin-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .admin-toolbar-split {
+        flex-wrap: wrap;
+        flex-direction: column;
+    }
+
+    .admin-toolbar-split .admin-toolbar-search,
+    .admin-toolbar-split .admin-toolbar-filters {
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .admin-toolbar-split .admin-toolbar-filters {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
 }

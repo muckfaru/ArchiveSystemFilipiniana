@@ -63,7 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fullName = $username; // Use username as full name
         $email = sanitize($_POST['email']);
         $password = $_POST['password'];
+        $confirmPassword = $_POST['confirm_password'] ?? '';
         $role = $_POST['role'];
+
+        if ($password !== $confirmPassword) {
+            redirect($_SERVER['PHP_SELF'] . '?error=password_mismatch&old_email=' . urlencode($email) . '&old_username=' . urlencode($username));
+        }
 
         // Check if username or email exists
         // Check if username exists
@@ -157,21 +162,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="<?= APP_URL ?>/assets/css/admin_pages/users.css" rel="stylesheet">
 </head>
 
-<body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
+<body class="admin-shell users-page <?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
     <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header admin-page-header">
             <div>
-                <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529;">Users</h1>
-                <div class="text-muted small">Create, edit, and manage system user accounts</div>
+                <h1 class="page-title">Users</h1>
+                <div class="page-subtitle">Create, edit, and manage system user accounts.</div>
             </div>
-            <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal"
-                data-bs-target="#createUserModal"
-                style="background-color: #3A9AFF; border-color: #3A9AFF; font-weight: 500;">
-                <i class="bi bi-person-plus-fill me-2"></i>Create Account
-            </button>
+            <div class="admin-header-actions">
+                <button type="button" class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2"
+                    data-bs-toggle="modal" data-bs-target="#createUserModal" style="font-weight: 600;">
+                    <i class="bi bi-person-plus-fill"></i><span>Create Account</span>
+                </button>
+            </div>
         </div>
 
         <!-- Alert -->
@@ -180,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Stats Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 admin-stat-card">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-uppercase fw-bold text-muted small mb-1"
@@ -195,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 admin-stat-card">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-uppercase fw-bold text-muted small mb-1"
@@ -212,8 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <!-- Search & Filter Section -->
-        <div class="card mb-4 border-0 shadow-sm rounded-4">
-            <div class="card-body p-2">
+        <div class="card mb-4 border-0 shadow-sm rounded-4 admin-toolbar-card">
+            <div class="card-body p-2 p-lg-1">
                 <form method="GET" class="d-flex align-items-center gap-2">
                     <!-- Search Input -->
                     <div class="position-relative flex-grow-1">
@@ -251,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <!-- Users Table -->
-        <div class="table-container">
+        <div class="table-container card border-0 shadow-sm rounded-4 overflow-hidden admin-data-card">
             <table class="table mb-0">
                 <thead>
                     <tr>
@@ -399,7 +405,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
                     <div>
                         <h4 class="modal-title"
-                            style="color: #2C1810; font-size: 26px; font-weight: 600; font-family: 'Poppins', sans-serif;">
+                            style="color: #2C1810; font-size: 26px; font-weight: 600; font-family: 'Fraunces', serif;">
                             Create New Account</h4>
                         <p style="color: #888; font-size: 14px; margin: 0;">Add a new user to the Archive System</p>
                     </div>
@@ -459,29 +465,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     style="font-size: 11px; letter-spacing: 0.5px;">Password</label>
                                 <div class="position-relative">
                                     <input type="password" class="form-control py-2 px-3 rounded-3" name="password"
-                                        id="createPassword" required minlength="6"
+                                        id="createPassword" required
                                         style="font-size: 14px; padding-right: 35px !important; border: 1px solid #dee2e6;">
                                     <i class="bi bi-eye-slash position-absolute text-muted" id="toggleCreatePassword"
                                         style="right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"></i>
                                 </div>
-                                <div id="passwordLengthMessage" class="small mt-1" style="font-size: 11px; font-weight: 600; min-height: 17px;"></div>
                             </div>
                             <div class="col-6">
                                 <label class="form-label small fw-bold text-secondary text-uppercase"
                                     style="font-size: 11px; letter-spacing: 0.5px;">Confirm Password</label>
                                 <div class="position-relative">
                                     <input type="password" class="form-control py-2 px-3 rounded-3"
-                                        name="confirm_password" id="confirmPassword" required minlength="6"
+                                        name="confirm_password" id="confirmPassword" required
                                         style="font-size: 14px; padding-right: 35px !important; border: 1px solid #dee2e6;">
                                     <i class="bi bi-eye-slash position-absolute text-muted" id="toggleConfirmPassword"
                                         style="right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"></i>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Validation Message -->
-                        <div class="d-flex justify-content-end">
-                            <div id="passwordMatchMessage" style="font-size: 11px; font-weight: 600; min-height: 17px;">
+                                <div id="passwordMatchMessage" class="small mt-1"
+                                    style="font-size: 11px; font-weight: 600; min-height: 17px;"></div>
                             </div>
                         </div>
                     </div>
@@ -505,10 +506,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="modal fade" id="editUserModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content"
-                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.25); font-family: 'Poppins', sans-serif;">
+                style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.25); font-family: 'Manrope', sans-serif;">
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
                     <h4 class="modal-title"
-                        style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Poppins', sans-serif;">
+                        style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Fraunces', serif;">
                         Edit User</h4>
                     <p style="color: #888; font-size: 14px; margin: 0;">Update user account details and permissions</p>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
@@ -962,7 +963,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Handle Create Account Errors
         const errorParam = urlParams.get('error');
-        if (errorParam === 'username_exists' || errorParam === 'email_exists') {
+        if (errorParam === 'username_exists' || errorParam === 'email_exists' || errorParam === 'password_mismatch') {
             const createModalElement = document.getElementById('createUserModal');
             const createModal = new bootstrap.Modal(createModalElement);
             createModal.show();
@@ -984,11 +985,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Show error
         const errorContainer = document.getElementById('createAccountError');
-        if (errorContainer && (errorParam === 'username_exists' || errorParam === 'email_exists')) {
+        if (errorContainer && (errorParam === 'username_exists' || errorParam === 'email_exists' || errorParam === 'password_mismatch')) {
             errorContainer.classList.remove('d-none');
             errorContainer.innerHTML = errorParam === 'username_exists'
                 ? '<i class="bi bi-exclamation-circle-fill me-2"></i>Username is already taken'
-                : '<i class="bi bi-exclamation-circle-fill me-2"></i>Email is already registered';
+                : errorParam === 'email_exists'
+                    ? '<i class="bi bi-exclamation-circle-fill me-2"></i>Email is already registered'
+                    : '<i class="bi bi-exclamation-circle-fill me-2"></i>Passwords do not match';
         }
 
         // Clean URL
@@ -1052,14 +1055,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             const password = createPassword.value;
             const confirm = confirmPassword.value;
-            const isPasswordMatch = password.length >= 6 && password === confirm;
+            const isPasswordMatch = password !== '' && password === confirm;
 
             // Check if errors are displayed
             const hasUsernameError = !usernameErrorEl.classList.contains('d-none');
             const hasEmailError = !emailErrorEl.classList.contains('d-none');
-            const isPasswordLengthValid = password.length >= 6;
 
-            if (hasUsernameError || hasEmailError || !isPasswordMatch || !isPasswordLengthValid) {
+            if (hasUsernameError || hasEmailError || !isPasswordMatch) {
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.6';
                 submitBtn.style.cursor = 'not-allowed';
@@ -1121,10 +1123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }, 500));
         }
 
-        function checkPasswordMatch() {
+        function checkPasswordMatchLegacy() {
             const password = createPassword.value;
             const confirm = confirmPassword.value;
-            const lengthMessage = document.getElementById('passwordLengthMessage');
 
             // Check password length first
             if (password.length > 0 && password.length < 6) {
@@ -1164,30 +1165,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             checkFormValidity();
         }
 
+        function checkPasswordMatch() {
+            const password = createPassword.value;
+            const confirm = confirmPassword.value;
+
+            if (confirm === '') {
+                matchMessage.textContent = '';
+                matchMessage.className = 'small mt-1';
+                checkFormValidity();
+                return;
+            }
+
+            if (password === confirm) {
+                matchMessage.textContent = 'Passwords match';
+                matchMessage.className = 'small mt-1 text-success';
+            } else {
+                matchMessage.textContent = 'Passwords do not match';
+                matchMessage.className = 'small mt-1 text-danger';
+            }
+
+            checkFormValidity();
+        }
+
         if (createPassword && confirmPassword) {
             createPassword.addEventListener('input', checkPasswordMatch);
             confirmPassword.addEventListener('input', checkPasswordMatch);
         }
 
-        // Prevent submission if mismatch or password too short (optional extra safety)
+        // Prevent submission if passwords do not match
         if (createAccountForm) {
             createAccountForm.addEventListener('submit', function (e) {
                 const password = createPassword.value;
                 const confirm = confirmPassword.value;
-                
-                if (password.length < 6) {
-                    e.preventDefault();
-                    const lengthMessage = document.getElementById('passwordLengthMessage');
-                    lengthMessage.textContent = 'Password must be at least 6 characters';
-                    lengthMessage.className = 'small mt-1 text-danger';
-                    createPassword.focus();
-                    return;
-                }
-                
+
                 if (password !== confirm) {
                     e.preventDefault();
                     matchMessage.textContent = 'Passwords do not match';
-                    matchMessage.className = 'mt-1 text-danger';
+                    matchMessage.className = 'small mt-1 text-danger';
                     confirmPassword.focus();
                 }
             });

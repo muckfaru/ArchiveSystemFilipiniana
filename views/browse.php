@@ -29,7 +29,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     <meta name="description" content="Browse and filter through our comprehensive digital archive collection.">
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -93,7 +93,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     <script>const APP_URL = "<?= APP_URL ?>";</script>
 </head>
 
-<body class="public-page">
+<body class="public-page browse-page">
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
@@ -124,6 +124,28 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             Admin Login
         </button>
     </header>
+
+    <section class="browse-masthead">
+        <div class="browse-masthead-inner">
+            <div class="browse-masthead-copy">
+                <span class="browse-masthead-kicker">Archive Discovery</span>
+                <h1 class="browse-masthead-title">Filter the collection with precision.</h1>
+                <p class="browse-masthead-subtitle">
+                    Move between publication types, languages, editions, and dates without losing the reading flow.
+                </p>
+            </div>
+            <div class="browse-masthead-meta">
+                <div class="browse-masthead-meta-card">
+                    <span class="browse-masthead-meta-value"><?= number_format($totalResults) ?></span>
+                    <span class="browse-masthead-meta-label">Results in view</span>
+                </div>
+                <div class="browse-masthead-meta-card">
+                    <span class="browse-masthead-meta-value"><?= number_format(count($activeFilters)) ?></span>
+                    <span class="browse-masthead-meta-label">Active filters</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- ==================== BROWSE LAYOUT ==================== -->
     <div class="browse-layout-redesign">

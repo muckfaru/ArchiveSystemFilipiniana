@@ -17,7 +17,7 @@ require_once __DIR__ . '/../../backend/core/config.php';
 
     <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <!-- Bootstrap CSS -->
@@ -40,6 +40,6 @@ require_once __DIR__ . '/../../backend/core/config.php';
     </script>
 </head>
 
-<body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
+<body class="admin-shell <?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-content">

@@ -154,9 +154,6 @@ function getActionLabel($action)
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/admin_pages/history.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap"
-        rel="stylesheet">
     <style>
         .search-bar-custom {
             background: #fff;
@@ -353,20 +350,22 @@ function getActionLabel($action)
     </style>
 </head>
 
-<body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
+<body class="admin-shell history-page <?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
     <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="mb-4">
-            <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529;">History Logs</h1>
-            <div class="text-muted small">Monitor and review all system activities and administrative actions</div>
+        <div class="page-header admin-page-header">
+            <div>
+                <h1 class="page-title">History Logs</h1>
+                <div class="page-subtitle">Monitor and review all system activities and administrative actions.</div>
+            </div>
         </div>
 
         <!-- Search & Filter Bar -->
-        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
+        <div class="admin-toolbar-card admin-toolbar-inline admin-toolbar-split mb-4">
             <!-- Search Bar -->
-            <div class="flex-grow-1">
+            <div class="admin-toolbar-search">
                 <form method="GET" id="searchForm" class="search-bar-custom">
                     <i class="bi bi-search text-muted fs-5 ms-1"></i>
                     <input type="text" class="search-input-custom" name="search" id="searchInput"
@@ -387,7 +386,7 @@ function getActionLabel($action)
             </div>
 
             <!-- Filters -->
-            <div class="d-flex gap-2">
+            <div class="admin-toolbar-filters">
                 <!-- Action Type Dropdown -->
                 <div class="dropdown">
                     <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -454,7 +453,7 @@ function getActionLabel($action)
         </div>
 
         <!-- History Table -->
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden admin-data-card">
             <div class="table-responsive">
                 <table class="table history-table mb-0 w-100">
                     <thead>

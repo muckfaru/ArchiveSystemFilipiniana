@@ -279,9 +279,6 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/admin_pages/trash.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap"
-        rel="stylesheet">
     <style>
         .search-bar-custom {
             background: #fff;
@@ -443,19 +440,20 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     </style>
 </head>
 
-<body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
+<body class="admin-shell trash-page <?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
     <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="mb-4">
-            <h1 class="fw-bold m-0" style="font-size: 24px; color: #212529; font-family: 'Poppins', sans-serif;">
-                Trash Repository</h1>
-            <div class="text-muted small">Recover or permanently remove deleted files and user accounts</div>
+        <div class="page-header admin-page-header">
+            <div>
+                <h1 class="page-title">Trash Repository</h1>
+                <div class="page-subtitle">Recover or permanently remove deleted files and user accounts.</div>
+            </div>
         </div>
 
         <!-- Auto-Delete Info Card -->
-        <div class="card border-0 mb-4 bg-warning-subtle shadow-sm" style="border-radius: 12px; border: 1px solid rgba(185, 28, 28, 0.1) !important;">
+        <div class="card border-0 mb-4 bg-warning-subtle shadow-sm admin-note-card" style="border-radius: 12px; border: 1px solid rgba(185, 28, 28, 0.1) !important;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle bg-white d-flex align-items-center justify-content-center"
@@ -473,9 +471,9 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         </div>
 
         <!-- Search & Filter Bar -->
-        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
+        <div class="admin-toolbar-card admin-toolbar-inline admin-toolbar-split mb-4">
             <!-- Search Bar -->
-            <div class="flex-grow-1">
+            <div class="admin-toolbar-search">
                 <form method="GET" id="searchForm" class="search-bar-custom">
                     <i class="bi bi-search text-muted fs-5 ms-1"></i>
                     <input type="text" class="search-input-custom" name="search" id="searchInput"
@@ -491,7 +489,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             </div>
 
             <!-- Filters -->
-            <div class="d-flex gap-2">
+            <div class="admin-toolbar-filters">
                 <!-- Type Filter Dropdown -->
                 <div class="dropdown">
                     <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -526,7 +524,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
         </div>
 
         <!-- Unified Table -->
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 admin-data-card">
             <div class="table-responsive">
                 <table class="table trash-table mb-0 w-100">
                     <thead>
@@ -1051,29 +1049,29 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
 
     <!-- Custom Scripts -->
     <script>
-        function showRestoreModal(id, title, type) {
+        function showRestoreModalLegacy(id, title, type) {
             document.getElementById('restoreItemId').value = id;
             document.getElementById('restoreItemType').value = type;
             document.getElementById('restoreItemTitle').textContent = title;
             new bootstrap.Modal(document.getElementById('restoreModal')).show();
         }
 
-        function showDeleteModal(id, title, type) {
+        function showDeleteModalLegacy(id, title, type) {
             document.getElementById('deleteItemId').value = id;
             document.getElementById('deleteItemType').value = type;
             document.getElementById('deleteItemTitle').textContent = title;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 
-        function showRestoreAllModal() {
+        function showRestoreAllModalLegacy() {
             new bootstrap.Modal(document.getElementById('restoreAllModal')).show();
         }
 
-        function showEmptyTrashModal() {
+        function showEmptyTrashModalLegacy() {
             new bootstrap.Modal(document.getElementById('emptyTrashModal')).show();
         }
 
-        function showRestoreSelectedModal() {
+        function showRestoreSelectedModalLegacy() {
             const selectedItems = getSelectedItems();
             document.getElementById('modalSelectedCount').textContent = selectedItems.length;
             document.getElementById('selectedItemsInput').value = JSON.stringify(selectedItems);

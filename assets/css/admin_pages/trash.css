@@ -9,11 +9,11 @@ body .sidebar-title {
 }
 
 body .nav-link {
-    font-family: 'Poppins', sans-serif !important;
+    font-family: 'Manrope', sans-serif !important;
 }
 
 body .nav-link span {
-    font-family: 'Poppins', sans-serif !important;
+    font-family: 'Manrope', sans-serif !important;
     font-size: 14px !important;
     font-weight: 600 !important;
 }
@@ -162,6 +162,52 @@ body.dark-mode .btn-trash-action {
 .modal-sm-standard {
     width: 100%;
     max-width: 380px !important;
+}
+
+#confirmModal .modal-dialog {
+    max-width: 360px !important;
+}
+
+#confirmModal .modal-content.modal-minimalist {
+    border-radius: 24px !important;
+    padding: 1.35rem 1.1rem 1.1rem !important;
+}
+
+#confirmModal .modal-header {
+    padding-bottom: 0.5rem !important;
+}
+
+#confirmModal .modal-body {
+    padding: 0 0.4rem 1rem !important;
+}
+
+#confirmModal .modal-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+    margin-top: 0.15rem;
+    margin-bottom: 0.25rem;
+}
+
+#confirmModal .modal-title {
+    font-size: 1.2rem;
+    margin-top: 0.4rem;
+    margin-bottom: 0.65rem !important;
+}
+
+#confirmModal .modal-body p {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+#confirmModal .modal-footer {
+    gap: 10px;
+}
+
+#confirmModal .modal-footer .btn {
+    padding: 9px 18px;
+    font-size: 0.84rem;
 }
 
 .modal-minimalist,

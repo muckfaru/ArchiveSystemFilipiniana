@@ -57,11 +57,17 @@
             if (modalMeta.length === 0) {
                 metadataContainer.innerHTML = '<p style="color:#888; font-size:13px;">No metadata available.</p>';
             } else {
+                let visibleFieldCount = 0;
                 modalMeta.forEach(function (field) {
                     const label = field.label || '';
                     const value = field.value || '';
                     const fieldName = field.field_name || '';
                     const fieldType = field.field_type || 'text';
+                    const trimmedValue = value.toString().trim();
+
+                    if (!trimmedValue) {
+                        return;
+                    }
 
                     // Pick icon
                     const iconClass = fieldIcons[fieldName] || 'bi-info-circle';
@@ -72,16 +78,19 @@
                         displayHtml = '<span style="color:#999;">—</span>';
                     } else if (fieldType === 'tags' || fieldName === 'tags' || fieldName === 'keywords') {
                         // Render as pills
-                        const tags = value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+                        const tags = trimmedValue.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+                        if (tags.length === 0) {
+                            return;
+                        }
                         displayHtml = tags.map(function (t) {
                             return '<span class="public-modal-keyword-pill">' + escapeHtml(t) + '</span>';
                         }).join(' ');
                     } else if (fieldType === 'date' || fieldName === 'date_published' || fieldName === 'publication_date') {
-                        displayHtml = escapeHtml(formatDate(value));
+                        displayHtml = escapeHtml(formatDate(trimmedValue));
                     } else if (fieldType === 'textarea' || fieldName === 'description') {
-                        displayHtml = '<span style="white-space:pre-wrap;">' + escapeHtml(value) + '</span>';
+                        displayHtml = '<span style="white-space:pre-wrap;">' + escapeHtml(trimmedValue) + '</span>';
                     } else {
-                        displayHtml = escapeHtml(value);
+                        displayHtml = escapeHtml(trimmedValue);
                     }
 
                     const row = document.createElement('div');
@@ -90,7 +99,12 @@
                         '<span class="public-modal-meta-label"><i class="bi ' + iconClass + '"></i> ' + escapeHtml(label) + '</span>' +
                         '<span class="public-modal-meta-value">' + displayHtml + '</span>';
                     metadataContainer.appendChild(row);
+                    visibleFieldCount += 1;
                 });
+
+                if (visibleFieldCount === 0) {
+                    metadataContainer.innerHTML = '<p style="color:#888; font-size:13px;">No metadata available.</p>';
+                }
             }
         }
 

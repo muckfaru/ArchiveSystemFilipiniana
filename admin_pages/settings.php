@@ -129,20 +129,20 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
     <link href="<?= APP_URL ?>/assets/css/admin_pages/settings.css" rel="stylesheet">
 </head>
 
-<body class="<?= $darkMode === '1' ? 'dark-mode' : '' ?>">
+<body class="admin-shell settings-page <?= $darkMode === '1' ? 'dark-mode' : '' ?>">
     <?php include __DIR__ . '/../views/layouts/sidebar.php'; ?>
 
     <main class="main-content">
         <!-- Page Header -->
-        <div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between;">
+        <div class="page-header admin-page-header settings-page-header">
             <div>
                 <h1 class="page-title"
-                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Poppins', sans-serif;">
+                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Fraunces', serif;">
                     Settings</h1>
                 <p class="page-subtitle" style="color: #888; margin: 0;">Manage your account settings and preferences
                 </p>
             </div>
-            <div class="page-actions" style="display: flex; gap: 12px;">
+            <div class="page-actions settings-page-actions" style="display: flex; gap: 12px;">
                 <button type="button" class="btn btn-cancel-edit d-none" onclick="cancelEdit()"
                     style="background: white; border: 1px solid #ddd; color: #333; padding: 10px 24px; border-radius: 8px; font-weight: 500;">Cancel</button>
                 <button type="button" class="btn btn-edit-profile" onclick="toggleEditMode()"
@@ -161,13 +161,13 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         <div class="row g-4">
             <!-- Profile Settings -->
             <div class="col-lg-12">
-                <div class="settings-card"
+                <div class="settings-card settings-surface-card"
                     style="background: white; border-radius: 0; border: 1px solid #eaeaea; padding: 40px; margin-bottom: 30px;">
                     <div class="settings-card-header"
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 35px; border-bottom: 1px solid #f1f1f1; padding-bottom: 20px;">
                         <i class="bi bi-person" style="color: #6B7280; font-size: 18px;"></i>
                         <span
-                            style="font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Poppins', sans-serif;">PROFILE
+                            style="font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Manrope', sans-serif;">PROFILE
                             SETTINGS</span>
                     </div>
 
@@ -196,7 +196,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                                 <div class="mt-5 pt-3">
                                     <button type="button" class="btn" data-bs-toggle="modal"
                                         data-bs-target="#changePasswordModal"
-                                        style="background: #3A9AFF; border: 1px solid #3A9AFF; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-family: 'Poppins', sans-serif;">
+                                        style="background: #3A9AFF; border: 1px solid #3A9AFF; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-family: 'Manrope', sans-serif;">
                                         <i class="bi bi-key-fill" style="color: white; font-size: 16px;"></i> Change
                                         Password
                                     </button>
@@ -242,7 +242,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                 </div>
 
                 <!-- Danger Zone -->
-                <div class="settings-card danger-zone"
+                <div class="settings-card settings-danger-card danger-zone"
                     style="background: #fffcfc; border: 1px solid #ffdcdb; box-shadow: none; border-radius: 4px; padding: 30px; margin-top: 40px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: flex-start; gap: 20px;">
