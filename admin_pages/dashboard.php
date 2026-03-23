@@ -10,23 +10,17 @@ require_once __DIR__ . '/../backend/core/analytics.php';
 
 ensureNewspaperViewsTable($pdo);
 
-// Get stats
-$totalArchives = countArchives();
-$totalIssues = countIssues();
-$yearsCovered = getYearsCovered();
-// Count categories that are used by uploaded newspapers
-$totalCategories = countCategories();
+$dashboardUploaderId = ($currentUser['role'] ?? 'admin') === 'super_admin'
+    ? null
+    : intval($currentUser['id'] ?? 0);
 
-// Get total views from newspaper_views table
-try {
-    // newspaper_views stores one row per view. Use COUNT(*) to get total views.
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM newspaper_views");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $totalViews = intval($result['total'] ?? 0);
-} catch (PDOException $e) {
-    error_log("Failed to get total views: " . $e->getMessage());
-    $totalViews = 0;
-}
+// Get stats
+$totalArchives = countArchives($dashboardUploaderId);
+$totalIssues = countIssues($dashboardUploaderId);
+$yearsCovered = getYearsCovered($dashboardUploaderId);
+// Count categories that are used by uploaded newspapers
+$totalCategories = countCategories($dashboardUploaderId);
+$totalViews = getAggregateViews($pdo, $dashboardUploaderId);
 
 // Get categories and languages for filters
 // Fetch categories from custom metadata values (not the old categories table)
@@ -44,7 +38,7 @@ $categories = $catStmt->fetchAll();
 $languages = getLanguages();
 
 // Get recent newspapers (Fetch more for pagination, e.g., 40 items = 5 pages of 8)
-$recentNewspapers = getRecentNewspapers(40);
+$recentNewspapers = getRecentNewspapers(40, $dashboardUploaderId);
 
 // Apply title overrides from custom metadata "Title" field
 applyTitleOverrides($recentNewspapers, $pdo);
@@ -70,7 +64,7 @@ if (!empty($recentNewspapers)) {
     unset($n);
 }
 // Get overall top reads (top 10) and filter out those with 0 views
-$topReads = getTopReadNewspapers($pdo);
+$topReads = getTopReadNewspapers($pdo, 'all', $dashboardUploaderId);
 $topReads = array_filter($topReads, function($read) {
     return intval($read['view_count']) > 0;
 });

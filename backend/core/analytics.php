@@ -403,7 +403,7 @@ function getNewspaperAnalytics($pdo, $newspaperId): array {
  * @param PDO $pdo Database connection
  * @return array Array of newspapers with id, title, and view_count
  */
-function getTopReadNewspapers($pdo, $period = 'all'): array {
+function getTopReadNewspapers($pdo, $period = 'all', $uploadedBy = null): array {
     try {
         if (!ensureNewspaperViewsTable($pdo)) {
             return [];
@@ -411,6 +411,11 @@ function getTopReadNewspapers($pdo, $period = 'all'): array {
 
         $whereClause = "n.deleted_at IS NULL";
         $params = [];
+
+        if ($uploadedBy !== null) {
+            $whereClause .= " AND n.uploaded_by = ?";
+            $params[] = intval($uploadedBy);
+        }
 
         // Add time-based filtering
         switch ($period) {
@@ -486,6 +491,44 @@ function getTotalViews($pdo, $newspaperId): int {
         return $row ? intval($row['cnt']) : 0;
     } catch (PDOException $e) {
         error_log("Analytics getTotalViews failed: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get total views across multiple newspapers, optionally scoped by uploader.
+ *
+ * @param PDO $pdo
+ * @param int|null $uploadedBy
+ * @return int
+ */
+function getAggregateViews($pdo, $uploadedBy = null): int {
+    try {
+        if (!ensureNewspaperViewsTable($pdo)) {
+            return 0;
+        }
+
+        if ($uploadedBy !== null) {
+            $stmt = $pdo->prepare("
+                SELECT COUNT(v.id) as cnt
+                FROM newspaper_views v
+                INNER JOIN newspapers n ON n.id = v.newspaper_id
+                WHERE n.deleted_at IS NULL AND n.uploaded_by = ?
+            ");
+            $stmt->execute([intval($uploadedBy)]);
+        } else {
+            $stmt = $pdo->query("
+                SELECT COUNT(v.id) as cnt
+                FROM newspaper_views v
+                INNER JOIN newspapers n ON n.id = v.newspaper_id
+                WHERE n.deleted_at IS NULL
+            ");
+        }
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? intval($row['cnt']) : 0;
+    } catch (PDOException $e) {
+        error_log("Analytics getAggregateViews failed: " . $e->getMessage());
         return 0;
     }
 }

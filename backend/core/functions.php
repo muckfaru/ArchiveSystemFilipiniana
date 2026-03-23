@@ -179,9 +179,15 @@ function getLanguages()
 /**
  * Count total archives (not deleted)
  */
-function countArchives()
+function countArchives($uploadedBy = null)
 {
     global $pdo;
+    if ($uploadedBy !== null) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM newspapers WHERE deleted_at IS NULL AND uploaded_by = ?");
+        $stmt->execute([intval($uploadedBy)]);
+        return $stmt->fetch()['total'];
+    }
+
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM newspapers WHERE deleted_at IS NULL");
     return $stmt->fetch()['total'];
 }
@@ -189,10 +195,10 @@ function countArchives()
 /**
  * Count total issues (pages) - from custom metadata
  */
-function countIssues()
+function countIssues($uploadedBy = null)
 {
     global $pdo;
-    $stmt = $pdo->query("
+    $sql = "
         SELECT COALESCE(SUM(CAST(cmv.field_value AS UNSIGNED)), 0) as total 
         FROM custom_metadata_values cmv
         INNER JOIN form_fields ff ON cmv.field_id = ff.id
@@ -200,17 +206,26 @@ function countIssues()
         WHERE LOWER(ff.field_label) IN ('page count', 'pages')
         AND n.deleted_at IS NULL
         AND cmv.field_value REGEXP '^[0-9]+$'
-    ");
+    ";
+
+    if ($uploadedBy !== null) {
+        $sql .= " AND n.uploaded_by = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([intval($uploadedBy)]);
+        return $stmt->fetch()['total'];
+    }
+
+    $stmt = $pdo->query($sql);
     return $stmt->fetch()['total'];
 }
 
 /**
  * Get years covered - from custom metadata
  */
-function getYearsCovered()
+function getYearsCovered($uploadedBy = null)
 {
     global $pdo;
-    $stmt = $pdo->query("
+    $sql = "
         SELECT 
             MIN(CAST(LEFT(cmv.field_value, 4) AS UNSIGNED)) as min_year, 
             MAX(CAST(LEFT(cmv.field_value, 4) AS UNSIGNED)) as max_year 
@@ -220,7 +235,16 @@ function getYearsCovered()
         WHERE LOWER(ff.field_label) IN ('publication date', 'date published', 'date')
         AND n.deleted_at IS NULL 
         AND cmv.field_value REGEXP '^[0-9]{4}-(0[1-9]|1[0-2])(-([0-2][0-9]|3[0-1]))?$'
-    ");
+    ";
+
+    if ($uploadedBy !== null) {
+        $sql .= " AND n.uploaded_by = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([intval($uploadedBy)]);
+    } else {
+        $stmt = $pdo->query($sql);
+    }
+
     $result = $stmt->fetch();
     if ($result['min_year'] && $result['max_year']) {
         // If min and max year are the same, show only one year
@@ -255,10 +279,10 @@ function formatPublicationDate($publicationDate, $long = true)
 /**
  * Count categories that are actually used by newspapers - now from custom metadata
  */
-function countCategories()
+function countCategories($uploadedBy = null)
 {
     global $pdo;
-    $stmt = $pdo->query("
+    $sql = "
         SELECT COUNT(DISTINCT cmv.field_value) as total 
         FROM custom_metadata_values cmv
         INNER JOIN form_fields ff ON cmv.field_id = ff.id
@@ -267,7 +291,16 @@ function countCategories()
         AND n.deleted_at IS NULL
         AND cmv.field_value IS NOT NULL 
         AND cmv.field_value != ''
-    ");
+    ";
+
+    if ($uploadedBy !== null) {
+        $sql .= " AND n.uploaded_by = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([intval($uploadedBy)]);
+        return $stmt->fetch()['total'];
+    }
+
+    $stmt = $pdo->query($sql);
     return $stmt->fetch()['total'];
 }
 
@@ -294,17 +327,31 @@ function countTotalAdmins()
 /**
  * Get recent newspapers - now without hardcoded metadata columns
  */
-function getRecentNewspapers($limit = 10)
+function getRecentNewspapers($limit = 10, $uploadedBy = null)
 {
     global $pdo;
-    $stmt = $pdo->prepare("
+    $sql = "
         SELECT n.*
         FROM newspapers n 
-        WHERE n.deleted_at IS NULL 
+        WHERE n.deleted_at IS NULL
+    ";
+
+    if ($uploadedBy !== null) {
+        $sql .= " AND n.uploaded_by = ?";
+    }
+
+    $sql .= "
         ORDER BY n.created_at DESC 
         LIMIT ?
-    ");
-    $stmt->execute([$limit]);
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $params = [];
+    if ($uploadedBy !== null) {
+        $params[] = intval($uploadedBy);
+    }
+    $params[] = intval($limit);
+    $stmt->execute($params);
     $newspapers = $stmt->fetchAll();
 
     // Fetch custom metadata for all newspapers in a single query

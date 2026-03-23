@@ -14,8 +14,12 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'refresh_rankings') {
     try {
         require_once __DIR__ . '/../core/analytics.php';
+        $currentUser = getCurrentUser();
+        $dashboardUploaderId = (($currentUser['role'] ?? 'admin') === 'super_admin')
+            ? null
+            : intval($currentUser['id'] ?? 0);
         $period = $_GET['period'] ?? 'all';
-        $topReads = getTopReadNewspapers($pdo, $period);
+        $topReads = getTopReadNewspapers($pdo, $period, $dashboardUploaderId);
         $topReads = array_filter($topReads, function($read) {
             return intval($read['view_count']) > 0;
         });

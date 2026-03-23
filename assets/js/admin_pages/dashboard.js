@@ -10,9 +10,9 @@ function refreshStats() {
         .then(data => {
             if (!data.success) return;
             const vals = document.querySelectorAll('.stat-card-value');
-            // Index order: Total Archives [0], Issues Count [1], Years Covered [2], Total Categories [3]
+            // Index order: Total Archives [0], Total Views [1], Years Covered [2], Total Categories [3]
             if (vals[0]) vals[0].textContent = data.archives.toLocaleString();
-            if (vals[1]) vals[1].textContent = data.issues.toLocaleString();
+            if (vals[1]) vals[1].textContent = data.views.toLocaleString();
             if (vals[2]) vals[2].textContent = data.years;
             if (vals[3]) vals[3].textContent = data.categories.toLocaleString();
         })
