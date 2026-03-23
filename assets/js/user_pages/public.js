@@ -210,6 +210,63 @@
     const searchForm = document.getElementById('publicSearchForm');
     const clearBtn = document.getElementById('publicSearchClear');
 
+    // ── Rotating hero chips ───────────────────────────────────────────────────
+    const heroChipTracks = [
+        [
+            { icon: 'bi-lightning-charge', text: 'Fast public reading' },
+            { icon: 'bi-newspaper', text: 'Read fresh newspaper issues' },
+            { icon: 'bi-book-half', text: 'Open full documents quickly' },
+            { icon: 'bi-clock-history', text: 'Catch recent uploads faster' }
+        ],
+        [
+            { icon: 'bi-journal-richtext', text: 'Curated publication shelves' },
+            { icon: 'bi-grid-3x3-gap', text: 'Explore category shelves' },
+            { icon: 'bi-collection', text: 'Browse newspaper and magazine sets' },
+            { icon: 'bi-calendar3', text: 'Track issues by publication date' }
+        ],
+        [
+            { icon: 'bi-search-heart', text: 'Search-first discovery' },
+            { icon: 'bi-binoculars', text: 'Spot titles in seconds' },
+            { icon: 'bi-tags', text: 'Search by category or date' },
+            { icon: 'bi-stars', text: 'Discover standout library picks' }
+        ]
+    ];
+
+    function initHeroChipLoop() {
+        const chips = document.querySelectorAll('.public-hero-chip-dynamic');
+        if (!chips.length) return;
+
+        const swapChip = (chip, next) => {
+            const icon = chip.querySelector('i');
+            const text = chip.querySelector('.public-hero-chip-text');
+            if (!icon || !text || !next) return;
+
+            chip.classList.add('is-swapping');
+            window.setTimeout(() => {
+                icon.className = `bi ${next.icon}`;
+                text.textContent = next.text;
+                chip.classList.remove('is-swapping');
+            }, 140);
+        };
+
+        chips.forEach((chip, idx) => {
+            const track = heroChipTracks[idx];
+            if (!track || !track.length) return;
+
+            let currentIndex = 0;
+            const intervalMs = 2400 + (idx * 700);
+
+            window.setTimeout(() => {
+                window.setInterval(() => {
+                    currentIndex = (currentIndex + 1) % track.length;
+                    swapChip(chip, track[currentIndex]);
+                }, intervalMs);
+            }, idx * 320);
+        });
+    }
+
+    initHeroChipLoop();
+
     function performLiveSearch() {
         if (!searchForm) return;
         const formData = new FormData(searchForm);

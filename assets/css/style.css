@@ -3,7 +3,7 @@
  * Quezon City Public Library
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 /* ==================== CSS Variables ==================== */
 :root {
@@ -367,14 +367,33 @@ a {
 }
 
 .sidebar-logout-btn {
-    color: #9CA3AF;
-    font-size: 22px;
-    padding: 5px;
-    transition: color 0.2s;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #dc2626;
+    font-size: 20px;
+    background: linear-gradient(135deg, rgba(254, 226, 226, 0.95) 0%, rgba(254, 242, 242, 1) 100%);
+    border: 1px solid rgba(248, 113, 113, 0.28);
+    box-shadow: 0 8px 18px rgba(220, 38, 38, 0.08);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sidebar-logout-btn:hover {
-    color: #374151;
+    color: #b91c1c;
+    background: linear-gradient(135deg, rgba(254, 202, 202, 0.98) 0%, rgba(254, 226, 226, 1) 100%);
+    box-shadow: 0 12px 22px rgba(220, 38, 38, 0.14);
+    transform: translateY(-1px);
+}
+
+.sidebar-logout-btn:focus,
+.sidebar-logout-btn:focus-visible {
+    outline: none;
+    color: #b91c1c;
+    box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.18);
 }
 
 /* ==================== Main Content ==================== */
@@ -1841,7 +1860,7 @@ a {
     border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Poppins', sans-serif;
     border: none;
 }
 
@@ -1862,7 +1881,7 @@ body:not(.public-page):not(.theme-dark) {
         radial-gradient(circle at top left, rgba(139, 196, 255, 0.14), transparent 24%),
         linear-gradient(180deg, #eef6ff 0%, #f2f7fc 28%, #f8fafc 100%);
     color: var(--admin-ink);
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .sidebar {
@@ -1924,7 +1943,7 @@ body:not(.public-page):not(.theme-dark) {
 .modal-minimalist .modal-title,
 .modal-sm-minimalist .modal-title {
     color: var(--admin-ink);
-    font-family: 'Fraunces', serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .main-content {
@@ -1944,7 +1963,7 @@ body:not(.public-page):not(.theme-dark) {
 .page-header h1,
 .page-title {
     color: var(--admin-ink);
-    font-family: 'Fraunces', serif;
+    font-family: 'Poppins', sans-serif;
     letter-spacing: -0.04em;
 }
 
@@ -1969,6 +1988,13 @@ body:not(.public-page):not(.theme-dark) {
 .admin-page-header .page-subtitle {
     margin: 6px 0 0;
     font-size: 0.96rem;
+}
+
+.users-page .admin-page-header .page-title,
+.history-page .admin-page-header .page-title,
+.trash-page .admin-page-header .page-title {
+    font-size: clamp(1.7rem, 2.1vw, 2.05rem);
+    line-height: 1.1;
 }
 
 .admin-header-actions {
@@ -2051,7 +2077,7 @@ body:not(.public-page):not(.theme-dark) {
 .form-control,
 .form-select,
 .form-control-custom {
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .form-control:focus,
@@ -2094,7 +2120,7 @@ body:not(.public-page):not(.theme-dark) {
 .modal-sm-minimalist .modal-body,
 .modal-minimalist .modal-footer .btn,
 .modal-sm-minimalist .btn {
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .modal-minimalist .modal-body p,
@@ -2161,4 +2187,31 @@ body:not(.public-page):not(.theme-dark) {
         justify-content: flex-start;
         flex-wrap: wrap;
     }
+}
+
+/* ==================== Global Typography Consistency ==================== */
+html,
+body,
+button,
+input,
+select,
+textarea,
+.btn,
+.form-control,
+.form-select,
+.page-title,
+.page-subtitle,
+.sidebar,
+.sidebar *,
+.main-content,
+.main-content *,
+.modal,
+.modal *,
+.card,
+.card *,
+.table,
+.table *,
+.badge,
+.alert {
+    font-family: 'Poppins', sans-serif !important;
 }

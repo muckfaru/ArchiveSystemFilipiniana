@@ -16,7 +16,7 @@
     <link href="<?= APP_URL ?>/assets/css/admin_pages/upload.css?v=<?= time() ?>" rel="stylesheet">
 </head>
 
-<body class="<?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
+<body class="admin-shell <?= getSetting('dark_mode') === '1' ? 'dark-mode' : '' ?>">
     <!-- Global Sidebar -->
     <?php include __DIR__ . '/layouts/sidebar.php'; ?>
 

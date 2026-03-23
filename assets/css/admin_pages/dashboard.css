@@ -970,7 +970,16 @@ body .sidebar-title {
     text-decoration: none;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+}
+
+.admin-action-btn i {
+    transition: transform 0.22s ease;
+}
+
+.admin-action-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
 .admin-edit-btn {
@@ -987,11 +996,30 @@ body .sidebar-title {
 .admin-delete-btn {
     background: #FFEBEE;
     color: #C62828;
+    border: 1px solid rgba(198, 40, 40, 0.14);
+    box-shadow: 0 10px 24px rgba(198, 40, 40, 0.08);
 }
 
 .admin-delete-btn:hover {
-    background: #FFCDD2;
-    color: #B71C1C;
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    color: #991B1B;
+    border-color: rgba(185, 28, 28, 0.24);
+    box-shadow: 0 16px 32px rgba(185, 28, 28, 0.18);
+    transform: translateY(-1px);
+}
+
+.admin-delete-btn:hover i,
+.admin-delete-btn:focus-visible i {
+    transform: scale(1.08) rotate(-8deg);
+}
+
+.admin-delete-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.14), 0 16px 32px rgba(185, 28, 28, 0.16);
+}
+
+.admin-delete-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(185, 28, 28, 0.14);
 }
 
 /* Ensure modal uses public modal styles */

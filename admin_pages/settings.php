@@ -137,7 +137,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
         <div class="page-header admin-page-header settings-page-header">
             <div>
                 <h1 class="page-title"
-                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Fraunces', serif;">
+                    style="font-size: 28px; font-weight: 600; color: #2C1810; font-family: 'Poppins', sans-serif;">
                     Settings</h1>
                 <p class="page-subtitle" style="color: #888; margin: 0;">Manage your account settings and preferences
                 </p>
@@ -167,7 +167,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 35px; border-bottom: 1px solid #f1f1f1; padding-bottom: 20px;">
                         <i class="bi bi-person" style="color: #6B7280; font-size: 18px;"></i>
                         <span
-                            style="font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Manrope', sans-serif;">PROFILE
+                            style="font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Poppins', sans-serif;">PROFILE
                             SETTINGS</span>
                     </div>
 
@@ -196,7 +196,7 @@ $storagePath = getSetting('storage_path', 'uploads/newspapers');
                                 <div class="mt-5 pt-3">
                                     <button type="button" class="btn" data-bs-toggle="modal"
                                         data-bs-target="#changePasswordModal"
-                                        style="background: #3A9AFF; border: 1px solid #3A9AFF; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-family: 'Manrope', sans-serif;">
+                                        style="background: #3A9AFF; border: 1px solid #3A9AFF; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-family: 'Poppins', sans-serif;">
                                         <i class="bi bi-key-fill" style="color: white; font-size: 16px;"></i> Change
                                         Password
                                     </button>

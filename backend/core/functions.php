@@ -327,7 +327,7 @@ function countTotalAdmins()
 /**
  * Get recent newspapers - now without hardcoded metadata columns
  */
-function getRecentNewspapers($limit = 10, $uploadedBy = null)
+function getRecentNewspapers($limit = 10, $uploadedBy = null, $offset = 0)
 {
     global $pdo;
     $sql = "
@@ -342,7 +342,7 @@ function getRecentNewspapers($limit = 10, $uploadedBy = null)
 
     $sql .= "
         ORDER BY n.created_at DESC 
-        LIMIT ?
+        LIMIT ? OFFSET ?
     ";
 
     $stmt = $pdo->prepare($sql);
@@ -351,6 +351,7 @@ function getRecentNewspapers($limit = 10, $uploadedBy = null)
         $params[] = intval($uploadedBy);
     }
     $params[] = intval($limit);
+    $params[] = max(0, intval($offset));
     $stmt->execute($params);
     $newspapers = $stmt->fetchAll();
 

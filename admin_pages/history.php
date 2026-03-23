@@ -155,23 +155,50 @@ function getActionLabel($action)
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/admin_pages/history.css" rel="stylesheet">
     <style>
+        .history-page .admin-toolbar-inline.admin-toolbar-split {
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .history-page .admin-toolbar-search {
+            flex: 1 1 62%;
+            max-width: none;
+            min-width: 360px;
+        }
+
+        .history-page .admin-toolbar-filters {
+            flex: 0 1 auto;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .search-bar-custom {
             background: #fff;
-            border-radius: 50px;
-            padding: 4px 4px 4px 20px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #d7dee8;
+            border-radius: 18px;
+            padding: 5px 5px 5px 16px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
             display: flex;
             align-items: center;
+            gap: 10px;
             width: 100%;
+            min-height: 56px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-bar-custom:focus-within {
+            border-color: rgba(58, 154, 255, 0.56);
+            box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
         }
 
         .search-input-custom {
             border: none;
             background: transparent;
             font-size: 14px;
-            color: #666;
+            font-family: 'Poppins', sans-serif;
+            color: #374151;
             width: 100%;
-            padding: 8px;
+            padding: 0;
         }
 
         .search-input-custom:focus {
@@ -182,13 +209,14 @@ function getActionLabel($action)
             background: #3A9AFF;
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .search-btn-custom:hover {
@@ -197,9 +225,10 @@ function getActionLabel($action)
 
         .filter-pill {
             background: #fff;
-            border: none;
-            border-radius: 50px;
-            padding: 10px 20px;
+            border: 1px solid #d7dee8;
+            border-radius: 16px;
+            padding: 0 16px;
+            min-height: 56px;
             font-size: 14px;
             font-weight: 500;
             color: #4B5563;
@@ -207,16 +236,35 @@ function getActionLabel($action)
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
             transition: all 0.2s;
             white-space: nowrap;
             text-decoration: none;
+            font-family: 'Poppins', sans-serif;
         }
 
         .filter-pill:hover {
             background: #F9FAFB;
             transform: translateY(-1px);
             color: #4B5563;
+            border-color: #bfd4ea;
+        }
+
+        .filter-pill:focus,
+        .filter-pill:focus-visible {
+            outline: none;
+            border-color: rgba(58, 154, 255, 0.56);
+            box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
+        }
+
+        .filter-pill.dropdown-toggle::after {
+            margin-left: 6px;
+        }
+
+        @media (max-width: 991.98px) {
+            .history-page .admin-toolbar-search {
+                min-width: 0;
+            }
         }
 
         .history-table th {

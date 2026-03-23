@@ -142,17 +142,13 @@
                     </div>
                 <?php else: ?>
                     <div class="row g-4" id="recentUploadsGrid">
-                        <?php foreach ($recentNewspapers as $index => $paper): ?>
-                            <?php
-                                $pageIndex = floor($index / 8) + 1;
-                                $isHidden = $pageIndex > 1 ? 'display: none;' : '';
-                            ?>
+                        <?php foreach ($recentNewspapers as $paper): ?>
                             <?php
                                 $meta = $paper['custom_metadata'] ?? [];
                                 $pubDate = getMetadataValueByLabel($meta, ['publication date', 'date published', 'date issued']);
                                 $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
                             ?>
-                            <div class="col-md-6 col-xl-3 recent-upload-item page-<?= $pageIndex ?>" style="<?= $isHidden ?>">
+                            <div class="col-md-6 col-xl-3 recent-upload-item">
                                 <div class="dashboard-file-card" data-id="<?= url_encrypt($paper['id']) ?>"
                                     data-raw-id="<?= $paper['id'] ?>"
                                     data-title="<?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>"
@@ -207,24 +203,28 @@
                     
                     <!-- Pagination Controls -->
                     <?php 
-                        $totalPages = ceil(count($recentNewspapers) / 8); 
-                        if ($totalPages > 1): 
+                        if ($recentUploadsTotalPages > 1):
+                            $recentUploadsParams = $_GET;
+                            unset($recentUploadsParams['recent_page']);
                     ?>
                     <div class="d-flex justify-content-center mt-4">
                         <nav aria-label="Recent uploads pagination">
                             <ul class="pagination pagination-sm mb-0 shadow-sm" id="recentUploadsPagination">
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#" onclick="changeRecentPage(event, 'prev')" aria-label="Previous">
+                                <li class="page-item <?= $recentUploadsPage <= 1 ? 'disabled' : '' ?>">
+                                    <?php $prevPageParams = http_build_query(array_merge($recentUploadsParams, ['recent_page' => max(1, $recentUploadsPage - 1)])); ?>
+                                    <a class="page-link" href="<?= $recentUploadsPage <= 1 ? '#' : '?' . $prevPageParams ?>" aria-label="Previous">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
-                                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                                    <li class="page-item <?= $p === 1 ? 'active' : '' ?>">
-                                        <a class="page-link" href="#" onclick="changeRecentPage(event, <?= $p ?>)"><?= $p ?></a>
+                                <?php for ($p = 1; $p <= $recentUploadsTotalPages; $p++): ?>
+                                    <?php $pageParams = http_build_query(array_merge($recentUploadsParams, ['recent_page' => $p])); ?>
+                                    <li class="page-item <?= $p === $recentUploadsPage ? 'active' : '' ?>">
+                                        <a class="page-link" href="?<?= $pageParams ?>"><?= $p ?></a>
                                     </li>
                                 <?php endfor; ?>
-                                <li class="page-item <?= $totalPages <= 1 ? 'disabled' : '' ?>">
-                                    <a class="page-link" href="#" onclick="changeRecentPage(event, 'next')" aria-label="Next">
+                                <li class="page-item <?= $recentUploadsPage >= $recentUploadsTotalPages ? 'disabled' : '' ?>">
+                                    <?php $nextPageParams = http_build_query(array_merge($recentUploadsParams, ['recent_page' => min($recentUploadsTotalPages, $recentUploadsPage + 1)])); ?>
+                                    <a class="page-link" href="<?= $recentUploadsPage >= $recentUploadsTotalPages ? '#' : '?' . $nextPageParams ?>" aria-label="Next">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>

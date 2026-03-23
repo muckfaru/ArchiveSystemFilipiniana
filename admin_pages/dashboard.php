@@ -37,8 +37,17 @@ $catStmt = $pdo->query("
 $categories = $catStmt->fetchAll();
 $languages = getLanguages();
 
-// Get recent newspapers (Fetch more for pagination, e.g., 40 items = 5 pages of 8)
-$recentNewspapers = getRecentNewspapers(40, $dashboardUploaderId);
+$recentUploadsPerPage = 8;
+$recentUploadsPage = max(1, intval($_GET['recent_page'] ?? 1));
+$recentUploadsTotal = countArchives($dashboardUploaderId);
+$recentUploadsTotalPages = max(1, (int) ceil($recentUploadsTotal / $recentUploadsPerPage));
+
+if ($recentUploadsPage > $recentUploadsTotalPages) {
+    $recentUploadsPage = $recentUploadsTotalPages;
+}
+
+$recentUploadsOffset = ($recentUploadsPage - 1) * $recentUploadsPerPage;
+$recentNewspapers = getRecentNewspapers($recentUploadsPerPage, $dashboardUploaderId, $recentUploadsOffset);
 
 // Apply title overrides from custom metadata "Title" field
 applyTitleOverrides($recentNewspapers, $pdo);

@@ -1,35 +1,7 @@
 /* Upload Archive - New Layout Design */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-/* ==================== Sidebar Consistency Fix ==================== */
-body .sidebar-title {
-    font-size: 13px !important;
-}
-
-body .nav-link {
-    font-family: 'Poppins', sans-serif !important;
-}
-
-body .nav-link span {
-    font-family: 'Poppins', sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-}
-
-body .nav-link i {
-    font-size: 18px !important;
-}
-
-body .nav-section-title {
-    font-size: 10px !important;
-    font-weight: 700 !important;
-}
-
 /* ==================== Global ==================== */
-* {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-}
-
 body .main-content {
     background: #F5F6F8 !important;
     padding: 24px !important;

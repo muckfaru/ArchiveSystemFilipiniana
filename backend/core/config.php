@@ -1,13 +1,5 @@
 <?php
-/**
- * Database Configuration (TEMPLATE)
- * Archive System - Quezon City Public Library
- * 
- * SETUP INSTRUCTIONS:
- * 1. Copy this file to config.php: copy config.example.php config.php
- * 2. Update the values below to match your local environment
- * 3. NEVER commit config.php to Git (it's in .gitignore)
- */
+
 
 // Database credentials
 define('DB_HOST', 'localhost');
@@ -25,36 +17,36 @@ if (!function_exists('route_url')) {
     function route_url(string $name = 'home', array $query = []): string
     {
         static $routes = [
-            'home' => '/',
-            'browse' => '/browse',
-            'collections' => '/collections',
-            'reader' => '/read',
-            'public-open' => '/open',
-            'public-pdf-viewer' => '/pdf-viewer',
-            'serve-file' => '/serve-file',
-            'user-convert-mobi' => '/convert-mobi',
-            'user-serve-cbz-image' => '/serve-cbz-image',
-            'login' => '/login',
-            'forgot-password' => '/forgot-password',
-            'reset-password' => '/reset-password',
-            'logout' => '/logout',
-            'dashboard' => '/dashboard',
-            'users' => '/users',
-            'history' => '/history',
-            'trash' => '/trash',
-            'upload' => '/upload',
-            'form-library' => '/form-library',
-            'form-builder' => '/form-builder',
-            'metadata-display' => '/metadata-display',
-            'report' => '/report',
-            'settings' => '/settings',
-            'admin-reader' => '/admin/read',
-            'admin-pdf-viewer' => '/admin/pdf-viewer',
-            'admin-convert-mobi' => '/admin/convert-mobi',
-            'admin-serve-cbz-image' => '/admin/serve-cbz-image',
-            'admin-serve-file' => '/admin/serve-file',
-            'worker' => '/admin/worker',
-            'check-user-availability' => '/admin/check-user-availability',
+        'home' => '/',
+        'browse' => '/browse',
+        'collections' => '/collections',
+        'reader' => '/read',
+        'public-open' => '/open',
+        'public-pdf-viewer' => '/pdf-viewer',
+        'serve-file' => '/serve-file',
+        'user-convert-mobi' => '/convert-mobi',
+        'user-serve-cbz-image' => '/serve-cbz-image',
+        'login' => '/login',
+        'forgot-password' => '/forgot-password',
+        'reset-password' => '/reset-password',
+        'logout' => '/logout',
+        'dashboard' => '/dashboard',
+        'users' => '/users',
+        'history' => '/history',
+        'trash' => '/trash',
+        'upload' => '/upload',
+        'form-library' => '/form-library',
+        'form-builder' => '/form-builder',
+        'metadata-display' => '/metadata-display',
+        'report' => '/report',
+        'settings' => '/settings',
+        'admin-reader' => '/admin/read',
+        'admin-pdf-viewer' => '/admin/pdf-viewer',
+        'admin-convert-mobi' => '/admin/convert-mobi',
+        'admin-serve-cbz-image' => '/admin/serve-cbz-image',
+        'admin-serve-file' => '/admin/serve-file',
+        'worker' => '/admin/worker',
+        'check-user-availability' => '/admin/check-user-availability',
         ];
 
         $path = $routes[$name] ?? '/' . ltrim($name, '/');
@@ -103,14 +95,13 @@ try {
         "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
         DB_USER,
         DB_PASS,
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false
-    ]
-        );
-}
-catch (PDOException $e) {
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+} catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
 
@@ -118,7 +109,7 @@ catch (PDOException $e) {
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', 1);
     ini_set('session.use_strict_mode', 1);
-    
+
     session_set_cookie_params([
         'lifetime' => SESSION_LIFETIME,
         'path' => '/',
@@ -127,9 +118,9 @@ if (session_status() === PHP_SESSION_NONE) {
         'httponly' => true,
         'samesite' => 'Strict'
     ]);
-    
+
     session_start();
 }
 
-// No changes required for UI enhancement in this backend config file.
+
 ?>

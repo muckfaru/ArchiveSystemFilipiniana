@@ -12,11 +12,11 @@ body .sidebar-title {
 
 /* Fix sidebar navigation text from zooming/changing on Settings page */
 body .nav-link {
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Poppins', sans-serif !important;
 }
 
 body .nav-link span {
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Poppins', sans-serif !important;
     font-size: 14px !important;
     font-weight: 600 !important;
 }
@@ -32,7 +32,7 @@ body .nav-section-title {
 
 /* Global settings font override */
 .main-content {
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Poppins', sans-serif !important;
 }
 
 /* Ensure settings page uses the shared admin typography */
@@ -58,12 +58,12 @@ h6,
 .modal-body,
 .modal-header,
 .modal-title {
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-page .page-title,
 .settings-page .modal-title {
-    font-family: 'Fraunces', serif !important;
+    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-section {
@@ -87,7 +87,7 @@ h6,
 /* Updated Typography for Settings Page */
 .settings-card-header span {
     color: #3A9AFF !important;
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Poppins', sans-serif !important;
     font-weight: 700 !important;
 }
 
@@ -102,6 +102,13 @@ h6,
 
 .settings-page-header {
     align-items: center !important;
+}
+
+.settings-page-header,
+.settings-page-header * ,
+.settings-page-header .page-title,
+.settings-page-header .page-subtitle {
+    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-page-actions {
@@ -156,7 +163,7 @@ h6,
     border-radius: 12px !important;
     font-size: 13px !important;
     font-weight: 700 !important;
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Poppins', sans-serif !important;
 }
 
 .settings-page .btn-cancel-edit {
@@ -184,7 +191,7 @@ h6,
 }
 
 .settings-danger-card h5 {
-    font-family: 'Fraunces', serif !important;
+    font-family: 'Poppins', sans-serif !important;
     font-size: 1.35rem !important;
 }
 

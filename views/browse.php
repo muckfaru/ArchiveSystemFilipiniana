@@ -29,7 +29,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     <meta name="description" content="Browse and filter through our comprehensive digital archive collection.">
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -121,31 +121,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         
         <button id="adminLoginTrigger" class="public-admin-login-btn" type="button">
             <i class="bi bi-person-lock"></i>
-            Admin Login
+            <span class="public-admin-login-text">Admin Login</span>
         </button>
     </header>
-
-    <section class="browse-masthead">
-        <div class="browse-masthead-inner">
-            <div class="browse-masthead-copy">
-                <span class="browse-masthead-kicker">Archive Discovery</span>
-                <h1 class="browse-masthead-title">Filter the collection with precision.</h1>
-                <p class="browse-masthead-subtitle">
-                    Move between publication types, languages, editions, and dates without losing the reading flow.
-                </p>
-            </div>
-            <div class="browse-masthead-meta">
-                <div class="browse-masthead-meta-card">
-                    <span class="browse-masthead-meta-value"><?= number_format($totalResults) ?></span>
-                    <span class="browse-masthead-meta-label">Results in view</span>
-                </div>
-                <div class="browse-masthead-meta-card">
-                    <span class="browse-masthead-meta-value"><?= number_format(count($activeFilters)) ?></span>
-                    <span class="browse-masthead-meta-label">Active filters</span>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- ==================== BROWSE LAYOUT ==================== -->
     <div class="browse-layout-redesign">
@@ -193,6 +171,39 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                     </ul>
                 </div>
             </div>
+
+            <!-- Publication Type Section -->
+            <?php if (!empty($publicationTypesWithCounts)): ?>
+                <div class="browse-filter-section">
+                    <button class="browse-filter-toggle" type="button" data-target="publication-types">
+                        <span>PUBLICATION TYPE</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="browse-filter-content" id="publication-types">
+                        <ul class="browse-category-list-redesign">
+                            <li class="browse-category-item-redesign">
+                                <label class="browse-checkbox-label">
+                                    <input type="radio" name="publication_type_filter" <?= $publicationType === '' ? 'checked' : '' ?>
+                                        onchange="if(this.checked) togglePublicationType('')">
+                                    <span>All Types</span>
+                                    <span class="browse-count-badge"><?= number_format($totalCollectionsCount) ?></span>
+                                </label>
+                            </li>
+                            <?php foreach ($publicationTypesWithCounts as $type): ?>
+                                <?php $isActive = $publicationType === $type['publication_type']; ?>
+                                <li class="browse-category-item-redesign">
+                                    <label class="browse-checkbox-label">
+                                        <input type="radio" name="publication_type_filter" value="<?= htmlspecialchars($type['publication_type']) ?>" <?= $isActive ? 'checked' : '' ?>
+                                            onchange="if(this.checked) togglePublicationType('<?= addslashes($type['publication_type']) ?>')">
+                                        <span><?= htmlspecialchars($type['publication_type']) ?></span>
+                                        <span class="browse-count-badge"><?= number_format($type['count']) ?></span>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <!-- Edition Filter -->
             <?php if (!empty($editionsWithCounts)): ?>
@@ -273,6 +284,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                             <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
                         <?php endforeach; ?>
                         <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
+                        <input type="hidden" name="view" value="<?= htmlspecialchars($viewMode) ?>">
                         <?php if ($publicationType): ?>
                             <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
                         <?php endif; ?>
@@ -318,6 +330,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
                     <?php endforeach; ?>
                     <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
+                    <input type="hidden" name="view" value="<?= htmlspecialchars($viewMode) ?>">
                     <?php if ($publicationType): ?>
                         <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
                     <?php endif; ?>
@@ -332,15 +345,16 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 
             <!-- Results Bar -->
             <div class="browse-results-bar-redesign">
-                <div class="browse-results-count-redesign">
+                <h1 class="browse-results-title-redesign">Browse Archives</h1>
+                <p class="browse-results-count-redesign">
                     <?php if ($searchQuery): ?>
-                        Showing results for "<strong><?= htmlspecialchars($searchQuery) ?></strong>"
+                        Showing results for "<strong><?= htmlspecialchars($searchQuery) ?></strong>" in your collection
                     <?php elseif ($publicationType): ?>
-                        Showing <?= number_format($totalResults) ?> <?= htmlspecialchars($publicationType) ?><?= $totalResults !== 1 ? 's' : '' ?>
+                        Showing <?= number_format($totalResults) ?> <?= htmlspecialchars($publicationType) ?><?= $totalResults !== 1 ? 's' : '' ?> found in your collection
                     <?php else: ?>
-                        Showing <?= number_format($totalResults) ?> newspapers
+                        Showing <?= number_format($totalResults) ?> newspapers found in your collection
                     <?php endif; ?>
-                </div>
+                </p>
                 
                 <!-- Sort Filter -->
                 <div class="browse-sort-wrap-redesign">
@@ -355,6 +369,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <?php foreach ($editionFilter as $ed): ?>
                             <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
                         <?php endforeach; ?>
+                        <input type="hidden" name="view" value="<?= htmlspecialchars($viewMode) ?>">
                         <?php if ($publicationType): ?>
                             <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
                         <?php endif; ?>
@@ -370,10 +385,10 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                     
                     <!-- View Toggle -->
                     <div class="browse-view-toggle">
-                        <button class="browse-view-btn active" data-view="grid">
+                        <button class="browse-view-btn <?= $viewMode === 'grid' ? 'active' : '' ?>" data-view="grid" type="button">
                             <i class="bi bi-grid-3x3-gap"></i>
                         </button>
-                        <button class="browse-view-btn" data-view="list">
+                        <button class="browse-view-btn <?= $viewMode === 'list' ? 'active' : '' ?>" data-view="list" type="button">
                             <i class="bi bi-list"></i>
                         </button>
                     </div>
@@ -407,7 +422,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <a href="<?= route_url('browse') ?>" class="browse-clear-btn">Clear Filters</a>
                 </div>
             <?php else: ?>
-                <div class="browse-grid-compact">
+                <div class="browse-grid-compact <?= $viewMode === 'list' ? 'browse-list-view' : '' ?>">
                     <?php foreach ($documents as $paper): ?>
                         <?php
                         $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
@@ -759,17 +774,38 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             
             buildAndNavigate(currentCategories, currentLanguages, newEditions);
         }
+
+        // Publication type filter toggle function
+        function togglePublicationType(pubType) {
+            const params = new URLSearchParams();
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+
+            if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
+            currentCategories.forEach(c => params.append('category[]', c));
+            currentLanguages.forEach(l => params.append('language[]', l));
+            currentEditions.forEach(e => params.append('edition[]', e));
+            if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
+            if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
+            params.set('sort', '<?= addslashes($sortFilter) ?>');
+            params.set('view', '<?= addslashes($viewMode) ?>');
+            if (pubType) params.set('publication_type', pubType);
+
+            window.location.href = '?' + params.toString();
+        }
         
         // Helper function to build URL and navigate
         function buildAndNavigate(categories, languages, editions) {
             const params = new URLSearchParams();
-            params.set('q', '<?= addslashes($searchQuery) ?>');
+            if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
             categories.forEach(c => params.append('category[]', c));
             languages.forEach(l => params.append('language[]', l));
             editions.forEach(e => params.append('edition[]', e));
             if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
             if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
             params.set('sort', '<?= addslashes($sortFilter) ?>');
+            params.set('view', '<?= addslashes($viewMode) ?>');
             const pubType = '<?= addslashes($publicationType) ?>';
             if (pubType) params.set('publication_type', pubType);
             
@@ -805,21 +841,14 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 
         // View toggle functionality
         const viewBtns = document.querySelectorAll('.browse-view-btn');
-        const gridContainer = document.querySelector('.browse-grid-compact');
         
         viewBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                viewBtns.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
                 const view = this.getAttribute('data-view');
-                if (view === 'list') {
-                    gridContainer.classList.add('browse-list-view');
-                    gridContainer.classList.remove('browse-grid-compact');
-                } else {
-                    gridContainer.classList.remove('browse-list-view');
-                    gridContainer.classList.add('browse-grid-compact');
-                }
+                const params = new URLSearchParams(window.location.search);
+                params.set('view', view);
+                params.delete('page');
+                window.location.href = '?' + params.toString();
             });
         });
 

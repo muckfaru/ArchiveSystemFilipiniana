@@ -113,6 +113,7 @@ $trashedItems = $stmt->fetchAll();
 
 // Calculate days until auto-delete
 $autoDeleteDays = intval(getSetting('auto_delete_days', 30));
+$hasTrashedItems = $totalItems > 0;
 
 // Handle Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -120,32 +121,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type = $_POST['type'] ?? '';
     $id = intval($_POST['id'] ?? 0);
 
+    $hasAnyTrashedFiles = (int) $pdo->query("SELECT COUNT(*) FROM newspapers WHERE deleted_at IS NOT NULL")->fetchColumn() > 0;
+    $hasAnyTrashedUsers = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE deleted_at IS NOT NULL")->fetchColumn() > 0;
+    $hasAnyTrashedItems = $hasAnyTrashedFiles || $hasAnyTrashedUsers;
+
     // --- RESTORE ---
     if ($action === 'restore') {
         if ($type === 'file') {
-            $stmt = $pdo->prepare("SELECT title FROM newspapers WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT title FROM newspapers WHERE id = ? AND deleted_at IS NOT NULL");
             $stmt->execute([$id]);
             $item = $stmt->fetch();
-
-            $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
-            $stmt->execute([$id]);
-            logActivity($currentUser['id'], 'restore', "File: " . ($item['title'] ?? $id));
+            if ($item) {
+                $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL");
+                $stmt->execute([$id]);
+                if ($stmt->rowCount() > 0) {
+                    logActivity($currentUser['id'], 'restore', "File: " . ($item['title'] ?? $id));
+                    redirect($_SERVER['PHP_SELF'] . '?success=restored');
+                }
+            }
         } elseif ($type === 'user') {
-            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ? AND deleted_at IS NOT NULL");
             $stmt->execute([$id]);
             $user = $stmt->fetch();
-
-            $stmt = $pdo->prepare("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
-            $stmt->execute([$id]);
-            logActivity($currentUser['id'], 'restore_user', "User: " . ($user['username'] ?? $id));
+            if ($user) {
+                $stmt = $pdo->prepare("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL");
+                $stmt->execute([$id]);
+                if ($stmt->rowCount() > 0) {
+                    logActivity($currentUser['id'], 'restore_user', "User: " . ($user['username'] ?? $id));
+                    redirect($_SERVER['PHP_SELF'] . '?success=restored');
+                }
+            }
         }
-        redirect($_SERVER['PHP_SELF'] . '?success=restored');
+        redirect($_SERVER['PHP_SELF'] . '?success=no_items');
     }
 
     // --- PERMANENT DELETE ---
     if ($action === 'delete') {
         if ($type === 'file') {
-            $stmt = $pdo->prepare("SELECT * FROM newspapers WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT * FROM newspapers WHERE id = ? AND deleted_at IS NOT NULL");
             $stmt->execute([$id]);
             $item = $stmt->fetch();
             if ($item) {
@@ -157,25 +170,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo->prepare("DELETE FROM newspapers WHERE id = ?")->execute([$id]);
                 logActivity($currentUser['id'], 'permanent_delete', $item['title']);
+                redirect($_SERVER['PHP_SELF'] . '?success=deleted');
             }
         } elseif ($type === 'user') {
-            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ? AND deleted_at IS NOT NULL");
             $stmt->execute([$id]);
             $user = $stmt->fetch();
             if ($user) {
                 $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$id]);
                 logActivity($currentUser['id'], 'permanent_delete_user', $user['username']);
+                redirect($_SERVER['PHP_SELF'] . '?success=deleted');
             }
         }
-        redirect($_SERVER['PHP_SELF'] . '?success=deleted');
+        redirect($_SERVER['PHP_SELF'] . '?success=no_items');
     }
 
     // --- RESTORE ALL ---
     if ($action === 'restore_all') {
-        $pdo->query("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE deleted_at IS NOT NULL");
-        $pdo->query("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE deleted_at IS NOT NULL");
-        logActivity($currentUser['id'], 'restore_all', 'Restored all items');
-        redirect($_SERVER['PHP_SELF'] . '?success=restored_all');
+        if (!$hasAnyTrashedItems) {
+            redirect($_SERVER['PHP_SELF'] . '?success=no_items');
+        }
+
+        $restoredFiles = $pdo->exec("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE deleted_at IS NOT NULL");
+        $restoredUsers = $pdo->exec("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE deleted_at IS NOT NULL");
+        $restoredTotal = intval($restoredFiles) + intval($restoredUsers);
+
+        if ($restoredTotal > 0) {
+            logActivity($currentUser['id'], 'restore_all', 'Restored all items');
+            redirect($_SERVER['PHP_SELF'] . '?success=restored_all');
+        }
+
+        redirect($_SERVER['PHP_SELF'] . '?success=no_items');
     }
 
     // --- RESTORE SELECTED ---
@@ -188,14 +213,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $itemType = $item['type'];
 
             if ($itemType === 'file') {
-                $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE newspapers SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL");
                 $stmt->execute([$itemId]);
-                $restoredCount++;
+                if ($stmt->rowCount() > 0) {
+                    $restoredCount++;
+                }
             } elseif ($itemType === 'user') {
-                $stmt = $pdo->prepare("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL");
                 $stmt->execute([$itemId]);
-                $restoredCount++;
+                if ($stmt->rowCount() > 0) {
+                    $restoredCount++;
+                }
             }
+        }
+
+        if ($restoredCount === 0) {
+            redirect($_SERVER['PHP_SELF'] . '?success=no_items');
         }
 
         logActivity($currentUser['id'], 'restore_selected', "Restored $restoredCount items");
@@ -212,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $itemType = $item['type'];
 
             if ($itemType === 'file') {
-                $stmt = $pdo->prepare("SELECT * FROM newspapers WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT * FROM newspapers WHERE id = ? AND deleted_at IS NOT NULL");
                 $stmt->execute([$itemId]);
                 $file = $stmt->fetch();
                 if ($file) {
@@ -222,9 +255,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $deletedCount++;
                 }
             } elseif ($itemType === 'user') {
-                $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$itemId]);
-                $deletedCount++;
+                $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ? AND deleted_at IS NOT NULL");
+                $stmt->execute([$itemId]);
+                $user = $stmt->fetch();
+                if ($user) {
+                    $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$itemId]);
+                    $deletedCount++;
+                }
             }
+        }
+
+        if ($deletedCount === 0) {
+            redirect($_SERVER['PHP_SELF'] . '?success=no_items');
         }
 
         logActivity($currentUser['id'], 'permanent_delete_selected', "Permanently deleted $deletedCount items");
@@ -233,6 +275,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- EMPTY TRASH ---
     if ($action === 'empty_trash') {
+        if (!$hasAnyTrashedItems) {
+            redirect($_SERVER['PHP_SELF'] . '?success=no_items');
+        }
+
         // Delete all files physically
         $stmt = $pdo->query("SELECT * FROM newspapers WHERE deleted_at IS NOT NULL");
         $files = $stmt->fetchAll();
@@ -243,10 +289,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unlink(UPLOAD_PATH . '../' . $file['thumbnail_path']);
         }
 
-        $pdo->query("DELETE FROM newspapers WHERE deleted_at IS NOT NULL");
-        $pdo->query("DELETE FROM users WHERE deleted_at IS NOT NULL");
-        logActivity($currentUser['id'], 'empty_trash', 'Emptied all trash');
-        redirect($_SERVER['PHP_SELF'] . '?success=emptied');
+        $deletedFiles = $pdo->exec("DELETE FROM newspapers WHERE deleted_at IS NOT NULL");
+        $deletedUsers = $pdo->exec("DELETE FROM users WHERE deleted_at IS NOT NULL");
+        $deletedTotal = intval($deletedFiles) + intval($deletedUsers);
+
+        if ($deletedTotal > 0) {
+            logActivity($currentUser['id'], 'empty_trash', 'Emptied all trash');
+            redirect($_SERVER['PHP_SELF'] . '?success=emptied');
+        }
+
+        redirect($_SERVER['PHP_SELF'] . '?success=no_items');
     }
 }
 
@@ -280,23 +332,50 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/admin_pages/trash.css" rel="stylesheet">
     <style>
+        .trash-page .admin-toolbar-inline.admin-toolbar-split {
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .trash-page .admin-toolbar-search {
+            flex: 1 1 62%;
+            max-width: none;
+            min-width: 360px;
+        }
+
+        .trash-page .admin-toolbar-filters {
+            flex: 0 1 auto;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .search-bar-custom {
             background: #fff;
-            border-radius: 50px;
-            padding: 4px 4px 4px 20px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #d7dee8;
+            border-radius: 18px;
+            padding: 5px 5px 5px 16px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
             display: flex;
             align-items: center;
+            gap: 10px;
             width: 100%;
+            min-height: 56px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-bar-custom:focus-within {
+            border-color: rgba(58, 154, 255, 0.56);
+            box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
         }
 
         .search-input-custom {
             border: none;
             background: transparent;
             font-size: 14px;
-            color: #666;
+            color: #374151;
             width: 100%;
-            padding: 8px;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
         }
 
         .search-input-custom:focus {
@@ -307,13 +386,14 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             background: #3A9AFF;
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .search-btn-custom:hover {
@@ -322,9 +402,10 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
 
         .filter-pill {
             background: #fff;
-            border: none;
-            border-radius: 50px;
-            padding: 10px 20px;
+            border: 1px solid #d7dee8;
+            border-radius: 16px;
+            padding: 0 16px;
+            min-height: 56px;
             font-size: 14px;
             font-weight: 500;
             color: #4B5563;
@@ -332,16 +413,48 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
             transition: all 0.2s;
             white-space: nowrap;
             text-decoration: none;
+            font-family: 'Poppins', sans-serif;
         }
 
         .filter-pill:hover {
             background: #F9FAFB;
             transform: translateY(-1px);
             color: #4B5563;
+            border-color: #bfd4ea;
+        }
+
+        .filter-pill:focus,
+        .filter-pill:focus-visible {
+            outline: none;
+            border-color: rgba(58, 154, 255, 0.56);
+            box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
+        }
+
+        .filter-pill.dropdown-toggle::after {
+            margin-left: 6px;
+        }
+
+        .toolbar-action-btn {
+            min-height: 56px;
+            border-radius: 16px;
+            padding: 0 18px;
+            font-size: 13px;
+        }
+
+        .toolbar-action-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none !important;
+        }
+
+        @media (max-width: 991.98px) {
+            .trash-page .admin-toolbar-search {
+                min-width: 0;
+            }
         }
 
         .trash-table th {
@@ -483,6 +596,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                     </button>
                     <!-- Keep hidden inputs for filters -->
                     <?php if ($typeFilter): ?><input type="hidden" name="type" value="<?= htmlspecialchars($typeFilter) ?>"><?php endif; ?>
+                    <?php if ($dateFilter): ?><input type="hidden" name="date" value="<?= htmlspecialchars($dateFilter) ?>"><?php endif; ?>
                     <?php if ($sortBy): ?><input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>"><?php endif; ?>
                     <?php if ($limit !== 4): ?><input type="hidden" name="limit" value="<?= htmlspecialchars($limit) ?>"><?php endif; ?>
                 </form>
@@ -496,10 +610,20 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <?= $typeFilter === 'file' ? 'Files' : ($typeFilter === 'user' ? 'Users' : 'All Types') ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 13px;">
-                        <li><a class="dropdown-item type-filter-item <?= empty($typeFilter) ? 'active' : '' ?>" href="?type=&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">All Types</a></li>
-                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'file' ? 'active' : '' ?>" href="?type=file&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">Files Only</a></li>
-                        <li><a class="dropdown-item type-filter-item <?= $typeFilter === 'user' ? 'active' : '' ?>" href="?type=user&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&limit=<?= $limit ?>">Users Only</a></li>
+                        <li><a class="dropdown-item <?= empty($typeFilter) ? 'active' : '' ?>" href="?type=&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">All Types</a></li>
+                        <li><a class="dropdown-item <?= $typeFilter === 'file' ? 'active' : '' ?>" href="?type=file&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Files Only</a></li>
+                        <li><a class="dropdown-item <?= $typeFilter === 'user' ? 'active' : '' ?>" href="?type=user&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Users Only</a></li>
                     </ul>
+                </div>
+
+                <div class="dropdown">
+                    <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <?= $dateFilter ? date('d M Y', strtotime($dateFilter)) : 'All Dates' ?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-sm p-3" style="min-width: 220px;">
+                        <label for="dateFilterInput" class="form-label text-muted small fw-semibold mb-2">Date Deleted</label>
+                        <input type="date" class="form-control shadow-none" id="dateFilterInput" value="<?= htmlspecialchars($dateFilter) ?>">
+                    </div>
                 </div>
 
                 <!-- Sort By -->
@@ -508,16 +632,16 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <?= $sortBy === 'oldest' ? 'Oldest First' : 'Newest First' ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 13px;">
-                        <li><a class="dropdown-item <?= $sortBy === 'newest' ? 'active' : '' ?>" href="?sort=newest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&limit=<?= $limit ?>">Newest First</a></li>
-                        <li><a class="dropdown-item <?= $sortBy === 'oldest' ? 'active' : '' ?>" href="?sort=oldest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&limit=<?= $limit ?>">Oldest First</a></li>
+                        <li><a class="dropdown-item <?= $sortBy === 'newest' ? 'active' : '' ?>" href="?sort=newest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Newest First</a></li>
+                        <li><a class="dropdown-item <?= $sortBy === 'oldest' ? 'active' : '' ?>" href="?sort=oldest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Oldest First</a></li>
                     </ul>
                 </div>
                 
                 <!-- Action Buttons: Restore All & Empty -->
-                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm d-flex align-items-center gap-2" style="font-size: 13px;" onclick="showRestoreAllModal()">
+                <button type="button" class="btn btn-outline-primary fw-medium shadow-sm d-flex align-items-center gap-2 toolbar-action-btn" onclick="showRestoreAllModal()" <?= $hasTrashedItems ? '' : 'disabled' ?>>
                     <i class="bi bi-arrow-counterclockwise"></i> Restore All
                 </button>
-                <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-medium shadow-sm d-flex align-items-center gap-2" style="font-size: 13px;" onclick="showEmptyTrashModal()">
+                <button type="button" class="btn btn-outline-danger fw-medium shadow-sm d-flex align-items-center gap-2 toolbar-action-btn" onclick="showEmptyTrashModal()" <?= $hasTrashedItems ? '' : 'disabled' ?>>
                     <i class="bi bi-trash-fill"></i> Empty
                 </button>
             </div>
@@ -633,12 +757,16 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
                     </select>
                     <span class="text-secondary small ms-2">
-                        Showing <?= ($offset + 1) ?>-<?= min($offset + $limit, $totalItems) ?> of <?= $totalItems ?> items
+                        <?php if ($totalItems > 0): ?>
+                            Showing <?= ($offset + 1) ?>-<?= min($offset + $limit, $totalItems) ?> of <?= $totalItems ?> items
+                        <?php else: ?>
+                            Showing 0 items
+                        <?php endif; ?>
                     </span>
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
-                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&search=<?= urlencode($search) ?>"
+                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&date=<?= urlencode($dateFilter) ?>&search=<?= urlencode($search) ?>"
                         class="pagination-circle <?= $page <= 1 ? 'disabled' : '' ?>">
                         <i class="bi bi-chevron-left"></i>
                     </a>
@@ -648,13 +776,13 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                     $startPage = max(1, $page - 2);
                     $endPage = min($totalPages, $page + 2);
                     for ($i = $startPage; $i <= $endPage; $i++): ?>
-                        <a href="?page=<?= $i ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&search=<?= urlencode($search) ?>"
+                        <a href="?page=<?= $i ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&date=<?= urlencode($dateFilter) ?>&search=<?= urlencode($search) ?>"
                             class="pagination-circle <?= $i == $page ? 'active' : '' ?>">
                             <?= $i ?>
                         </a>
                     <?php endfor; ?>
 
-                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&search=<?= urlencode($search) ?>"
+                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&date=<?= urlencode($dateFilter) ?>&search=<?= urlencode($search) ?>"
                         class="pagination-circle <?= $page >= $totalPages ? 'disabled' : '' ?>">
                         <i class="bi bi-chevron-right"></i>
                     </a>
@@ -833,11 +961,15 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             };
 
             window.showRestoreAllModal = function() {
+                if (!document.querySelector('.item-checkbox')) {
+                    return;
+                }
                 modalTitle.textContent = 'Restore Everything?';
                 modalMessage.innerHTML = 'Are you sure you want to restore <span class="fw-bold">ALL</span> items in the trash? They will be returned to their original locations.';
                 modalAction.value = 'restore_all';
                 modalItemId.value = '';
                 modalItemType.value = '';
+                document.getElementById('modalItemsJson').value = '';
                 modalSubmitBtn.className = 'btn btn-restore-confirm px-4 w-100';
                 modalSubmitBtn.textContent = 'Restore All';
                 modalIcon.className = 'bi bi-arrow-clockwise';
@@ -846,11 +978,15 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             };
 
             window.showEmptyTrashModal = function() {
+                if (!document.querySelector('.item-checkbox')) {
+                    return;
+                }
                 modalTitle.textContent = 'Empty Trash?';
                 modalMessage.innerHTML = 'Are you sure you want to permanently delete <span class="fw-bold">ALL</span> items in the trash? This action <span class="text-danger fw-bold">CANNOT</span> be undone.';
                 modalAction.value = 'empty_trash';
                 modalItemId.value = '';
                 modalItemType.value = '';
+                document.getElementById('modalItemsJson').value = '';
                 modalSubmitBtn.className = 'btn btn-delete-confirm px-4 w-100';
                 modalSubmitBtn.textContent = 'Empty Trash Now';
                 modalIcon.className = 'bi bi-trash3';
@@ -861,10 +997,13 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             window.showRestoreSelectedModal = function() {
                 const checked = document.querySelectorAll('.item-checkbox:checked');
                 const items = Array.from(checked).map(cb => ({ id: cb.dataset.id, type: cb.dataset.type }));
+                if (!items.length) return;
                 
                 modalTitle.textContent = 'Restore Selected?';
                 modalMessage.innerHTML = `Are you sure you want to restore the <span class="fw-bold">${items.length}</span> selected items?`;
                 modalAction.value = 'restore_selected';
+                modalItemId.value = '';
+                modalItemType.value = '';
                 document.getElementById('modalItemsJson').value = JSON.stringify(items);
                 modalSubmitBtn.className = 'btn btn-restore-confirm px-4 w-100';
                 modalSubmitBtn.textContent = 'Restore Selected';
@@ -876,10 +1015,13 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             window.showDeleteSelectedModal = function() {
                 const checked = document.querySelectorAll('.item-checkbox:checked');
                 const items = Array.from(checked).map(cb => ({ id: cb.dataset.id, type: cb.dataset.type }));
+                if (!items.length) return;
                 
                 modalTitle.textContent = 'Delete Selected?';
                 modalMessage.innerHTML = `Confirm permanent deletion of the <span class="fw-bold">${items.length}</span> selected items? This action <span class="text-danger fw-bold">CANNOT</span> be undone.`;
                 modalAction.value = 'delete_selected';
+                modalItemId.value = '';
+                modalItemType.value = '';
                 document.getElementById('modalItemsJson').value = JSON.stringify(items);
                 modalSubmitBtn.className = 'btn btn-delete-confirm px-4 w-100';
                 modalSubmitBtn.textContent = 'Delete Permanently';
@@ -900,7 +1042,8 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                     'restored_all': 'All items have been restored.',
                     'emptied': 'Trash repository has been cleared.',
                     'restored_selected': 'Selected items have been restored.',
-                    'deleted_selected': 'Selected items were permanently deleted.'
+                    'deleted_selected': 'Selected items were permanently deleted.',
+                    'no_items': 'No trashed items were available for that action.'
                 };
                 
                 if (messages[successParam]) {

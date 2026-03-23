@@ -17,7 +17,7 @@ require_once __DIR__ . '/../../backend/core/config.php';
 
     <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <!-- Bootstrap CSS -->

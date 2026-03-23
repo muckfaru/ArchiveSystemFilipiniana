@@ -16,7 +16,9 @@ if (isLoggedIn()) {
 
 // --- Pagination & Filters ---
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = 20; // Match collections page
+$viewMode = strtolower(trim($_GET['view'] ?? 'grid'));
+$viewMode = in_array($viewMode, ['grid', 'list'], true) ? $viewMode : 'grid';
+$limit = $viewMode === 'list' ? 12 : 8;
 
 $searchQuery = trim($_GET['q'] ?? '');
 $categoryFilter = isset($_GET['category']) ? (is_array($_GET['category']) ? $_GET['category'] : [$_GET['category']]) : [];
@@ -44,9 +46,12 @@ if ($dateTo !== '' && preg_match('/^\d{4}$/', $dateTo)) {
 $catSql = "SELECT cmv.field_value as id, cmv.field_value as name, COUNT(DISTINCT n.id) as count 
            FROM custom_metadata_values cmv
            INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
-           LEFT JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
+           INNER JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
            WHERE cmf.field_label = 'Category'
+           AND cmv.field_value IS NOT NULL
+           AND TRIM(cmv.field_value) != ''
            GROUP BY cmv.field_value
+           HAVING COUNT(DISTINCT n.id) > 0
            ORDER BY cmv.field_value ASC";
 $categoriesWithCounts = $pdo->query($catSql)->fetchAll();
 
@@ -74,6 +79,18 @@ $editionSql = "SELECT cmv.field_value as edition, COUNT(DISTINCT n.id) as count
                GROUP BY cmv.field_value
                ORDER BY cmv.field_value ASC";
 $editionsWithCounts = $pdo->query($editionSql)->fetchAll();
+
+// Get publication types for filter with counts
+$pubTypeSql = "SELECT cmv.field_value as publication_type, COUNT(DISTINCT n.id) as count
+               FROM custom_metadata_values cmv
+               INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+               INNER JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
+               WHERE cmf.field_label = 'Publication Type'
+               AND cmv.field_value IS NOT NULL
+               AND TRIM(cmv.field_value) != ''
+               GROUP BY cmv.field_value
+               ORDER BY cmv.field_value ASC";
+$publicationTypesWithCounts = $pdo->query($pubTypeSql)->fetchAll();
 
 // Get min and max publication dates for the date range filter
 $dateRangeSql = "SELECT 
@@ -262,12 +279,12 @@ if (!empty($documents)) {
 }
 
 // --- Generate Filter Display Label with Remove Buttons ---
-function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categories, $languages, $searchQuery, $sortFilter, $publicationType = '')
+function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categories, $languages, $searchQuery, $sortFilter, $publicationType = '', $viewMode = 'grid')
 {
     $filters = [];
 
     // Helper function to build URL params
-    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null, $overrideSearch = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType) {
+    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null, $overrideSearch = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType, $viewMode) {
         $useSearch = ($overrideSearch !== null) ? $overrideSearch : $searchQuery;
         $useDateFrom = ($overrideDateFrom !== null) ? $overrideDateFrom : $dateFrom;
         $useDateTo = ($overrideDateTo !== null) ? $overrideDateTo : $dateTo;
@@ -289,6 +306,8 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
             $params[] = 'sort=' . urlencode($sortFilter);
         if ($usePubType)
             $params[] = 'publication_type=' . urlencode($usePubType);
+        if ($viewMode && $viewMode !== 'grid')
+            $params[] = 'view=' . urlencode($viewMode);
         return '?' . implode('&', $params);
     };
 
@@ -400,7 +419,7 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
     return $filters;
 }
 
-$activeFilters = generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categoriesWithCounts, $languages, $searchQuery, $sortFilter, $publicationType);
+$activeFilters = generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categoriesWithCounts, $languages, $searchQuery, $sortFilter, $publicationType, $viewMode);
 $hasActiveFilters = !empty($activeFilters) || ($publicationType !== '');
 
 // Helper function to format numbers

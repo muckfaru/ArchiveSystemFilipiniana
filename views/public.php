@@ -10,7 +10,7 @@
 
     <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -50,7 +50,7 @@
         
         <button id="adminLoginTrigger" class="public-admin-login-btn" type="button">
             <i class="bi bi-person-lock"></i>
-            Admin Login
+            <span class="public-admin-login-text">Admin Login</span>
         </button>
     </header>
 
@@ -61,8 +61,7 @@
                 <span class="public-hero-kicker">Quezon City Public Library Digital Collection</span>
                 <h1 class="public-hero-title">Read the archive like a living newsroom.</h1>
                 <p class="public-hero-subtitle">
-                    Discover periodicals, magazines, journals, and historical publications through a faster, more
-                    curated public reading experience.
+                    Discover newspapers and magazines through a faster, more curated public reading experience.
                 </p>
 
                 <div class="public-search-wrapper">
@@ -86,9 +85,18 @@
                 </div>
 
                 <div class="public-hero-chips">
-                    <span class="public-hero-chip"><i class="bi bi-lightning-charge"></i> Fast public reading</span>
-                    <span class="public-hero-chip"><i class="bi bi-journal-richtext"></i> Curated publication shelves</span>
-                    <span class="public-hero-chip"><i class="bi bi-search-heart"></i> Search-first discovery</span>
+                    <span class="public-hero-chip public-hero-chip-dynamic" data-chip-index="0">
+                        <i class="bi bi-lightning-charge"></i>
+                        <span class="public-hero-chip-text">Fast public reading</span>
+                    </span>
+                    <span class="public-hero-chip public-hero-chip-dynamic" data-chip-index="1">
+                        <i class="bi bi-journal-richtext"></i>
+                        <span class="public-hero-chip-text">Curated publication shelves</span>
+                    </span>
+                    <span class="public-hero-chip public-hero-chip-dynamic" data-chip-index="2">
+                        <i class="bi bi-search-heart"></i>
+                        <span class="public-hero-chip-text">Search-first discovery</span>
+                    </span>
                 </div>
             </div>
 
@@ -287,17 +295,6 @@
     <?php else: ?>
         <!-- ══════════════ CATALOG SHELVES (PressReader-style) ══════════════ -->
         <div class="catalog-container" data-total="<?= array_sum(array_column($catalogShelves, 'total')) ?>">
-            <div class="public-grid-container public-grid-container-intro">
-                <div class="public-section-heading">
-                    <div>
-                        <span class="public-section-kicker">Featured Shelves</span>
-                        <h2 class="public-section-title">Browse by publication type</h2>
-                    </div>
-                    <a href="<?= route_url('browse') ?>" class="public-section-link">
-                        View full archive <i class="bi bi-arrow-up-right"></i>
-                    </a>
-                </div>
-            </div>
             <?php if (empty($catalogShelves)): ?>
                 <div class="public-grid-container">
                     <div class="public-empty-state">
