@@ -11,7 +11,7 @@ git clone https://github.com/muckfaru/AchiveSystemFilipiniana.git
 ```
 Place the project folder inside your XAMPP `htdocs` directory, e.g.:
 ```
-C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana
+C:\xampp\htdocs\ArchiveSystemFilipiniana
 ```
 
 ### 2. Create the Database
@@ -24,22 +24,24 @@ C:\xampp\htdocs\qcpl\ArchiveSystemFilipiniana
 ### 3. Configure `config.php`
 ```bash
 # Navigate to the config folder
-cd backend/core
+on root folder named 
+backend
+ -core
+ -config.php
 
 # Copy the example config
 copy config.example.php config.php
 ```
 Then edit `config.php` and update:
 - **`APP_URL`** — Must match your local path, e.g.:
-  - `http://localhost/qcpl/ArchiveSystemFilipiniana`
   - `http://localhost/ArchiveSystemFilipiniana`
-- **`CALIBRE_CONVERT_PATH`** — Path to Calibre's `ebook-convert.exe` (optional, see below)
-- **`SMTP_USERNAME`** / **`SMTP_PASSWORD`** — Gmail credentials for password reset emails (optional)
+  - `http://localhost/ArchiveSystemFilipiniana`
+- **`SMTP_USERNAME`** / **`SMTP_PASSWORD`** — Gmail credentials for password reset emails (if the provided email isn't working maybe the it expires)
+to use the forgot password reset link maybe because of the internet firewall blocking the port (This is Normal on QCPL Wifi for security policy)
 
-> **⚠️ IMPORTANT:** `config.php` is in `.gitignore` — it will NOT be pushed to GitHub.
-> Each user must create their own copy from `config.example.php`.
 
-### 4. Calibre Setup (Optional — for MOBI file reading)
+
+### 4. Calibre Setup (Required to read .mobi file on this project  — for MOBI file reading)
 1. Download **Calibre Portable** from: https://calibre-ebook.com/download_portable
 2. Extract it to your `htdocs` folder, e.g.: `C:\xampp\htdocs\CalibrePortable`
 3. Set the path in `config.php`:
@@ -49,8 +51,8 @@ define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebo
 > If Calibre is not installed, MOBI files will offer a download button instead of in-browser reading.
 
 ### 5. Access the System
-- **Public page:** `http://localhost/qcpl/ArchiveSystemFilipiniana/`
-- **Admin login:** `http://localhost/qcpl/ArchiveSystemFilipiniana/auth/login.php`
+- **Public page:** `http://localhost/ArchiveSystemFilipiniana/`
+- **Admin login:** `http://localhost/ArchiveSystemFilipiniana/auth/login.php`
 
 ---
 
