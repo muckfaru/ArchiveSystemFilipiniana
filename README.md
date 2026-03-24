@@ -70,6 +70,7 @@ If you already have the system running and pull new changes:
 1. Your `config.php` won't be affected (it's gitignored)
 2. If `database.sql` has changed, check the `backend/migrations/` folder for new migration scripts
 3. Run any new migrations in order: `php backend/migrations/XXX_migration_name.php`
+4. For the current upload metadata format, run `C:\xampp\php\php.exe backend/migrations/009_sync_default_upload_form.php`
 
 ---
 

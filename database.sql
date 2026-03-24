@@ -271,30 +271,26 @@ VALUES (
 INSERT INTO form_templates (id, name, description, status, is_active)
 VALUES (1, 'Default Archive Form', 'Default metadata form for archive documents', 'active', 1);
 
--- Default Form Fields (required by the system)
--- These field_label values are referenced in queries across the codebase
+-- Default Form Fields
+-- This matches the current active upload form configuration used by the team.
 INSERT INTO form_fields (id, form_id, field_label, field_type, field_options, is_required, display_order, help_text)
 VALUES 
-    (1, 1, 'Title', 'text', NULL, 1, 1, 'Document title'),
-    (2, 1, 'Publisher', 'text', NULL, 0, 2, 'Publisher name'),
-    (3, 1, 'Publication Date', 'date', NULL, 0, 3, 'Date of publication (YYYY-MM-DD)'),
-    (4, 1, 'Page Count', 'number', NULL, 0, 4, 'Number of pages'),
-    (5, 1, 'Category', 'select', '["Politics","Sports","Business","Culture","Entertainment","Technology","Health","Education","Science","Local News"]', 0, 5, 'Document category'),
-    (6, 1, 'Language', 'select', '["English","Filipino","Tagalog","Cebuano","Ilocano"]', 0, 6, 'Document language'),
-    (7, 1, 'Edition', 'text', NULL, 0, 7, 'Edition information'),
-    (8, 1, 'Description', 'textarea', NULL, 0, 8, 'Brief description of the document'),
-    (9, 1, 'Keywords', 'tags', NULL, 0, 9, 'Searchable keywords or tags');
+    (1, 1, 'Title', 'text', NULL, 1, 0, 'Document title'),
+    (2, 1, 'Publication Type', 'select', '["Newspaper","Magazine"]', 0, 1, NULL),
+    (3, 1, 'Publication Date', 'date', NULL, 0, 2, 'Date of publication (YYYY-MM-DD)'),
+    (4, 1, 'Category', 'select', '["Politics","Sports","Business","Culture","Entertainment","Technology","Health","Education","Science","Local News"]', 0, 3, 'Document category'),
+    (5, 1, 'Language', 'select', '["English","Filipino","Tagalog","Cebuano","Ilocano"]', 0, 4, 'Document language'),
+    (6, 1, 'Keywords', 'tags', NULL, 0, 5, 'Searchable keywords or tags'),
+    (7, 1, 'Description', 'textarea', NULL, 0, 6, 'Brief description of the document');
 
 -- Default Metadata Display Configuration
 -- Controls which fields show on cards vs modals
 INSERT INTO metadata_display_config (form_field_id, show_on_card, show_in_modal)
 VALUES 
-    (1, 1, 1),  -- Title: show everywhere
-    (2, 1, 1),  -- Publisher: show everywhere
-    (3, 1, 1),  -- Publication Date: show everywhere
-    (4, 0, 1),  -- Page Count: modal only
-    (5, 1, 1),  -- Category: show everywhere
-    (6, 0, 1),  -- Language: modal only
-    (7, 0, 1),  -- Edition: modal only
-    (8, 0, 1),  -- Description: modal only
-    (9, 0, 1);  -- Keywords: modal only
+    (1, 1, 1),
+    (2, 1, 1),
+    (3, 1, 1),
+    (4, 1, 1),
+    (5, 1, 1),
+    (6, 1, 1),
+    (7, 1, 1);
