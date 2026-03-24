@@ -29,14 +29,11 @@ backend
  -core
  -config.php
 
-# Copy the example config
-copy config.example.php config.php
-```
 Then edit `config.php` and update:
 - **`APP_URL`** — Must match your local path, e.g.:
   - `http://localhost/ArchiveSystemFilipiniana`
   - `http://localhost/ArchiveSystemFilipiniana`
-- **`SMTP_USERNAME`** / **`SMTP_PASSWORD`** — Gmail credentials for password reset emails (if the provided email isn't working maybe the it expires)
+- **`SMTP_USERNAME`** / **`SMTP_PASSWORD`** — Gmail credentials for password reset emails (if the provided email isn't working maybe it expires)
 to use the forgot password reset link maybe because of the internet firewall blocking the port (This is Normal on QCPL Wifi for security policy)
 
 
@@ -46,7 +43,7 @@ to use the forgot password reset link maybe because of the internet firewall blo
 2. Extract it to your `htdocs` folder, e.g.: `C:\xampp\htdocs\CalibrePortable`
 3. Set the path in `config.php`:
 ```php
-define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
+define('CALIBRE_CONVERT_PATH', 'define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe'); or config your own 
 ```
 > If Calibre is not installed, MOBI files will offer a download button instead of in-browser reading.
 
@@ -64,17 +61,6 @@ define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebo
 
 > Change the password after first login!
 
----
-
-## For Existing Developers (Pulling Updates)
-
-If you already have the system running and pull new changes:
-1. Your `config.php` won't be affected (it's gitignored)
-2. If `database.sql` has changed, check the `backend/migrations/` folder for new migration scripts
-3. Run any new migrations in order: `php backend/migrations/XXX_migration_name.php`
-4. For the current upload metadata format, run `C:\xampp\php\php.exe backend/migrations/009_sync_default_upload_form.php`
-
----
 
 ## Tech Stack
 - **Backend:** PHP 8.x on XAMPP
