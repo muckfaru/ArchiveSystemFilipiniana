@@ -214,3 +214,52 @@ body.dark-mode .btn-action-danger:hover {
     background: var(--danger-color);
     color: white;
 }
+
+/* Edit user modal header */
+.edit-user-modal-header {
+    position: relative;
+    display: block;
+    padding-right: 52px !important;
+}
+
+.edit-user-modal-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.edit-user-modal-title {
+    margin: 0;
+    line-height: 1.15;
+}
+
+.edit-user-modal-subtitle {
+    max-width: 420px;
+    line-height: 1.5;
+}
+
+.edit-user-modal-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+}
+
+@media (max-width: 575.98px) {
+    .edit-user-modal-header {
+        padding-right: 44px !important;
+    }
+
+    .edit-user-modal-title {
+        font-size: 22px !important;
+    }
+
+    .edit-user-modal-subtitle {
+        font-size: 13px !important;
+        max-width: none;
+    }
+
+    .edit-user-modal-close {
+        top: 20px;
+        right: 20px;
+    }
+}

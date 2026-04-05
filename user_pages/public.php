@@ -76,6 +76,7 @@ function attachMetadataToDocs(&$docs, $pdo, $cardFields, $modalFields) {
     unset($doc);
 }
 
+
 // --- Determine mode: search vs catalog ---
 $isSearchMode = (
     $searchQuery !== '' ||

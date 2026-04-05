@@ -29,6 +29,148 @@ body .nav-section-title {
 
 /* ==================== Trash Page Specifics ==================== */
 
+.trash-page .admin-toolbar-inline.admin-toolbar-split {
+    align-items: stretch;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+.trash-page .admin-toolbar-search {
+    flex: 1 1 auto;
+    max-width: none;
+    min-width: 280px;
+}
+
+.trash-page .admin-toolbar-filters {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+.trash-filter-group,
+.trash-action-group {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+.trash-filter-group {
+    justify-content: flex-end;
+}
+
+.trash-action-group {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.trash-page .search-bar-custom {
+    background: #fff;
+    border: 1px solid #d7dee8;
+    border-radius: 18px;
+    padding: 5px 5px 5px 16px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trash-page .search-bar-custom:focus-within {
+    border-color: rgba(58, 154, 255, 0.56);
+    box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
+}
+
+.trash-page .search-input-custom {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #374151;
+    width: 100%;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.trash-page .search-input-custom:focus {
+    outline: none;
+}
+
+.trash-page .search-btn-custom {
+    background: #3A9AFF;
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.trash-page .search-btn-custom:hover {
+    background: #2d87ef;
+}
+
+.trash-page .filter-pill {
+    background: #fff;
+    border: 1px solid #d7dee8;
+    border-radius: 16px;
+    padding: 0 14px;
+    min-height: 56px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4B5563;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+.trash-page .filter-pill:hover {
+    background: #F9FAFB;
+    transform: translateY(-1px);
+    color: #4B5563;
+    border-color: #bfd4ea;
+}
+
+.trash-page .filter-pill:focus,
+.trash-page .filter-pill:focus-visible {
+    outline: none;
+    border-color: rgba(58, 154, 255, 0.56);
+    box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
+}
+
+.trash-page .filter-pill.dropdown-toggle::after {
+    margin-left: 6px;
+}
+
+.trash-page .toolbar-action-btn {
+    min-height: 56px;
+    border-radius: 16px;
+    padding: 0 16px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.trash-page .toolbar-action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none !important;
+}
+
 /* Table Layout Fix */
 .trash-table {
     table-layout: fixed;
@@ -151,6 +293,55 @@ body.dark-mode .btn-trash-action {
     height: 36px;
     object-fit: cover;
     border-radius: 6px;
+}
+
+@media (max-width: 1399.98px) {
+    .trash-page .admin-toolbar-filters {
+        gap: 8px;
+    }
+
+    .trash-filter-group,
+    .trash-action-group {
+        gap: 8px;
+    }
+
+    .trash-page .filter-pill,
+    .trash-page .toolbar-action-btn {
+        padding-left: 12px;
+        padding-right: 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .trash-page .admin-toolbar-inline.admin-toolbar-split {
+        flex-wrap: wrap;
+    }
+
+    .trash-page .admin-toolbar-search {
+        min-width: 0;
+    }
+
+    .trash-page .admin-toolbar-filters,
+    .trash-filter-group,
+    .trash-action-group {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .trash-filter-group,
+    .trash-action-group {
+        gap: 10px;
+    }
+
+    .trash-page .filter-pill,
+    .trash-page .toolbar-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* Minimalist Modals (Mockup-Based) */

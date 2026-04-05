@@ -80,7 +80,7 @@
                     <a href="<?= route_url('report') ?>"
                         class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'report.php' ? 'active' : '' ?>">
                         <i class="bi bi-file-earmark-bar-graph"></i>
-                        <span>Report</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li class="nav-item">

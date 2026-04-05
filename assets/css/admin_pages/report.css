@@ -12,6 +12,32 @@
     margin-bottom: 24px;
 }
 
+.report-date-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+}
+
+.report-clear-dates-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    color: #3B82F6;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.report-clear-dates-btn:hover {
+    color: #2563EB;
+}
+
+.report-clear-dates-btn:focus {
+    box-shadow: none;
+}
+
 .report-header-actions {
     display: flex;
     align-items: center;
@@ -493,6 +519,10 @@
 }
 
 @media (max-width: 768px) {
+    .report-date-actions {
+        justify-content: flex-start;
+    }
+
     .report-header-actions {
         width: 100%;
         justify-content: space-between;

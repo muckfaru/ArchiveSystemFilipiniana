@@ -332,131 +332,6 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <link href="<?= APP_URL ?>/assets/css/dark-mode.css" rel="stylesheet">
     <link href="<?= APP_URL ?>/assets/css/admin_pages/trash.css" rel="stylesheet">
     <style>
-        .trash-page .admin-toolbar-inline.admin-toolbar-split {
-            align-items: stretch;
-            gap: 14px;
-        }
-
-        .trash-page .admin-toolbar-search {
-            flex: 1 1 62%;
-            max-width: none;
-            min-width: 360px;
-        }
-
-        .trash-page .admin-toolbar-filters {
-            flex: 0 1 auto;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .search-bar-custom {
-            background: #fff;
-            border: 1px solid #d7dee8;
-            border-radius: 18px;
-            padding: 5px 5px 5px 16px;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            min-height: 56px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .search-bar-custom:focus-within {
-            border-color: rgba(58, 154, 255, 0.56);
-            box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
-        }
-
-        .search-input-custom {
-            border: none;
-            background: transparent;
-            font-size: 14px;
-            color: #374151;
-            width: 100%;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .search-input-custom:focus {
-            outline: none;
-        }
-
-        .search-btn-custom {
-            background: #3A9AFF;
-            color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-
-        .search-btn-custom:hover {
-            background: #2d87ef;
-        }
-
-        .filter-pill {
-            background: #fff;
-            border: 1px solid #d7dee8;
-            border-radius: 16px;
-            padding: 0 16px;
-            min-height: 56px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #4B5563;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-            transition: all 0.2s;
-            white-space: nowrap;
-            text-decoration: none;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .filter-pill:hover {
-            background: #F9FAFB;
-            transform: translateY(-1px);
-            color: #4B5563;
-            border-color: #bfd4ea;
-        }
-
-        .filter-pill:focus,
-        .filter-pill:focus-visible {
-            outline: none;
-            border-color: rgba(58, 154, 255, 0.56);
-            box-shadow: 0 0 0 4px rgba(58, 154, 255, 0.12);
-        }
-
-        .filter-pill.dropdown-toggle::after {
-            margin-left: 6px;
-        }
-
-        .toolbar-action-btn {
-            min-height: 56px;
-            border-radius: 16px;
-            padding: 0 18px;
-            font-size: 13px;
-        }
-
-        .toolbar-action-btn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            box-shadow: none !important;
-        }
-
-        @media (max-width: 991.98px) {
-            .trash-page .admin-toolbar-search {
-                min-width: 0;
-            }
-        }
-
         .trash-table th {
             font-size: 11px;
             font-weight: 700;
@@ -604,6 +479,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
 
             <!-- Filters -->
             <div class="admin-toolbar-filters">
+                <div class="trash-filter-group">
                 <!-- Type Filter Dropdown -->
                 <div class="dropdown">
                     <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -636,14 +512,17 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <li><a class="dropdown-item <?= $sortBy === 'oldest' ? 'active' : '' ?>" href="?sort=oldest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Oldest First</a></li>
                     </ul>
                 </div>
-                
-                <!-- Action Buttons: Restore All & Empty -->
-                <button type="button" class="btn btn-outline-primary fw-medium shadow-sm d-flex align-items-center gap-2 toolbar-action-btn" onclick="showRestoreAllModal()" <?= $hasTrashedItems ? '' : 'disabled' ?>>
-                    <i class="bi bi-arrow-counterclockwise"></i> Restore All
-                </button>
-                <button type="button" class="btn btn-outline-danger fw-medium shadow-sm d-flex align-items-center gap-2 toolbar-action-btn" onclick="showEmptyTrashModal()" <?= $hasTrashedItems ? '' : 'disabled' ?>>
-                    <i class="bi bi-trash-fill"></i> Empty
-                </button>
+                </div>
+
+                <div class="trash-action-group">
+                    <!-- Action Buttons: Restore All & Empty -->
+                    <button type="button" class="btn btn-outline-primary fw-medium shadow-sm d-flex align-items-center gap-2 toolbar-action-btn" onclick="showRestoreAllModal()" <?= $hasTrashedItems ? '' : 'disabled' ?>>
+                        <i class="bi bi-arrow-counterclockwise"></i> Restore All
+                    </button>
+                    <button type="button" class="btn btn-outline-danger fw-medium shadow-sm d-flex align-items-center gap-2 toolbar-action-btn" onclick="showEmptyTrashModal()" <?= $hasTrashedItems ? '' : 'disabled' ?>>
+                        <i class="bi bi-trash-fill"></i> Empty
+                    </button>
+                </div>
             </div>
         </div>
 

@@ -56,101 +56,41 @@
 
     <!-- ==================== HERO ==================== -->
     <section class="public-hero">
-        <div class="public-hero-shell">
-            <div class="public-hero-copy">
-                <span class="public-hero-kicker">Quezon City Public Library Digital Collection</span>
-                <h1 class="public-hero-title">Read the archive like a living newsroom.</h1>
-                <p class="public-hero-subtitle">
-                    Discover newspapers and magazines through a faster, more curated public reading experience.
-                </p>
-
-                <div class="public-search-wrapper">
-                    <form method="GET" action="" id="publicSearchForm">
-                        <?php if ($categoryFilter): ?>
-                            <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
-                        <?php endif; ?>
-                        <div class="public-search-bar">
-                            <i class="bi bi-search"></i>
-                            <input type="text" class="public-search-input" id="publicSearchInput" name="q"
-                                placeholder="Search titles, publishers, categories, or dates"
-                                value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
-                            <?php if ($searchQuery): ?>
-                                <button type="button" class="public-search-clear" id="publicSearchClear" title="Clear search">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            <?php endif; ?>
-                            <button type="submit" class="public-search-btn">Explore</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="public-hero-chips">
-                    <span class="public-hero-chip public-hero-chip-dynamic" data-chip-index="0">
-                        <i class="bi bi-lightning-charge"></i>
-                        <span class="public-hero-chip-text">Fast public reading</span>
-                    </span>
-                    <span class="public-hero-chip public-hero-chip-dynamic" data-chip-index="1">
-                        <i class="bi bi-journal-richtext"></i>
-                        <span class="public-hero-chip-text">Curated publication shelves</span>
-                    </span>
-                    <span class="public-hero-chip public-hero-chip-dynamic" data-chip-index="2">
-                        <i class="bi bi-search-heart"></i>
-                        <span class="public-hero-chip-text">Search-first discovery</span>
-                    </span>
-                </div>
+        <div class="public-hero-bg" aria-hidden="true"></div>
+        <div class="public-hero-inner">
+            <p class="public-hero-kicker">QCPL PERIODICAL ARCHIVE</p>
+            <h1 class="public-hero-title">
+                Read and Browse <span class="public-hero-title-accent">Newspapers and Magazines</span>
+            </h1>
+            <div class="public-search-wrapper">
+                <form method="GET" action="" id="publicSearchForm">
+                    <?php if ($categoryFilter): ?>
+                        <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
+                    <?php endif; ?>
+                    <div class="public-search-bar">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="public-search-input" id="publicSearchInput" name="q"
+                            placeholder="Search over 100 years of history..."
+                            value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
+                        <button type="button"
+                            class="public-search-clear <?= empty($searchQuery) ? 'd-none' : '' ?>"
+                            id="publicSearchClear" title="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <button type="submit" class="public-search-btn">Search</button>
+                    </div>
+                    <div class="public-adv-search-panel" id="publicAdvSearchPanel">
+                        <a href="<?= route_url('browse') ?>" class="public-adv-inline-link" id="publicAdvSearchLink">
+                            <i class="bi bi-sliders2"></i>
+                            Advanced Search
+                        </a>
+                    </div>
+                </form>
             </div>
-
-            <aside class="public-hero-aside">
-                <div class="public-hero-panel">
-                    <p class="public-hero-panel-label">Archive Snapshot</p>
-                    <div class="public-hero-stats">
-                        <div class="public-hero-stat">
-                            <span class="public-hero-stat-value"><?= number_format(countArchives()) ?></span>
-                            <span class="public-hero-stat-label">Published items</span>
-                        </div>
-                        <div class="public-hero-stat">
-                            <span class="public-hero-stat-value"><?= number_format(countCategories()) ?></span>
-                            <span class="public-hero-stat-label">Active categories</span>
-                        </div>
-                        <div class="public-hero-stat">
-                            <span class="public-hero-stat-value"><?= htmlspecialchars((string) getYearsCovered()) ?></span>
-                            <span class="public-hero-stat-label">Years covered</span>
-                        </div>
-                    </div>
-                    <div class="public-hero-note">
-                        <i class="bi bi-stars"></i>
-                        <span><?= $isSearchMode ? 'Search mode is active. Refine your query or browse shelves below.' : 'Start with a shelf below or jump into Browse for deeper filtering.' ?></span>
-                    </div>
-                </div>
-            </aside>
         </div>
     </section>
 
-    <!-- ==================== SEARCH ACTIVE FILTER BAR ==================== -->
     <div id="publicContentArea">
-    <?php if ($isSearchMode && ($searchQuery || $categoryFilter)): ?>
-        <div class="public-grid-container public-results-shell" style="padding-bottom: 0;">
-            <div class="public-results-banner">
-                <span class="public-results-banner-text">
-                    <?php if ($searchQuery): ?>
-                        Showing <strong>
-                            <?= number_format($totalResults) ?>
-                        </strong> results for <strong>"
-                            <?= htmlspecialchars($searchQuery) ?>"
-                        </strong>
-                    <?php else: ?>
-                        Showing <strong>
-                            <?= number_format($totalResults) ?>
-                        </strong> results
-                    <?php endif; ?>
-                </span>
-                <a href="<?= route_url('home') ?>" class="public-results-banner-clear">
-                    <i class="bi bi-x-circle me-1"></i>Clear filters
-                </a>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <!-- ==================== FILE GRID / CATALOG ==================== -->
     <?php
     // Helper: highlight search term in a string safely
@@ -162,6 +102,48 @@
         $safeQ = preg_quote(htmlspecialchars($q), '/');
         return preg_replace('/(' . $safeQ . ')/iu', '<mark class="pub-hl">$1</mark>', $safe);
     }
+
+    function renderPublicDiscoveryCard(array $paper, string $extraClass = ''): void
+    {
+        $catName = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+        $catClass = 'public-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $catName));
+        $modalMetaJson = htmlspecialchars(json_encode($paper['modal_metadata']), ENT_QUOTES, 'UTF-8');
+        $pubDate = getMetadataValueByLabel(
+            $paper['custom_metadata'] ?? [],
+            ['publication date', 'date published', 'date issued', 'date'],
+            ''
+        );
+        ?>
+        <div class="public-file-card <?= htmlspecialchars($extraClass) ?>"
+            data-id="<?= url_encrypt($paper['id']) ?>"
+            data-title="<?= htmlspecialchars($paper['title']) ?>"
+            data-thumbnail="<?= $paper['thumbnail_path'] ? APP_URL . '/' . $paper['thumbnail_path'] : '' ?>"
+            data-is-bulk="<?= $paper['is_bulk_image'] ?? 0 ?>"
+            data-category="<?= htmlspecialchars($catName) ?>"
+            data-modal-metadata="<?= $modalMetaJson ?>">
+            <div class="public-thumb-wrap">
+                <?php if ($paper['thumbnail_path']): ?>
+                    <img src="<?= APP_URL ?>/<?= htmlspecialchars($paper['thumbnail_path']) ?>"
+                        class="public-file-thumbnail" alt="<?= htmlspecialchars($paper['title']) ?>" loading="lazy">
+                <?php else: ?>
+                    <div class="public-file-thumbnail-placeholder">
+                        <i class="bi bi-newspaper"></i>
+                    </div>
+                <?php endif; ?>
+                <?php if ($catName !== 'Uncategorized'): ?>
+                    <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
+                <?php endif; ?>
+            </div>
+
+            <div class="public-file-info">
+                <div class="public-file-title"><?= htmlspecialchars($paper['title']) ?></div>
+                <?php if ($pubDate): ?>
+                    <div class="public-file-date"><?= htmlspecialchars(formatPublicationDate($pubDate)) ?></div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
     ?>
 
     <?php if ($isSearchMode): ?>
@@ -170,11 +152,16 @@
             <div class="public-section-heading">
                 <div>
                     <span class="public-section-kicker">Search Results</span>
-                    <h2 class="public-section-title"><?= empty($documents) ? 'No matches yet' : 'Matches across the archive' ?></h2>
+                    <h2 class="public-section-title">
+                        <?php if (empty($documents)): ?>
+                            No matches for &ldquo;<?= htmlspecialchars($searchQuery ?: 'your search') ?>&rdquo;
+                        <?php elseif ($searchQuery): ?>
+                            <?= number_format($totalResults) ?> <?= $totalResults === 1 ? 'result' : 'results' ?> for &ldquo;<?= htmlspecialchars($searchQuery) ?>&rdquo;
+                        <?php else: ?>
+                            <?= number_format($totalResults) ?> filtered <?= $totalResults === 1 ? 'result' : 'results' ?>
+                        <?php endif; ?>
+                    </h2>
                 </div>
-                <a href="<?= route_url('browse') ?>" class="public-section-link">
-                    Open advanced browse <i class="bi bi-arrow-up-right"></i>
-                </a>
             </div>
             <?php if (empty($documents)): ?>
                 <div class="public-empty-state">
@@ -294,6 +281,8 @@
 
     <?php else: ?>
         <!-- ══════════════ CATALOG SHELVES (PressReader-style) ══════════════ -->
+
+
         <div class="catalog-container" data-total="<?= array_sum(array_column($catalogShelves, 'total')) ?>">
             <?php if (empty($catalogShelves)): ?>
                 <div class="public-grid-container">

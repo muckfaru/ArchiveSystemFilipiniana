@@ -6,6 +6,8 @@
 (function () {
     'use strict';
 
+    function initPublicPage() {
+
     // ── DOM refs ──────────────────────────────────────────────────────────────
     const backdrop = document.getElementById('publicModalBackdrop');
     const modalClose = document.getElementById('publicModalClose');
@@ -39,6 +41,12 @@
     // ── Open modal ────────────────────────────────────────────────────────────
     function openModal(card) {
         const d = card.dataset;
+        const readUrl = APP_URL + '/read?id=' + encodeURIComponent(d.id);
+
+        if (!backdrop || !readBtn) {
+            window.location.href = readUrl;
+            return;
+        }
 
         // Title
         if (elTitle) elTitle.textContent = d.title || '—';
@@ -109,18 +117,20 @@
         }
 
         // Thumbnail
-        if (d.thumbnail) {
-            modalImg.src = d.thumbnail;
-            modalImg.style.display = '';
-            modalNoImg.style.display = 'none';
-        } else {
-            modalImg.style.display = 'none';
-            modalNoImg.style.display = '';
+        if (modalImg && modalNoImg) {
+            if (d.thumbnail) {
+                modalImg.src = d.thumbnail;
+                modalImg.style.display = '';
+                modalNoImg.style.display = 'none';
+            } else {
+                modalImg.style.display = 'none';
+                modalNoImg.style.display = '';
+            }
         }
 
         // Open the public reader directly to avoid the extra redirect/database
         // hop that was making public reads noticeably slower than admin.
-        readBtn.href = APP_URL + '/read?id=' + encodeURIComponent(d.id);
+        readBtn.href = readUrl;
 
         // Show backdrop
         backdrop.classList.add('active');
@@ -145,15 +155,22 @@
 
     // ── Close modal ───────────────────────────────────────────────────────────
     function closeModal() {
+        if (!backdrop) {
+            return;
+        }
         backdrop.classList.remove('active');
         document.body.style.overflow = '';
     }
 
-    modalClose.addEventListener('click', closeModal);
+    if (modalClose) {
+        modalClose.addEventListener('click', closeModal);
+    }
 
-    backdrop.addEventListener('click', function (e) {
-        if (e.target === backdrop) closeModal();
-    });
+    if (backdrop) {
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop) closeModal();
+        });
+    }
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeModal();
@@ -209,6 +226,9 @@
     const searchInput = document.getElementById('publicSearchInput');
     const searchForm = document.getElementById('publicSearchForm');
     const clearBtn = document.getElementById('publicSearchClear');
+    const searchBar = document.querySelector('.public-search-bar');
+    const advSearchPanel = document.getElementById('publicAdvSearchPanel');
+    let activeSearchRequest = null;
 
     // ── Rotating hero chips ───────────────────────────────────────────────────
     const heroChipTracks = [
@@ -277,7 +297,13 @@
         const contentArea = document.getElementById('publicContentArea');
         if (contentArea) contentArea.style.opacity = '0.5';
 
-        fetch(url)
+        if (activeSearchRequest) {
+            activeSearchRequest.abort();
+        }
+
+        activeSearchRequest = new AbortController();
+
+        fetch(url, { signal: activeSearchRequest.signal })
             .then(res => res.text())
             .then(html => {
                 const parser = new DOMParser();
@@ -297,16 +323,51 @@
                 window.history.replaceState({}, '', url);
             })
             .catch(err => {
+                if (err.name === 'AbortError') {
+                    return;
+                }
                 console.error('Search failed', err);
                 if (contentArea) contentArea.style.opacity = '1';
+            })
+            .finally(() => {
+                activeSearchRequest = null;
             });
+    }
+
+    function showAdvancedSearchPanel() {
+        if (advSearchPanel) {
+            advSearchPanel.classList.add('active');
+        }
+    }
+
+    function hideAdvancedSearchPanel() {
+        if (advSearchPanel) {
+            advSearchPanel.classList.remove('active');
+        }
+    }
+
+    function updateSearchClearButton() {
+        if (!clearBtn || !searchInput) {
+            return;
+        }
+
+        clearBtn.classList.toggle('d-none', searchInput.value.trim() === '');
     }
 
     // ── Clear (X) button ──────────────────────────────────────────────────────
     if (clearBtn) {
+        clearBtn.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+        });
+
         clearBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            if (searchInput) searchInput.value = '';
+            e.stopPropagation();
+            if (searchInput) {
+                searchInput.value = '';
+                updateSearchClearButton();
+                searchInput.focus();
+            }
             performLiveSearch();
         });
     }
@@ -330,6 +391,8 @@
         });
 
         searchInput.addEventListener('input', function () {
+            updateSearchClearButton();
+
             // Auto-reset when user clears the searchbox manually
             if (this.value.trim() === '') {
                 clearTimeout(debounceTimer);
@@ -340,9 +403,41 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function () {
                 performLiveSearch();
-            }, 600); // 600ms debounce
+            }, 300);
+        });
+
+        searchInput.addEventListener('search', function () {
+            updateSearchClearButton();
+            clearTimeout(debounceTimer);
+            performLiveSearch();
+        });
+
+        searchInput.addEventListener('focus', showAdvancedSearchPanel);
+        updateSearchClearButton();
+    }
+
+    if (searchBar && searchInput) {
+        searchBar.addEventListener('click', function (e) {
+            if (e.target.closest('.public-search-btn, .public-search-clear')) {
+                return;
+            }
+
+            searchInput.focus();
+            showAdvancedSearchPanel();
         });
     }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.public-search-wrapper')) {
+            hideAdvancedSearchPanel();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            hideAdvancedSearchPanel();
+        }
+    });
 
     // ── Live update polling (reflects admin upload/delete) ────────────────────
     // Read the initial archive count embedded by PHP in the grid/catalog container.
@@ -362,6 +457,14 @@
                     .catch(() => { }); // silently ignore network errors
             }, 30000); // poll every 30 seconds
         }
+    }
+
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPublicPage, { once: true });
+    } else {
+        initPublicPage();
     }
 
 })();

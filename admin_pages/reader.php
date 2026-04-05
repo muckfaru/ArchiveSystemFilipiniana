@@ -365,6 +365,75 @@ $formatLabel = match (true) {
             width: 20%;
         }
 
+        .epub-page-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 190px;
+        }
+
+        .epub-nav-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(10, 14, 20, 0.72);
+            color: #fff;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .epub-nav-btn:hover {
+            background: rgba(58, 154, 255, 0.92);
+            border-color: rgba(58, 154, 255, 0.92);
+        }
+
+        .epub-nav-btn i {
+            font-size: 18px;
+        }
+
+        .epub-page-count {
+            font-size: 13px;
+            color: var(--text);
+            min-width: 104px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .epub-reader-tip {
+            position: absolute;
+            left: 50%;
+            bottom: 78px;
+            transform: translateX(-50%);
+            z-index: 11;
+            background: rgba(11, 16, 22, 0.82);
+            color: #e5edf7;
+            padding: 12px 16px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .epub-reader-tip.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(8px);
+            pointer-events: none;
+        }
+
+        .epub-reader-tip i {
+            color: var(--accent);
+            font-size: 14px;
+        }
+
         /* Loading */
         .epub-loading {
             position: absolute;
@@ -441,6 +510,10 @@ $formatLabel = match (true) {
             white-space: nowrap;
             min-width: 80px;
             text-align: right;
+        }
+
+        .progress-label.epub-pages {
+            display: none;
         }
 
         /* ── Panels (Settings / Info) ── */
@@ -813,6 +886,30 @@ $formatLabel = match (true) {
             .chrome-center {
                 font-size: 12px;
             }
+
+            .epub-nav-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+            }
+
+            .epub-reader-tip {
+                max-width: calc(100vw - 28px);
+                text-align: center;
+                border-radius: 16px;
+                padding: 10px 14px;
+                bottom: 70px;
+            }
+
+            .epub-page-nav {
+                min-width: 150px;
+                gap: 8px;
+            }
+
+            .epub-page-count {
+                min-width: 86px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -866,6 +963,10 @@ $formatLabel = match (true) {
             <div id="epub-viewer"></div>
             <div class="zone zone-prev" id="zonePrev"></div>
             <div class="zone zone-next" id="zoneNext"></div>
+            <div class="epub-reader-tip" id="epubReaderTip">
+                <i class="bi bi-hand-index-thumb"></i>
+                <span>Tap the left or right side of the screen to turn pages.</span>
+            </div>
             <div class="epub-loading" id="epubLoading">
                 <div class="spinner"></div>
                 <span style="font-size:13px;color:var(--muted);">Opening book…</span>
@@ -890,18 +991,22 @@ $formatLabel = match (true) {
                     <h3>MOBI Web Preview Unavailable</h3>
                     <p style="font-size:14px;color:#94a3b8;margin:12px 0;max-width:420px;line-height:1.6;">
                         This MOBI file needs Calibre to convert it to EPUB for web reading. 
-                        Calibre is not currently installed on the server. You can download the file and read it with a local e-book reader instead.
+                        Calibre is not currently installed on the server.
                     </p>
                 <?php else: ?>
                     <i class="bi bi-file-earmark-break"></i>
                     <h3>Cannot Preview This File</h3>
                 <?php endif; ?>
-                <p style="font-size:14px;">Format:
-                    <?= strtoupper(htmlspecialchars($fileType)) ?>
-                </p>
-                <a href="<?= $fileUrl ?>" download class="btn-dl">
-                    <i class="bi bi-download me-2"></i>Download File
-                </a>
+                <?php if (!($fileType === 'mobi' && $conversionError)): ?>
+                    <p style="font-size:14px;">Format:
+                        <?= strtoupper(htmlspecialchars($fileType)) ?>
+                    </p>
+                <?php endif; ?>
+                <?php if (!($fileType === 'mobi' && $conversionError)): ?>
+                    <a href="<?= $fileUrl ?>" download class="btn-dl">
+                        <i class="bi bi-download me-2"></i>Download File
+                    </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -916,6 +1021,16 @@ $formatLabel = match (true) {
                 <input type="number" id="pdfPageInput" value="1" min="1">
                 <span id="pdfPageTotal">/ —</span>
                 <button onclick="pdfPage(1)"><i class="bi bi-chevron-right"></i></button>
+            </div>
+        <?php elseif ($readerType === 'epub'): ?>
+            <div class="epub-page-nav">
+                <button class="epub-nav-btn" id="epubPrevBtn" type="button" aria-label="Previous page">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <div class="epub-page-count" id="epubPageCount">Page 1 / -</div>
+                <button class="epub-nav-btn" id="epubNextBtn" type="button" aria-label="Next page">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
         <?php endif; ?>
         <div class="progress-bar-outer" id="progressOuter">
@@ -1136,8 +1251,18 @@ $formatLabel = match (true) {
         const readerTop = $('readerTop');
         const readerArea = $('readerArea');
         const readerBottom = $('readerBottom');
+        const progressOuter = $('progressOuter');
         const progressBar = $('progressBar');
         const progressLabel = $('progressLabel');
+        const epubPrevBtn = $('epubPrevBtn');
+        const epubNextBtn = $('epubNextBtn');
+        const epubPageCount = $('epubPageCount');
+        const epubReaderTip = $('epubReaderTip');
+
+        if (READER_TYPE === 'epub' && progressLabel) {
+            progressLabel.classList.add('epub-pages');
+            progressLabel.textContent = 'Page 1 / -';
+        }
 
         // ── Panels ───────────────────────────────────────────────────────────────────
         const panels = { theme: $('panelTheme'), text: $('panelText'), info: $('panelInfo') };
@@ -1433,6 +1558,41 @@ $formatLabel = match (true) {
             });
 
             const LOC_KEY = 'pub_epub_loc_' + encodeURIComponent(EPUB_URL);
+            let epubPageTotal = 0;
+
+            function hideEpubTip() {
+                if (epubReaderTip) {
+                    epubReaderTip.classList.add('hidden');
+                }
+            }
+
+            function updateEpubProgress(cfi) {
+                if (!cfi || !book.locations || book.locations.length() <= 0) {
+                    progressBar.style.width = '0%';
+                    progressLabel.textContent = 'Page 1 / -';
+                    if (epubPageCount) epubPageCount.textContent = 'Page 1 / -';
+                    return;
+                }
+
+                epubPageTotal = book.locations.length();
+                const rawLocation = book.locations.locationFromCfi(cfi);
+                const currentPage = Math.max(1, Math.min(epubPageTotal, (parseInt(rawLocation, 10) || 0) + 1));
+                const pct = epubPageTotal > 0 ? Math.round((currentPage / epubPageTotal) * 100) : 0;
+
+                progressBar.style.width = pct + '%';
+                progressLabel.textContent = `Page ${currentPage} / ${epubPageTotal}`;
+                if (epubPageCount) epubPageCount.textContent = `Page ${currentPage} / ${epubPageTotal}`;
+            }
+
+            function goPrevEpub() {
+                hideEpubTip();
+                rendition.prev();
+            }
+
+            function goNextEpub() {
+                hideEpubTip();
+                rendition.next();
+            }
 
             function updateEpubLayout() {
                 const themeColors = {
@@ -1488,9 +1648,11 @@ $formatLabel = match (true) {
                 const cached = localStorage.getItem(cacheKey);
                 if (cached) {
                     book.locations.load(cached);
+                    updateEpubProgress(rendition.location?.start?.cfi);
                 } else {
                     book.locations.generate(1000).then(() => {
                         localStorage.setItem(cacheKey, book.locations.save());
+                        updateEpubProgress(rendition.location?.start?.cfi);
                     });
                 }
             }).catch(err => {
@@ -1500,19 +1662,39 @@ $formatLabel = match (true) {
 
             rendition.on('relocated', loc => {
                 localStorage.setItem(LOC_KEY, loc.start.cfi);
-                if (book.locations.length() > 0) {
-                    const pct = Math.round(book.locations.percentageFromCfi(loc.start.cfi) * 100);
-                    progressBar.style.width = pct + '%';
-                    progressLabel.textContent = pct + '% read';
-                }
+                updateEpubProgress(loc.start.cfi);
             });
 
-            $('zonePrev').addEventListener('click', () => rendition.prev());
-            $('zoneNext').addEventListener('click', () => rendition.next());
+            if (progressOuter) {
+                progressOuter.addEventListener('click', e => {
+                    if (!book.locations || book.locations.length() <= 0) return;
+                    const rect = progressOuter.getBoundingClientRect();
+                    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                    const target = book.locations.cfiFromPercentage(ratio);
+                    if (target) {
+                        hideEpubTip();
+                        rendition.display(target);
+                    }
+                });
+            }
+
+            $('zonePrev').addEventListener('click', goPrevEpub);
+            $('zoneNext').addEventListener('click', goNextEpub);
+            if (epubPrevBtn) epubPrevBtn.addEventListener('click', goPrevEpub);
+            if (epubNextBtn) epubNextBtn.addEventListener('click', goNextEpub);
             document.addEventListener('keydown', e => {
-                if (e.key === 'ArrowLeft') rendition.prev();
-                if (e.key === 'ArrowRight') rendition.next();
-                if (e.key === ' ') rendition.next();
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    goPrevEpub();
+                }
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    goNextEpub();
+                }
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    goNextEpub();
+                }
             });
         <?php endif; ?>
 

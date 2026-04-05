@@ -507,12 +507,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content"
                 style="border-radius: 16px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.25); font-family: 'Manrope', sans-serif;">
-                <div class="modal-header border-0 pb-0 pt-4 px-4">
-                    <h4 class="modal-title"
-                        style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Fraunces', serif;">
-                        Edit User</h4>
-                    <p style="color: #888; font-size: 14px; margin: 0;">Update user account details and permissions</p>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+                <div class="modal-header border-0 pb-0 pt-4 px-4 edit-user-modal-header">
+                    <div class="edit-user-modal-heading">
+                        <h4 class="modal-title edit-user-modal-title"
+                            style="color: #2C1810; font-size: 24px; font-weight: 500; font-family: 'Fraunces', serif;">
+                            Edit User</h4>
+                        <p class="edit-user-modal-subtitle" style="color: #888; font-size: 14px; margin: 0;">
+                            Update user account details and permissions</p>
+                    </div>
+                    <button type="button" class="btn-close edit-user-modal-close" data-bs-dismiss="modal"
+                        style="opacity: 0.5;"></button>
                 </div>
                 <form method="POST" id="editUserForm">
                     <div class="modal-body px-4 py-3">
@@ -1046,9 +1050,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const emailErrorEl = document.getElementById('emailError');
         const submitBtn = createAccountForm ? createAccountForm.querySelector('button[type="submit"]') : null;
 
-        // Flags
-        let isUsernameValid = true; // Assume true until checked
-        let isEmailValid = true;
+        function setInlineMessage(inputEl, errorEl, message, type = 'error') {
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.classList.remove('d-none');
+                errorEl.classList.remove('text-danger', 'text-success');
+                errorEl.classList.add(type === 'success' ? 'text-success' : 'text-danger');
+            }
+
+            if (inputEl) {
+                inputEl.classList.toggle('is-invalid', type === 'error');
+                inputEl.classList.toggle('is-valid', type === 'success');
+            }
+        }
+
+        function clearInlineError(inputEl, errorEl) {
+            if (errorEl) {
+                errorEl.textContent = '';
+                errorEl.classList.add('d-none');
+                errorEl.classList.remove('text-danger', 'text-success');
+            }
+
+            if (inputEl) {
+                inputEl.classList.remove('is-invalid');
+                inputEl.classList.remove('is-valid');
+            }
+        }
+
+        function clearCreateAccountAlert() {
+            if (errorContainer) {
+                errorContainer.classList.add('d-none');
+                errorContainer.innerHTML = '';
+            }
+        }
+
+        if (errorParam === 'email_exists' && createEmailInput && emailErrorEl) {
+            setInlineMessage(createEmailInput, emailErrorEl, 'Email is already registered.');
+        }
+
+        if (errorParam === 'username_exists' && createUsernameInput && usernameErrorEl) {
+            setInlineMessage(createUsernameInput, usernameErrorEl, 'Username is already taken.');
+        }
 
         function checkFormValidity() {
             if (!submitBtn) return;
@@ -1056,12 +1098,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const password = createPassword.value;
             const confirm = confirmPassword.value;
             const isPasswordMatch = password !== '' && password === confirm;
+            const isEmailFormatValid = createEmailInput ? createEmailInput.value.trim() !== '' && createEmailInput.validity.valid : true;
 
             // Check if errors are displayed
             const hasUsernameError = !usernameErrorEl.classList.contains('d-none');
             const hasEmailError = !emailErrorEl.classList.contains('d-none');
 
-            if (hasUsernameError || hasEmailError || !isPasswordMatch) {
+            if (hasUsernameError || hasEmailError || !isPasswordMatch || !isEmailFormatValid) {
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.6';
                 submitBtn.style.cursor = 'not-allowed';
@@ -1074,8 +1117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Duplicate Check Function
         function checkDuplicate(type, value, errorEl) {
+            const inputEl = type === 'username' ? createUsernameInput : createEmailInput;
+
             if (!value) {
-                errorEl.classList.add('d-none');
+                clearInlineError(inputEl, errorEl);
+                clearCreateAccountAlert();
                 checkFormValidity();
                 return;
             }
@@ -1091,14 +1137,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 .then(response => response.json())
                 .then(data => {
                     if (data.exists) {
-                        errorEl.textContent = type === 'username' ? 'Username is already taken.' : 'Email is already registered.';
-                        errorEl.classList.remove('d-none');
+                        setInlineMessage(
+                            inputEl,
+                            errorEl,
+                            type === 'username' ? 'Username is already taken.' : 'Email is already registered.'
+                        );
+                    } else if (type === 'email') {
+                        setInlineMessage(inputEl, errorEl, 'Email is available.', 'success');
                     } else {
-                        errorEl.classList.add('d-none');
+                        clearInlineError(inputEl, errorEl);
+                        clearCreateAccountAlert();
                     }
                     checkFormValidity();
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Duplicate check error:', error);
+                    clearInlineError(inputEl, errorEl);
+                    checkFormValidity();
+                });
+        }
+
+        async function validateDuplicateOnSubmit(type, value, errorEl) {
+            const inputEl = type === 'username' ? createUsernameInput : createEmailInput;
+
+            if (!value) {
+                clearInlineError(inputEl, errorEl);
+                return true;
+            }
+
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('value', value);
+
+            try {
+                const response = await fetch('<?= APP_URL ?>/ajax/check_duplicate_user.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Duplicate check failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                const alreadyExists = Boolean(data.exists);
+
+                if (alreadyExists) {
+                    setInlineMessage(
+                        inputEl,
+                        errorEl,
+                        type === 'username' ? 'Username is already taken.' : 'Email is already registered.'
+                    );
+                    inputEl.focus();
+                } else if (type === 'email') {
+                    setInlineMessage(inputEl, errorEl, 'Email is available.', 'success');
+                } else {
+                    clearInlineError(inputEl, errorEl);
+                }
+
+                checkFormValidity();
+                return !alreadyExists;
+            } catch (error) {
+                console.error('Duplicate submit validation error:', error);
+                clearInlineError(inputEl, errorEl);
+                return true;
+            }
+        }
+
+        function validateEmailField(showAvailability = false) {
+            if (!createEmailInput || !emailErrorEl) {
+                return;
+            }
+
+            const emailValue = createEmailInput.value.trim();
+
+            if (!emailValue) {
+                clearInlineError(createEmailInput, emailErrorEl);
+                clearCreateAccountAlert();
+                checkFormValidity();
+                return;
+            }
+
+            if (!createEmailInput.validity.valid) {
+                setInlineMessage(createEmailInput, emailErrorEl, 'Please enter a valid email address.');
+                checkFormValidity();
+                return;
+            }
+
+            if (showAvailability) {
+                checkDuplicate('email', emailValue, emailErrorEl);
+            } else {
+                clearInlineError(createEmailInput, emailErrorEl);
+                checkFormValidity();
+            }
         }
 
         // Debounce Function
@@ -1114,13 +1245,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (createUsernameInput) {
             createUsernameInput.addEventListener('input', debounce(function () {
                 checkDuplicate('username', this.value.trim(), usernameErrorEl);
-            }, 500));
+            }, 300));
+
+            createUsernameInput.addEventListener('blur', function () {
+                checkDuplicate('username', this.value.trim(), usernameErrorEl);
+            });
         }
 
         if (createEmailInput) {
             createEmailInput.addEventListener('input', debounce(function () {
-                checkDuplicate('email', this.value.trim(), emailErrorEl);
-            }, 500));
+                validateEmailField(true);
+            }, 250));
+
+            createEmailInput.addEventListener('blur', function () {
+                validateEmailField(true);
+            });
         }
 
         function checkPasswordMatchLegacy() {
@@ -1194,16 +1333,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Prevent submission if passwords do not match
         if (createAccountForm) {
-            createAccountForm.addEventListener('submit', function (e) {
+            createAccountForm.addEventListener('submit', async function (e) {
                 const password = createPassword.value;
                 const confirm = confirmPassword.value;
 
+                e.preventDefault();
+
                 if (password !== confirm) {
-                    e.preventDefault();
                     matchMessage.textContent = 'Passwords do not match';
                     matchMessage.className = 'small mt-1 text-danger';
                     confirmPassword.focus();
+                    checkFormValidity();
+                    return;
                 }
+
+                const usernameOk = await validateDuplicateOnSubmit(
+                    'username',
+                    createUsernameInput ? createUsernameInput.value.trim() : '',
+                    usernameErrorEl
+                );
+                const emailOk = await validateDuplicateOnSubmit(
+                    'email',
+                    createEmailInput ? createEmailInput.value.trim() : '',
+                    emailErrorEl
+                );
+
+                if (!usernameOk || !emailOk) {
+                    return;
+                }
+
+                this.submit();
             });
         }
     </script>

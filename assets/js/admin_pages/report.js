@@ -25,6 +25,8 @@
     const customDateContainer = document.getElementById('customDateRange');
     const startDateInput = document.getElementById('reportStartDate');
     const endDateInput = document.getElementById('reportEndDate');
+    const reportDateActions = document.getElementById('reportDateActions');
+    const clearReportDatesBtn = document.getElementById('clearReportDatesBtn');
 
     const limitSelect = document.getElementById('reportLimit');
     const btnPrev = document.getElementById('btnPrevPage');
@@ -37,6 +39,7 @@
     // Init
     initEvents();
     updateDateTime();
+    updateClearDatesVisibility();
     fetchReportData();
     setInterval(updateDateTime, 1000);
 
@@ -62,6 +65,7 @@
                 if (endDateInput) endDateInput.value = '';
                 state.startDate = '';
                 state.endDate = '';
+                updateClearDatesVisibility();
                 state.page = 1;
                 fetchReportData();
             });
@@ -71,6 +75,7 @@
         if (startDateInput) {
             startDateInput.addEventListener('change', (e) => {
                 state.startDate = e.target.value;
+                updateClearDatesVisibility();
                 if (state.startDate && state.endDate) {
                     periodSelect.value = 'all'; // visually reset
                     state.period = 'custom';
@@ -83,12 +88,19 @@
         if (endDateInput) {
             endDateInput.addEventListener('change', (e) => {
                 state.endDate = e.target.value;
+                updateClearDatesVisibility();
                 if (state.startDate && state.endDate) {
                     periodSelect.value = 'all'; // visually reset
                     state.period = 'custom';
                     state.page = 1;
                     fetchReportData();
                 }
+            });
+        }
+
+        if (clearReportDatesBtn) {
+            clearReportDatesBtn.addEventListener('click', () => {
+                clearDateFilters();
             });
         }
 
@@ -204,6 +216,32 @@
                 }
             }
         });
+    }
+
+    function updateClearDatesVisibility() {
+        if (!reportDateActions) {
+            return;
+        }
+
+        const hasCustomDates = Boolean(
+            (startDateInput && startDateInput.value) ||
+            (endDateInput && endDateInput.value)
+        );
+
+        reportDateActions.classList.toggle('d-none', !hasCustomDates);
+    }
+
+    function clearDateFilters() {
+        if (startDateInput) startDateInput.value = '';
+        if (endDateInput) endDateInput.value = '';
+
+        state.startDate = '';
+        state.endDate = '';
+        state.period = periodSelect ? periodSelect.value : 'all';
+        state.page = 1;
+
+        updateClearDatesVisibility();
+        fetchReportData();
     }
 
     function fetchReportData() {

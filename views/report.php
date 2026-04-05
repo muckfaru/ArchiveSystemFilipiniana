@@ -28,6 +28,12 @@ include __DIR__ . '/layouts/header.php';
     <!-- Filters Section -->
     <div class="card mb-4" style="border-radius: 16px;">
         <div class="card-body p-4">
+            <div id="reportDateActions" class="report-date-actions d-none">
+                <button type="button" id="clearReportDatesBtn" class="btn btn-link report-clear-dates-btn">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Clear Dates</span>
+                </button>
+            </div>
             <div class="row gx-3 gy-3 align-items-end">
                 <div class="col-md-4 col-sm-12">
                     <label class="form-label text-muted fw-semibold" style="font-size:12px;">SEARCH</label>
