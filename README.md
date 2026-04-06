@@ -45,7 +45,7 @@ to use the forgot password reset link maybe because of the internet firewall blo
 ```php
 define('CALIBRE_CONVERT_PATH', 'define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe'); or config your own 
 ```
-> If Calibre is not installed, MOBI files will offer a download button instead of in-browser reading.
+> If Calibre is not installed, MOBI files will show a text about Calibre Portable instead of in-browser reading.
 
 ### 5. Access the System
 - **Public page:** `http://localhost/ArchiveSystemFilipiniana/`
@@ -66,6 +66,6 @@ define('CALIBRE_CONVERT_PATH', 'define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdoc
 - **Backend:** PHP 8.x on XAMPP
 - **Database:** MySQL (via phpMyAdmin)
 - **Frontend:** Bootstrap 5, epub.js, pdf.js
-- **Optional:** Calibre (for MOBI → EPUB conversion)
+- **Mandatory:** Calibre (for MOBI → EPUB conversion)
 
 

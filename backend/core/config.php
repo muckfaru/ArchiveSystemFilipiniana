@@ -35,6 +35,7 @@ if (!function_exists('route_url')) {
         'history' => '/history',
         'trash' => '/trash',
         'upload' => '/upload',
+        'featured-collections' => '/featured-collections',
         'form-library' => '/form-library',
         'form-builder' => '/form-builder',
         'metadata-display' => '/metadata-display',
@@ -63,7 +64,7 @@ if (!function_exists('route_url')) {
 // File upload settings
 define('UPLOAD_PATH', __DIR__ . '/../../uploads/');
 define('MAX_UPLOAD_SIZE', 100 * 1024 * 1024); // 100MB
-define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png', 'tiff', 'tif']);
+define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif']);
 
 // Calibre ebook-convert path (for MOBI to EPUB conversion)
 // Update this path to match your Calibre installation, or leave empty if not installed

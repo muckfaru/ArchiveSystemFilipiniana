@@ -159,14 +159,52 @@ if ($publicationType !== '') {
 
 if ($searchQuery) {
     $like = "%$searchQuery%";
+    $normalizedSearch = preg_replace('/\s+/', ' ', trim(str_replace(',', '', $searchQuery)));
+    $normalizedLike = "%$normalizedSearch%";
+    $dateExpr = "COALESCE(
+        STR_TO_DATE(cmv2.field_value, '%Y-%m-%d'),
+        STR_TO_DATE(CONCAT(cmv2.field_value, '-01'), '%Y-%m-%d')
+    )";
     $whereClause .= "
         AND (
             n.title LIKE ?
+         OR n.file_name LIKE ?
+         OR n.file_type LIKE ?
          OR EXISTS (
-                SELECT 1 FROM custom_metadata_values cmv2
-                WHERE cmv2.file_id = n.id AND cmv2.field_value LIKE ?
+                SELECT 1
+                FROM custom_metadata_values cmv2
+                LEFT JOIN form_fields ff2 ON cmv2.field_id = ff2.id
+                WHERE cmv2.file_id = n.id
+                AND (
+                    cmv2.field_value LIKE ?
+                    OR COALESCE(ff2.field_label, '') LIKE ?
+                    OR (
+                        LOWER(TRIM(COALESCE(ff2.field_label, ''))) IN ('publication date', 'date published', 'date issued', 'date')
+                        AND (
+                            DATE_FORMAT($dateExpr, '%M %e, %Y') LIKE ?
+                            OR DATE_FORMAT($dateExpr, '%b %e, %Y') LIKE ?
+                            OR DATE_FORMAT($dateExpr, '%M %Y') LIKE ?
+                            OR DATE_FORMAT($dateExpr, '%b %Y') LIKE ?
+                            OR REPLACE(DATE_FORMAT($dateExpr, '%M %e, %Y'), ',', '') LIKE ?
+                            OR REPLACE(DATE_FORMAT($dateExpr, '%b %e, %Y'), ',', '') LIKE ?
+                            OR DATE_FORMAT($dateExpr, '%Y-%m-%d') LIKE ?
+                            OR DATE_FORMAT($dateExpr, '%Y-%m') LIKE ?
+                        )
+                    )
+                )
             )
         )";
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $normalizedLike;
+    $params[] = $normalizedLike;
     $params[] = $like;
     $params[] = $like;
 }

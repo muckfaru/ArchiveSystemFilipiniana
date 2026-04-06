@@ -112,6 +112,8 @@ if ($isSearchMode) {
         )";
         $whereClause .= " AND (
             n.title LIKE ?
+         OR n.file_name LIKE ?
+         OR n.file_type LIKE ?
          OR EXISTS (
                 SELECT 1
                 FROM custom_metadata_values cmv2
@@ -136,6 +138,8 @@ if ($isSearchMode) {
                 )
             )
         )";
+        $params[] = $like;
+        $params[] = $like;
         $params[] = $like;
         $params[] = $like;
         $params[] = $like;
@@ -200,6 +204,44 @@ if ($isSearchMode) {
     $totalResults = 0;
     $totalPages = 1;
     $currentPage = 1;
+    $catalogShelves = [];
+
+    // Load featured files first so they appear above publication type shelves.
+    try {
+        $featuredSql = "SELECT DISTINCT n.*
+                        FROM newspapers n
+                        INNER JOIN featured_collection_items fci ON fci.file_id = n.id
+                        INNER JOIN featured_collections fc ON fc.id = fci.collection_id
+                        WHERE n.deleted_at IS NULL
+                        AND fc.slug = 'homepage-featured'
+                        AND fc.is_active = 1
+                        ORDER BY fci.item_order ASC, n.created_at DESC
+                        LIMIT 15";
+        $featuredDocs = $pdo->query($featuredSql)->fetchAll();
+
+        if (!empty($featuredDocs)) {
+            applyTitleOverrides($featuredDocs, $pdo);
+            attachMetadataToDocs($featuredDocs, $pdo, $cardFields, $modalFields);
+
+            $featuredCountStmt = $pdo->query("SELECT COUNT(DISTINCT n.id)
+                FROM newspapers n
+                INNER JOIN featured_collection_items fci ON fci.file_id = n.id
+                INNER JOIN featured_collections fc ON fc.id = fci.collection_id
+                WHERE n.deleted_at IS NULL
+                AND fc.slug = 'homepage-featured'
+                AND fc.is_active = 1");
+            $featuredTotal = (int) $featuredCountStmt->fetchColumn();
+
+            $catalogShelves[] = [
+                'type' => 'Featured Collection',
+                'docs' => $featuredDocs,
+                'total' => $featuredTotal,
+                'see_all_url' => route_url('browse'),
+            ];
+        }
+    } catch (Throwable $e) {
+        // If the featured tables are unavailable, fall back to the normal catalog shelves.
+    }
 
     // Get all distinct Publication Type values
     $pubTypeSql = "SELECT DISTINCT cmv.field_value as pub_type
@@ -210,8 +252,6 @@ if ($isSearchMode) {
                    AND cmv.field_value IS NOT NULL AND cmv.field_value != ''
                    ORDER BY cmv.field_value ASC";
     $pubTypes = $pdo->query($pubTypeSql)->fetchAll(PDO::FETCH_COLUMN);
-
-    $catalogShelves = [];
 
     foreach ($pubTypes as $pubType) {
         $shelfSql = "SELECT DISTINCT n.*

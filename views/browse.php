@@ -97,32 +97,98 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
-        <a href="<?= route_url('home') ?>" class="public-header-brand">
-            <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
-            <span class="public-header-brand-name">Quezon City Public Library</span>
-        </a>
-        
-        <!-- Hamburger Menu Button (Mobile Only) -->
-        <button class="public-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavCollapse" aria-controls="publicNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
-            <i class="bi bi-list"></i>
-        </button>
-        
-        <!-- Navigation -->
-        <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
-            <a href="<?= route_url('home') ?>" class="public-nav-link">
-                <i class="bi bi-house-door"></i>
-                Home
+        <div class="public-header-left">
+            <button class="public-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavCollapse" aria-controls="publicNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
+                <a href="<?= route_url('home') ?>" class="public-nav-link">
+                    <i class="bi bi-house-door"></i>
+                    Home
+                </a>
+                <a href="<?= route_url('browse') ?>" class="public-nav-link active">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    Browse
+                </a>
+            </nav>
+        </div>
+
+        <div class="public-header-center">
+            <a href="<?= route_url('home') ?>" class="public-header-brand public-header-brand-center">
+                <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
+                <span class="public-header-brand-name">Quezon City Public Library</span>
             </a>
-            <a href="<?= route_url('browse') ?>" class="public-nav-link active">
-                <i class="bi bi-grid-3x3-gap"></i>
-                Browse
-            </a>
-        </nav>
-        
-        <button id="adminLoginTrigger" class="public-admin-login-btn" type="button">
-            <i class="bi bi-person-lock"></i>
-            <span class="public-admin-login-text">Admin Login</span>
-        </button>
+
+            <form method="GET" action="<?= route_url('browse') ?>" id="publicHeaderSearchForm" class="public-header-search" role="search">
+                <?php foreach ($categoryFilter as $cat): ?>
+                    <input type="hidden" name="category[]" value="<?= htmlspecialchars($cat) ?>">
+                <?php endforeach; ?>
+                <?php foreach ($languageFilter as $lang): ?>
+                    <input type="hidden" name="language[]" value="<?= htmlspecialchars($lang) ?>">
+                <?php endforeach; ?>
+                <?php foreach ($editionFilter as $ed): ?>
+                    <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
+                <?php endforeach; ?>
+                <?php if ($dateFrom): ?>
+                    <input type="hidden" name="date_from" value="<?= htmlspecialchars($dateFrom) ?>">
+                <?php endif; ?>
+                <?php if ($dateTo): ?>
+                    <input type="hidden" name="date_to" value="<?= htmlspecialchars($dateTo) ?>">
+                <?php endif; ?>
+                <?php if ($sortFilter): ?>
+                    <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
+                <?php endif; ?>
+                <?php if ($viewMode): ?>
+                    <input type="hidden" name="view" value="<?= htmlspecialchars($viewMode) ?>">
+                <?php endif; ?>
+                <?php if ($publicationType): ?>
+                    <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+                <?php endif; ?>
+                <label for="publicHeaderSearchInput" class="visually-hidden">Search archives</label>
+                <div class="public-header-search-bar">
+                    <i class="bi bi-search"></i>
+                    <input
+                        type="text"
+                        id="publicHeaderSearchInput"
+                        class="public-header-search-input"
+                        name="q"
+                        placeholder="Search archives..."
+                        value="<?= htmlspecialchars($searchQuery) ?>"
+                        autocomplete="off">
+                    <button type="button" class="public-header-search-clear" id="publicHeaderSearchClear" aria-label="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <button type="submit" class="public-header-search-submit">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="public-header-actions">
+            <button type="button" class="public-header-icon-btn" id="publicHeaderSearchToggle" aria-label="Open search" aria-expanded="false">
+                <i class="bi bi-search"></i>
+            </button>
+
+            <div class="dropdown">
+                <button
+                    class="public-header-icon-btn"
+                    type="button"
+                    id="publicHeaderMenuToggle"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Open menu">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end public-header-menu" aria-labelledby="publicHeaderMenuToggle">
+                    <li>
+                        <button id="adminLoginTrigger" class="dropdown-item public-header-menu-item" type="button">
+                            <i class="bi bi-person-lock"></i>
+                            <span>Admin Login</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </header>
 
     <!-- ==================== BROWSE LAYOUT ==================== -->
@@ -316,32 +382,6 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 
         <!-- Main Results Column -->
         <main class="browse-main-redesign">
-
-            <!-- Search Box -->
-            <div class="browse-search-box-redesign">
-                <form method="GET" action="" id="browseSearchForm">
-                    <?php foreach ($categoryFilter as $cat): ?>
-                        <input type="hidden" name="category[]" value="<?= htmlspecialchars($cat) ?>">
-                    <?php endforeach; ?>
-                    <?php foreach ($languageFilter as $lang): ?>
-                        <input type="hidden" name="language[]" value="<?= htmlspecialchars($lang) ?>">
-                    <?php endforeach; ?>
-                    <?php foreach ($editionFilter as $ed): ?>
-                        <input type="hidden" name="edition[]" value="<?= htmlspecialchars($ed) ?>">
-                    <?php endforeach; ?>
-                    <input type="hidden" name="sort" value="<?= htmlspecialchars($sortFilter) ?>">
-                    <input type="hidden" name="view" value="<?= htmlspecialchars($viewMode) ?>">
-                    <?php if ($publicationType): ?>
-                        <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
-                    <?php endif; ?>
-                    <div class="browse-search-input-wrap">
-                        <i class="bi bi-search"></i>
-                        <input type="text" class="browse-search-input-redesign" name="q"
-                            placeholder="Search newspapers, journals, or archives..."
-                            value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
-                    </div>
-                </form>
-            </div>
 
             <!-- Results Bar -->
             <div class="browse-results-bar-redesign">

@@ -15,6 +15,11 @@ let selectedFile = null;
 let originalFormData = {}; // Store initial values for dirty checking
 let coverFileId = null; // ID of the file selected as cover/thumbnail in Bind Mode
 let draftSaveTimeout = null;
+let singleSelectionAction = 'change';
+const ALLOWED_UPLOAD_EXTENSIONS = ['pdf', 'epub', 'mobi', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff'];
+const ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'epub', 'mobi', 'txt'];
+const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff'];
+const ALLOWED_FILE_TYPES_LABEL = 'PDF, EPUB, MOBI, TXT, JPG, JPEG, PNG, WEBP, TIF, TIFF';
 
 document.addEventListener('DOMContentLoaded', function () {
     // FIX: BUG 1 - Add defensive guard for APP_URL
@@ -46,6 +51,162 @@ document.addEventListener('DOMContentLoaded', function () {
     const thumbnailPlaceholder = document.getElementById('thumbnailPlaceholder');
     const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
     const publicationDateInput = document.getElementById('publication_date');
+
+    function getFileExtension(file) {
+        return (file?.name || '').split('.').pop().toLowerCase();
+    }
+
+    function isImageExtension(extension) {
+        return ALLOWED_IMAGE_EXTENSIONS.includes(extension);
+    }
+
+    function isDocumentExtension(extension) {
+        return ALLOWED_DOCUMENT_EXTENSIONS.includes(extension);
+    }
+
+    function getInvalidFileTypeMessage(fileName, allowedLabel = ALLOWED_FILE_TYPES_LABEL) {
+        return `"${fileName}" is not a supported file type. Accepted file types: ${allowedLabel}.`;
+    }
+
+    function showSingleFileTypeError(message) {
+        const previewError = document.getElementById('previewError');
+        const selectedFilePreview = document.getElementById('selectedFilePreview');
+        const dropZoneContainer = document.getElementById('dropZoneContainer');
+        const previewFilename = document.getElementById('previewFilename');
+        const previewSize = document.getElementById('previewSize');
+
+        selectedFile = null;
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        if (selectedFilePreview) {
+            selectedFilePreview.style.display = 'none';
+        }
+
+        if (dropZoneContainer && document.querySelector('input[name="action"]')?.value !== 'edit') {
+            dropZoneContainer.style.display = '';
+        }
+
+        if (previewFilename) {
+            previewFilename.textContent = 'filename.ext';
+        }
+
+        if (previewSize) {
+            previewSize.textContent = '0 KB';
+        }
+
+        if (previewError) {
+            previewError.textContent = message;
+            previewError.style.display = 'block';
+        }
+
+        showAlert('danger', message);
+        updateButtons();
+    }
+
+    function clearSingleFileTypeError() {
+        const previewError = document.getElementById('previewError');
+        if (previewError) {
+            previewError.textContent = '';
+            previewError.style.display = 'none';
+        }
+    }
+
+    function buildMetadataSnapshot() {
+        const metadata = {
+            title: document.getElementById('title')?.value?.trim() || '',
+            publisher: document.getElementById('publisher')?.value?.trim() || '',
+            publication_date: document.getElementById('publication_date')?.value?.trim() || '',
+            edition: document.getElementById('edition')?.value?.trim() || '',
+            category_id: document.getElementById('category_id')?.value?.trim() || '',
+            language_id: document.getElementById('language_id')?.value?.trim() || '',
+            page_count: document.getElementById('page_count')?.value?.trim() || '',
+            volume_issue: document.getElementById('volume_issue')?.value?.trim() || '',
+            description: document.getElementById('description')?.value?.trim() || '',
+            tags: document.getElementById('keywordsHidden')?.value?.trim() || ''
+        };
+
+        document.querySelectorAll('.custom-field').forEach(field => {
+            const fieldName = field.name;
+            if (!fieldName) return;
+
+            if (field.type === 'checkbox') {
+                const checkedBoxes = document.querySelectorAll(`input[name="${fieldName}"]:checked`);
+                metadata[fieldName] = Array.from(checkedBoxes).map(cb => cb.value);
+            } else if (field.type === 'radio') {
+                const selectedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
+                metadata[fieldName] = selectedRadio ? selectedRadio.value : '';
+            } else {
+                metadata[fieldName] = field.value?.trim() || '';
+            }
+        });
+
+        return metadata;
+    }
+
+    function createBulkFileObject(file, metadata = null) {
+        return {
+            id: Math.random().toString(36).substr(2, 9),
+            file: file,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            status: 'pending',
+            isDuplicate: false,
+            metadata: metadata || {
+                title: '',
+                publisher: '',
+                publication_date: '',
+                edition: '',
+                category_id: '',
+                language_id: '',
+                page_count: '',
+                volume_issue: '',
+                description: '',
+                tags: ''
+            },
+            customThumbnail: null
+        };
+    }
+
+    function promoteSingleSelectionToBulk() {
+        if (!selectedFile) {
+            return;
+        }
+
+        const baseExt = getFileExtension(selectedFile);
+        const baseIsImage = selectedFile.type.startsWith('image/') || isImageExtension(baseExt);
+        const baseFileObject = createBulkFileObject(selectedFile, buildMetadataSnapshot());
+
+        bulkFiles = [baseFileObject];
+        selectedFile = null;
+
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        if (baseIsImage) {
+            isBindMode = true;
+            isBulkMode = true;
+            activeFileIndex = -1;
+        } else {
+            isBindMode = false;
+            isBulkMode = true;
+            activeFileIndex = 0;
+        }
+
+        enableBulkMode();
+        updateBulkUI();
+
+        if (!isBindMode) {
+            loadFileData(0);
+        } else {
+            validateBindModeForm();
+        }
+
+        checkAllDuplicates();
+    }
 
     // --- Initialization ---
     const isEditMode = document.querySelector('input[name="action"]').value === 'edit';
@@ -107,10 +268,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Capture Original State if Edit Mode
     if (isEditMode) {
         captureOriginalState();
-
-        // Change "Add File" to "Change File"
-        const btnAddFile = document.querySelector('.btn-add-file');
-        if (btnAddFile) btnAddFile.textContent = 'CHANGE FILE';
 
         // Initialize Tags visually
         const keywordsHidden = document.getElementById('keywordsHidden');
@@ -1350,6 +1507,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('First file:', files[0].name, files[0].size, 'bytes');
         }
         handleFiles(files);
+        singleSelectionAction = 'change';
     }
 
     function handleBulkFileAdditionFromInput(e) {
@@ -1363,14 +1521,32 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        const fileList = Array.from(files);
+        const invalidFiles = fileList.filter(file => {
+            const extension = getFileExtension(file);
+            return !ALLOWED_UPLOAD_EXTENSIONS.includes(extension);
+        });
+
+        if (invalidFiles.length > 0) {
+            const firstInvalid = invalidFiles[0];
+            showSingleFileTypeError(getInvalidFileTypeMessage(firstInvalid.name));
+            return;
+        }
+
+        clearSingleFileTypeError();
+
         const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
         console.log('📝 Mode:', isEdit ? 'Edit' : 'Upload');
+
+        if (!isEdit && singleSelectionAction === 'add' && selectedFile && !isBulkMode) {
+            promoteSingleSelectionToBulk();
+        }
 
         // FIX: BUG 2 - Detect single non-image file and route as single upload
         // Only route to bulk mode if: multiple files OR starting fresh with images
         const firstFile = files[0];
-        const firstFileExt = firstFile.name.split('.').pop().toLowerCase();
-        const isImageFile = firstFile.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(firstFileExt);
+        const firstFileExt = getFileExtension(firstFile);
+        const isImageFile = firstFile.type.startsWith('image/') || isImageExtension(firstFileExt);
         const isSingleNonImageFile = files.length === 1 && !isImageFile && bulkFiles.length === 0;
 
         if (!isEdit && !isSingleNonImageFile) {
@@ -1441,44 +1617,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
         newFiles.forEach(file => {
             // Get file extension
-            const fileExt = file.name.split('.').pop().toLowerCase();
-            const isImageFile = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExt);
-            const isDocumentFile = ['pdf', 'epub', 'mobi', 'doc', 'docx'].includes(fileExt);
+            const fileExt = getFileExtension(file);
+            const isImageFile = file.type.startsWith('image/') || isImageExtension(fileExt);
+            const isDocumentFile = isDocumentExtension(fileExt);
+
+            if (!ALLOWED_UPLOAD_EXTENSIONS.includes(fileExt)) {
+                const message = getInvalidFileTypeMessage(file.name);
+                showAlert('danger', message);
+                return;
+            }
 
             // Enforce Mode Consistency
             if (isBindMode && !isImageFile) {
-                showAlert('warning', `Skipped "${file.name}": Only images allowed in Photo Mode.`);
+                showAlert('warning', `Skipped "${file.name}": Only image files are allowed in Photo Mode. Accepted image types: JPG, JPEG, PNG, WEBP, TIF, TIFF.`);
                 return;
             }
             if (!isBindMode && isImageFile) {
-                showAlert('warning', `Skipped "${file.name}": Images not allowed in Document Mode.`);
+                showAlert('warning', `Skipped "${file.name}": Only document files are allowed in Document Mode. Accepted document types: PDF, EPUB, MOBI, TXT.`);
                 return;
             }
 
             // Prevent exact duplicate in current list
             if (!bulkFiles.some(f => f.name === file.name && f.size === file.size)) {
-                const fileObj = {
-                    id: Math.random().toString(36).substr(2, 9),
-                    file: file,
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    status: 'pending', // pending, ready, error
-                    isDuplicate: false, // Will be checked async
-                    metadata: {
-                        title: '',
-                        publisher: '',
-                        publication_date: '',
-                        edition: '',
-                        category_id: '',
-                        language_id: '',
-                        page_count: '',
-                        volume_issue: '',
-                        description: '',
-                        tags: ''
-                    },
-                    customThumbnail: null
-                };
+                const fileObj = createBulkFileObject(file);
                 bulkFiles.push(fileObj);
                 addedCount++;
 
@@ -1818,13 +1979,19 @@ document.addEventListener('DOMContentLoaded', function () {
     window.resetFileSelection = function () {
         selectedFile = null;
         fileInput.value = '';
+        singleSelectionAction = 'change';
+        clearSingleFileTypeError();
 
         // Hide file badge, show drop zone
         const selectedFilePreview = document.getElementById('selectedFilePreview');
         const dropZoneContainer = document.getElementById('dropZoneContainer');
+        const previewFilename = document.getElementById('previewFilename');
+        const previewSize = document.getElementById('previewSize');
 
         if (selectedFilePreview) selectedFilePreview.style.display = 'none';
         if (dropZoneContainer) dropZoneContainer.style.display = 'block';
+        if (previewFilename) previewFilename.textContent = 'filename.pdf';
+        if (previewSize) previewSize.textContent = '0 KB';
 
         // Check for edit mode
         const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
@@ -1846,6 +2013,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 1. Clear state variables FIRST (critical order)
         selectedFile = null;
+        singleSelectionAction = 'change';
         bulkFiles = [];
         activeFileIndex = -1;
         isBulkMode = false;
@@ -1975,6 +2143,20 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButtons();
 
         console.log('✅ Form reset complete - bulkFiles cleared:', bulkFiles.length);
+    }
+
+    window.startAddFileMode = function () {
+        singleSelectionAction = 'add';
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    window.startChangeFileMode = function () {
+        singleSelectionAction = 'change';
+        if (fileInput) {
+            fileInput.click();
+        }
     }
 
     function updateButtons() {

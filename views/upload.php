@@ -41,13 +41,14 @@
         <div class="drop-zone-container" id="dropZoneContainer" <?= $editMode ? 'style="display: none;"' : '' ?>>
             <div class="drop-zone" id="mainDropZone">
                 <input type="file" id="fileInput" name="file" hidden multiple
-                    accept=".pdf,.doc,.docx,.xml,.tiff,.tif,.jpg,.jpeg,.png,.mobi,.epub">
+                    accept=".pdf,.epub,.mobi,.txt,.tiff,.tif,.jpg,.jpeg,.png,.webp">
                 
                 <svg class="drop-icon" width="64" height="64" viewBox="0 0 24 24" fill="none">
                     <path d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM6 20V4H13V9H18V20H6Z" fill="#94A3B8"/>
                 </svg>
                 <p class="drop-title">Drag and drop files here</p>
                 <p class="drop-subtitle">or <span class="click-browse" onclick="document.getElementById('fileInput').click()">click to browse</span> your computer</p>
+                <p class="drop-allowed-types">Allowed file types: PDF, EPUB, MOBI, TXT, JPG, JPEG, PNG, WEBP, TIF, TIFF</p>
             </div>
         </div>
 
@@ -62,8 +63,16 @@
                 </div>
             </div>
             <div class="preview-right">
-                <button type="button" class="btn-add-file" onclick="document.getElementById('fileInput').click()">
+                <button type="button" class="btn-file-action btn-file-action-danger" onclick="resetFileSelection()">
+                    REMOVE FILE
+                </button>
+                <?php if (!$editMode): ?>
+                <button type="button" class="btn-file-action btn-file-action-secondary" onclick="startAddFileMode()">
                     ADD FILE
+                </button>
+                <?php endif; ?>
+                <button type="button" class="btn-file-action btn-file-action-primary" onclick="startChangeFileMode()">
+                    CHANGE FILE
                 </button>
             </div>
         </div>
@@ -140,7 +149,7 @@
                         <button type="button" class="btn btn-add-files" id="addMoreBtn">
                             + ADD FILES
                         </button>
-                        <input type="file" id="addMoreInput" multiple style="display: none;" accept=".pdf,.epub,.mobi">
+                        <input type="file" id="addMoreInput" multiple style="display: none;" accept=".pdf,.epub,.mobi,.txt">
                         <div id="duplicateStatusContainer" class="duplicate-status" style="display: none;">
                             <i class="bi bi-check-circle-fill"></i> NO DUPLICATE FILES DETECTED
                         </div>

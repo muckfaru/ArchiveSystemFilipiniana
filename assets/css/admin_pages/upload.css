@@ -127,6 +127,15 @@ body .main-content {
     margin: 0;
 }
 
+.drop-allowed-types {
+    margin: 14px 0 0;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 560px;
+}
+
 .click-browse {
     color: #3A9AFF;
     font-weight: 500;
@@ -1339,12 +1348,11 @@ body .main-content {
 .preview-right {
     display: flex;
     align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.btn-add-file {
-    background: #3A9AFF;
-    color: white;
-    border: none;
+.btn-file-action {
     border-radius: 6px;
     padding: 10px 20px;
     font-size: 13px;
@@ -1355,12 +1363,44 @@ body .main-content {
     letter-spacing: 0.5px;
 }
 
-.btn-add-file:hover {
+.btn-file-action-primary {
+    background: #3A9AFF;
+    color: white;
+    border: none;
+}
+
+.btn-file-action-primary:hover {
     background: #2d87ef;
     transform: translateY(-1px);
 }
 
-.btn-add-file:active {
+.btn-file-action-secondary {
+    background: #FFFFFF;
+    color: #475569;
+    border: 1px solid #D7E2F0;
+}
+
+.btn-file-action-secondary:hover {
+    background: #F8FAFC;
+    border-color: #94A3B8;
+    color: #1F2937;
+    transform: translateY(-1px);
+}
+
+.btn-file-action-danger {
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+}
+
+.btn-file-action-danger:hover {
+    background: #FEE2E2;
+    border-color: #FCA5A5;
+    color: #B91C1C;
+    transform: translateY(-1px);
+}
+
+.btn-file-action:active {
     transform: translateY(0);
 }
 

@@ -53,13 +53,20 @@
                         <span>Upload</span>
                     </a>
                     <a href="#uploadSubmenu" data-bs-toggle="collapse"
-                        aria-expanded="<?= in_array(basename($_SERVER['PHP_SELF']), ['upload.php', 'form-library.php', 'form-builder.php', 'metadata-display.php']) ? 'true' : 'false' ?>"
+                        aria-expanded="<?= in_array(basename($_SERVER['PHP_SELF']), ['upload.php', 'featured-collections.php', 'form-library.php', 'form-builder.php', 'metadata-display.php']) ? 'true' : 'false' ?>"
                         class="submenu-toggle position-absolute d-flex align-items-center justify-content-center"
                         style="right: 20px; top: 2px; height: 44px; width: 32px; z-index: 5; color: #6B7280; text-decoration: none;">
                         <i class="bi bi-chevron-down dropdown-indicator"></i>
                     </a>
-                    <ul class="collapse sidebar-submenu list-unstyled <?= in_array(basename($_SERVER['PHP_SELF']), ['upload.php', 'form-library.php', 'form-builder.php', 'metadata-display.php']) ? 'show' : '' ?>"
+                    <ul class="collapse sidebar-submenu list-unstyled <?= in_array(basename($_SERVER['PHP_SELF']), ['upload.php', 'featured-collections.php', 'form-library.php', 'form-builder.php', 'metadata-display.php']) ? 'show' : '' ?>"
                         id="uploadSubmenu">
+                        <li class="nav-item">
+                            <a href="<?= route_url('featured-collections') ?>"
+                                class="nav-link sub-nav-link <?= basename($_SERVER['PHP_SELF']) == 'featured-collections.php' ? 'active' : '' ?>">
+                                <i class="bi bi-stars"></i>
+                                <span>Featured Collections</span>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="<?= route_url('form-library') ?>"
                                 class="nav-link sub-nav-link <?= in_array(basename($_SERVER['PHP_SELF']), ['form-library.php', 'form-builder.php']) ? 'active' : '' ?>">

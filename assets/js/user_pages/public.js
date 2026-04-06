@@ -223,221 +223,182 @@
     initCatalogScroll();
 
     // ── Live search (debounced) & Auto Reset ──────────────────────────────────
-    const searchInput = document.getElementById('publicSearchInput');
-    const searchForm = document.getElementById('publicSearchForm');
-    const clearBtn = document.getElementById('publicSearchClear');
-    const searchBar = document.querySelector('.public-search-bar');
-    const advSearchPanel = document.getElementById('publicAdvSearchPanel');
-    let activeSearchRequest = null;
+    const header = document.querySelector('.public-header');
+    const headerSearchToggle = document.getElementById('publicHeaderSearchToggle');
+    const headerSearchForm = document.getElementById('publicHeaderSearchForm');
+    const headerSearchInput = document.getElementById('publicHeaderSearchInput');
+    const headerSearchClear = document.getElementById('publicHeaderSearchClear');
+    const headerSearchPersistKey = 'publicHeaderSearchKeepOpen';
 
-    // ── Rotating hero chips ───────────────────────────────────────────────────
-    const heroChipTracks = [
-        [
-            { icon: 'bi-lightning-charge', text: 'Fast public reading' },
-            { icon: 'bi-newspaper', text: 'Read fresh newspaper issues' },
-            { icon: 'bi-book-half', text: 'Open full documents quickly' },
-            { icon: 'bi-clock-history', text: 'Catch recent uploads faster' }
-        ],
-        [
-            { icon: 'bi-journal-richtext', text: 'Curated publication shelves' },
-            { icon: 'bi-grid-3x3-gap', text: 'Explore category shelves' },
-            { icon: 'bi-collection', text: 'Browse newspaper and magazine sets' },
-            { icon: 'bi-calendar3', text: 'Track issues by publication date' }
-        ],
-        [
-            { icon: 'bi-search-heart', text: 'Search-first discovery' },
-            { icon: 'bi-binoculars', text: 'Spot titles in seconds' },
-            { icon: 'bi-tags', text: 'Search by category or date' },
-            { icon: 'bi-stars', text: 'Discover standout library picks' }
-        ]
-    ];
+    function buildSearchUrl(form) {
+        const action = form.getAttribute('action') || window.location.pathname;
+        const url = new URL(action, window.location.origin);
+        const params = new URLSearchParams();
+        const formData = new FormData(form);
 
-    function initHeroChipLoop() {
-        const chips = document.querySelectorAll('.public-hero-chip-dynamic');
-        if (!chips.length) return;
-
-        const swapChip = (chip, next) => {
-            const icon = chip.querySelector('i');
-            const text = chip.querySelector('.public-hero-chip-text');
-            if (!icon || !text || !next) return;
-
-            chip.classList.add('is-swapping');
-            window.setTimeout(() => {
-                icon.className = `bi ${next.icon}`;
-                text.textContent = next.text;
-                chip.classList.remove('is-swapping');
-            }, 140);
-        };
-
-        chips.forEach((chip, idx) => {
-            const track = heroChipTracks[idx];
-            if (!track || !track.length) return;
-
-            let currentIndex = 0;
-            const intervalMs = 2400 + (idx * 700);
-
-            window.setTimeout(() => {
-                window.setInterval(() => {
-                    currentIndex = (currentIndex + 1) % track.length;
-                    swapChip(chip, track[currentIndex]);
-                }, intervalMs);
-            }, idx * 320);
-        });
-    }
-
-    initHeroChipLoop();
-
-    function performLiveSearch() {
-        if (!searchForm) return;
-        const formData = new FormData(searchForm);
-        const params = new URLSearchParams(formData).toString();
-        const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-        const url = currentPath + (params ? '?' + params : '');
-
-        const contentArea = document.getElementById('publicContentArea');
-        if (contentArea) contentArea.style.opacity = '0.5';
-
-        if (activeSearchRequest) {
-            activeSearchRequest.abort();
-        }
-
-        activeSearchRequest = new AbortController();
-
-        fetch(url, { signal: activeSearchRequest.signal })
-            .then(res => res.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newContentArea = doc.getElementById('publicContentArea');
-
-                if (newContentArea && contentArea) {
-                    contentArea.innerHTML = newContentArea.innerHTML;
-                    contentArea.style.opacity = '1';
-
-                    // Reattach event listeners for newly added DOM elements
-                    attachCardListeners();
-                    initCatalogScroll();
-                }
-
-                // Update URL without reloading (optional, for shareability)
-                window.history.replaceState({}, '', url);
-            })
-            .catch(err => {
-                if (err.name === 'AbortError') {
+        formData.forEach(function (value, key) {
+            if (typeof value === 'string') {
+                const trimmedValue = value.trim();
+                if (trimmedValue === '') {
                     return;
                 }
-                console.error('Search failed', err);
-                if (contentArea) contentArea.style.opacity = '1';
-            })
-            .finally(() => {
-                activeSearchRequest = null;
-            });
+                params.append(key, trimmedValue);
+                return;
+            }
+
+            params.append(key, value);
+        });
+
+        url.search = params.toString();
+        return url.toString();
     }
 
-    function showAdvancedSearchPanel() {
-        if (advSearchPanel) {
-            advSearchPanel.classList.add('active');
-        }
-    }
-
-    function hideAdvancedSearchPanel() {
-        if (advSearchPanel) {
-            advSearchPanel.classList.remove('active');
-        }
-    }
-
-    function updateSearchClearButton() {
-        if (!clearBtn || !searchInput) {
+    function initLiveSearch(form, input) {
+        if (!form || !input) {
             return;
         }
 
-        clearBtn.classList.toggle('d-none', searchInput.value.trim() === '');
+        let debounceTimer = null;
+        let isComposing = false;
+
+        function submitLiveSearch() {
+            const nextUrl = buildSearchUrl(form);
+            const currentUrl = new URL(window.location.href);
+
+            if (nextUrl === currentUrl.toString()) {
+                return;
+            }
+
+            window.location.href = nextUrl;
+        }
+
+        function queueLiveSearch() {
+            window.clearTimeout(debounceTimer);
+            debounceTimer = window.setTimeout(submitLiveSearch, 280);
+        }
+
+        input.addEventListener('compositionstart', function () {
+            isComposing = true;
+        });
+
+        input.addEventListener('compositionend', function () {
+            isComposing = false;
+            queueLiveSearch();
+        });
+
+        input.addEventListener('input', function () {
+            updateHeaderSearchClear();
+
+            if (isComposing) {
+                return;
+            }
+
+            queueLiveSearch();
+        });
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                window.clearTimeout(debounceTimer);
+            }
+        });
     }
 
+    // ── Rotating hero chips ───────────────────────────────────────────────────
     // ── Clear (X) button ──────────────────────────────────────────────────────
-    if (clearBtn) {
-        clearBtn.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-        });
-
-        clearBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (searchInput) {
-                searchInput.value = '';
-                updateSearchClearButton();
-                searchInput.focus();
-            }
-            performLiveSearch();
-        });
-    }
-
     // ── Auto-submit on type (Debounced / True Live Search AJAX) ───────────────
-    let debounceTimer;
-    if (searchInput && searchForm) {
-        // Keeps user interaction smooth by restoring focus where left off
-        if (searchInput.value.length > 0) {
-            searchInput.focus();
-            const val = searchInput.value;
-            searchInput.value = '';
-            searchInput.value = val;
+    function setHeaderSearchOpen(isOpen) {
+        if (!header || !headerSearchToggle) {
+            return;
         }
 
-        // Hook into form submit to prevent traditional action and use AJAX
-        searchForm.addEventListener('submit', function (e) {
+        header.classList.toggle('public-header-search-open', isOpen);
+        headerSearchToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+        if (isOpen && headerSearchInput) {
+            window.setTimeout(() => {
+                headerSearchInput.focus();
+                const valueLength = headerSearchInput.value.length;
+                headerSearchInput.setSelectionRange(valueLength, valueLength);
+            }, 30);
+        }
+    }
+
+    function shouldKeepHeaderSearchOpen() {
+        if (!headerSearchInput) {
+            return false;
+        }
+
+        return headerSearchInput.value.trim() !== '';
+    }
+
+    function shouldRestoreHeaderSearchOpen() {
+        try {
+            return window.sessionStorage.getItem(headerSearchPersistKey) === 'true';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function persistHeaderSearchOpen(shouldPersist) {
+        try {
+            if (shouldPersist) {
+                window.sessionStorage.setItem(headerSearchPersistKey, 'true');
+            } else {
+                window.sessionStorage.removeItem(headerSearchPersistKey);
+            }
+        } catch (e) {
+            // Ignore storage access issues.
+        }
+    }
+
+    function updateHeaderSearchClear() {
+        if (!headerSearchClear || !headerSearchInput) {
+            return;
+        }
+
+        const hasValue = headerSearchInput.value.trim() !== '';
+        headerSearchClear.classList.toggle('is-visible', hasValue);
+        headerSearchClear.setAttribute('aria-hidden', hasValue ? 'false' : 'true');
+    }
+
+    if (header && headerSearchToggle && headerSearchForm) {
+        updateHeaderSearchClear();
+
+        if (shouldKeepHeaderSearchOpen() || shouldRestoreHeaderSearchOpen()) {
+            setHeaderSearchOpen(true);
+            persistHeaderSearchOpen(false);
+        }
+
+        headerSearchToggle.addEventListener('click', function (e) {
             e.preventDefault();
-            clearTimeout(debounceTimer);
-            performLiveSearch();
+            const willOpen = shouldKeepHeaderSearchOpen() ? true : !header.classList.contains('public-header-search-open');
+            setHeaderSearchOpen(willOpen);
         });
 
-        searchInput.addEventListener('input', function () {
-            updateSearchClearButton();
-
-            // Auto-reset when user clears the searchbox manually
-            if (this.value.trim() === '') {
-                clearTimeout(debounceTimer);
-                performLiveSearch();
-                return;
-            }
-
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function () {
-                performLiveSearch();
-            }, 300);
+        headerSearchForm.addEventListener('submit', function () {
+            persistHeaderSearchOpen(true);
+            setHeaderSearchOpen(true);
         });
 
-        searchInput.addEventListener('search', function () {
-            updateSearchClearButton();
-            clearTimeout(debounceTimer);
-            performLiveSearch();
-        });
-
-        searchInput.addEventListener('focus', showAdvancedSearchPanel);
-        updateSearchClearButton();
-    }
-
-    if (searchBar && searchInput) {
-        searchBar.addEventListener('click', function (e) {
-            if (e.target.closest('.public-search-btn, .public-search-clear')) {
-                return;
-            }
-
-            searchInput.focus();
-            showAdvancedSearchPanel();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.public-search-wrapper')) {
-            hideAdvancedSearchPanel();
+        if (headerSearchClear && headerSearchInput) {
+            headerSearchClear.addEventListener('click', function () {
+                headerSearchInput.value = '';
+                updateHeaderSearchClear();
+                persistHeaderSearchOpen(true);
+                setHeaderSearchOpen(true);
+                headerSearchInput.focus();
+                window.location.href = buildSearchUrl(headerSearchForm);
+            });
         }
-    });
 
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            hideAdvancedSearchPanel();
-        }
-    });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && header.classList.contains('public-header-search-open') && !shouldKeepHeaderSearchOpen()) {
+                setHeaderSearchOpen(false);
+            }
+        });
+
+        initLiveSearch(headerSearchForm, headerSearchInput);
+    }
 
     // ── Live update polling (reflects admin upload/delete) ────────────────────
     // Read the initial archive count embedded by PHP in the grid/catalog container.

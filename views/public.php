@@ -26,69 +26,78 @@
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
-        <a href="<?= route_url('home') ?>" class="public-header-brand">
-            <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
-            <span class="public-header-brand-name">Quezon City Public Library</span>
-        </a>
-        
-        <!-- Hamburger Menu Button (Mobile Only) -->
-        <button class="public-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavCollapse" aria-controls="publicNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
-            <i class="bi bi-list"></i>
-        </button>
-        
-        <!-- Navigation -->
-        <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
-            <a href="<?= route_url('home') ?>" class="public-nav-link <?= !isset($_GET['view']) || $_GET['view'] !== 'browse' ? 'active' : '' ?>">
-                <i class="bi bi-house-door"></i>
-                Home
-            </a>
-            <a href="<?= route_url('browse') ?>" class="public-nav-link <?= isset($_GET['view']) && $_GET['view'] === 'browse' ? 'active' : '' ?>">
-                <i class="bi bi-grid-3x3-gap"></i>
-                Browse
-            </a>
-        </nav>
-        
-        <button id="adminLoginTrigger" class="public-admin-login-btn" type="button">
-            <i class="bi bi-person-lock"></i>
-            <span class="public-admin-login-text">Admin Login</span>
-        </button>
-    </header>
+        <div class="public-header-left">
+            <button class="public-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavCollapse" aria-controls="publicNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list"></i>
+            </button>
 
-    <!-- ==================== HERO ==================== -->
-    <section class="public-hero">
-        <div class="public-hero-bg" aria-hidden="true"></div>
-        <div class="public-hero-inner">
-            <p class="public-hero-kicker">QCPL PERIODICAL ARCHIVE</p>
-            <h1 class="public-hero-title">
-                Read and Browse <span class="public-hero-title-accent">Newspapers and Magazines</span>
-            </h1>
-            <div class="public-search-wrapper">
-                <form method="GET" action="" id="publicSearchForm">
-                    <?php if ($categoryFilter): ?>
-                        <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
-                    <?php endif; ?>
-                    <div class="public-search-bar">
-                        <i class="bi bi-search"></i>
-                        <input type="text" class="public-search-input" id="publicSearchInput" name="q"
-                            placeholder="Search over 100 years of history..."
-                            value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
-                        <button type="button"
-                            class="public-search-clear <?= empty($searchQuery) ? 'd-none' : '' ?>"
-                            id="publicSearchClear" title="Clear search">
-                            <i class="bi bi-x-lg"></i>
+            <nav class="public-nav navbar-collapse collapse" id="publicNavCollapse">
+                <a href="<?= route_url('home') ?>" class="public-nav-link <?= !isset($_GET['view']) || $_GET['view'] !== 'browse' ? 'active' : '' ?>">
+                    <i class="bi bi-house-door"></i>
+                    Home
+                </a>
+                <a href="<?= route_url('browse') ?>" class="public-nav-link <?= isset($_GET['view']) && $_GET['view'] === 'browse' ? 'active' : '' ?>">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    Browse
+                </a>
+            </nav>
+        </div>
+
+        <div class="public-header-center">
+            <a href="<?= route_url('home') ?>" class="public-header-brand public-header-brand-center">
+                <img src="<?= APP_URL ?>/assets/images/public_logo.png" alt="QCPL Logo" class="public-header-logo">
+                <span class="public-header-brand-name">Quezon City Public Library</span>
+            </a>
+
+            <form method="GET" action="<?= route_url('home') ?>" id="publicHeaderSearchForm" class="public-header-search" role="search">
+                <?php if ($categoryFilter): ?>
+                    <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
+                <?php endif; ?>
+                <label for="publicHeaderSearchInput" class="visually-hidden">Search archives</label>
+                <div class="public-header-search-bar">
+                    <i class="bi bi-search"></i>
+                    <input
+                        type="text"
+                        id="publicHeaderSearchInput"
+                        class="public-header-search-input"
+                        name="q"
+                        placeholder="Search archives..."
+                        value="<?= htmlspecialchars($searchQuery) ?>"
+                        autocomplete="off">
+                    <button type="button" class="public-header-search-clear" id="publicHeaderSearchClear" aria-label="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <button type="submit" class="public-header-search-submit">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="public-header-actions">
+            <button type="button" class="public-header-icon-btn" id="publicHeaderSearchToggle" aria-label="Open search" aria-expanded="false">
+                <i class="bi bi-search"></i>
+            </button>
+
+            <div class="dropdown">
+                <button
+                    class="public-header-icon-btn"
+                    type="button"
+                    id="publicHeaderMenuToggle"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Open menu">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end public-header-menu" aria-labelledby="publicHeaderMenuToggle">
+                    <li>
+                        <button id="adminLoginTrigger" class="dropdown-item public-header-menu-item" type="button">
+                            <i class="bi bi-person-lock"></i>
+                            <span>Admin Login</span>
                         </button>
-                        <button type="submit" class="public-search-btn">Search</button>
-                    </div>
-                    <div class="public-adv-search-panel" id="publicAdvSearchPanel">
-                        <a href="<?= route_url('browse') ?>" class="public-adv-inline-link" id="publicAdvSearchLink">
-                            <i class="bi bi-sliders2"></i>
-                            Advanced Search
-                        </a>
-                    </div>
-                </form>
+                    </li>
+                </ul>
             </div>
         </div>
-    </section>
+    </header>
 
     <div id="publicContentArea">
     <!-- ==================== FILE GRID / CATALOG ==================== -->
@@ -130,12 +139,12 @@
                         <i class="bi bi-newspaper"></i>
                     </div>
                 <?php endif; ?>
-                <?php if ($catName !== 'Uncategorized'): ?>
-                    <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
-                <?php endif; ?>
             </div>
 
             <div class="public-file-info">
+                <?php if ($catName !== 'Uncategorized'): ?>
+                    <span class="public-file-category-top <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
+                <?php endif; ?>
                 <div class="public-file-title"><?= htmlspecialchars($paper['title']) ?></div>
                 <?php if ($pubDate): ?>
                     <div class="public-file-date"><?= htmlspecialchars(formatPublicationDate($pubDate)) ?></div>
@@ -164,14 +173,15 @@
                 </div>
             </div>
             <?php if (empty($documents)): ?>
-                <div class="public-empty-state">
+                <div class="public-empty-state public-empty-state-search">
                     <i class="bi bi-search"></i>
                     <h5>No Results Found</h5>
-                    <p style="font-size: 14px;">We couldn't find any documents matching your criteria.</p>
-                    <a href="<?= route_url('home') ?>" class="public-read-btn"
-                        style="width: auto; display: inline-flex; margin-top: 16px; padding: 10px 24px;">
-                        Browse All
-                    </a>
+                    <p>We couldn't find any documents matching your search. Try another keyword, or open the full archive catalog.</p>
+                    <div class="public-empty-state-actions">
+                        <a href="<?= route_url('browse') ?>" class="public-read-btn public-empty-state-browse-btn">
+                            Browse All Archives
+                        </a>
+                    </div>
                 </div>
             <?php else: ?>
                 <div class="row g-4">
@@ -201,12 +211,12 @@
                                             <i class="bi bi-newspaper"></i>
                                         </div>
                                     <?php endif; ?>
-                                    <?php if ($catName !== 'Uncategorized'): ?>
-                                        <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
-                                    <?php endif; ?>
                                 </div>
 
                                 <div class="public-file-info">
+                                    <?php if ($catName !== 'Uncategorized'): ?>
+                                        <span class="public-file-category-top <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
+                                    <?php endif; ?>
                                     <div class="public-file-title">
                                         <?= pubHighlight($paper['title'], $searchQuery) ?>
                                     </div>
@@ -312,7 +322,7 @@
                                 <span class="catalog-shelf-count"><?= number_format($shelf['total']) ?></span>
                             </div>
                             <?php if ($shelf['type'] !== 'All Archives'): ?>
-                                <a href="<?= route_url('browse', ['publication_type' => $shelf['type']]) ?>" class="catalog-see-all">
+                                <a href="<?= htmlspecialchars($shelf['see_all_url'] ?? route_url('browse', ['publication_type' => $shelf['type']])) ?>" class="catalog-see-all">
                                     See All <i class="bi bi-arrow-right"></i>
                                 </a>
                             <?php else: ?>
@@ -364,13 +374,13 @@
                                                     <i class="bi bi-newspaper"></i>
                                                 </div>
                                             <?php endif; ?>
-                                            <?php if ($catName !== 'Uncategorized'): ?>
-                                                <span class="pub-thumb-badge <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
-                                            <?php endif; ?>
                                         </div>
 
                                         <!-- Card Info -->
                                         <div class="catalog-card-info">
+                                            <?php if ($catName !== 'Uncategorized'): ?>
+                                                <span class="public-file-category-top <?= $catClass ?>"><?= htmlspecialchars($catName) ?></span>
+                                            <?php endif; ?>
                                             <div class="catalog-card-title"><?= htmlspecialchars($paper['title']) ?></div>
                                             <?php if ($pubDate): ?>
                                                 <div class="catalog-card-date"><?= htmlspecialchars(formatPublicationDate($pubDate)) ?></div>
