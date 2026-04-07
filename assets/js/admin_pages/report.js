@@ -9,12 +9,14 @@
     // State
     const state = {
         search: '',
+        reportType: 'most_viewed',
         period: 'all',
         startDate: '',
         endDate: '',
         limit: 10,
         page: 1,
-        total: 0
+        total: 0,
+        exportMode: 'print'
     };
 
     let searchTimer = null;
@@ -22,7 +24,6 @@
     // DOM Elements
     const searchInput = document.getElementById('reportSearch');
     const periodSelect = document.getElementById('reportPeriod');
-    const customDateContainer = document.getElementById('customDateRange');
     const startDateInput = document.getElementById('reportStartDate');
     const endDateInput = document.getElementById('reportEndDate');
     const reportDateActions = document.getElementById('reportDateActions');
@@ -33,12 +34,16 @@
     const btnNext = document.getElementById('btnNextPage');
     const paginationInfo = document.getElementById('reportPaginationInfo');
 
+    const tableHead = document.getElementById('reportTableHead');
     const tableBody = document.getElementById('reportTableBody');
+    const reportTabMostViewed = document.getElementById('reportTabMostViewed');
+    const reportTabFileSummary = document.getElementById('reportTabFileSummary');
     let currentFileId = null;
 
     // Init
     initEvents();
     updateDateTime();
+    renderTableHead();
     updateClearDatesVisibility();
     fetchReportData();
     setInterval(updateDateTime, 1000);
@@ -60,11 +65,6 @@
         if (periodSelect) {
             periodSelect.addEventListener('change', (e) => {
                 state.period = e.target.value;
-                // If they manually select a period, clear explicitly set custom dates
-                if (startDateInput) startDateInput.value = '';
-                if (endDateInput) endDateInput.value = '';
-                state.startDate = '';
-                state.endDate = '';
                 updateClearDatesVisibility();
                 state.page = 1;
                 fetchReportData();
@@ -76,12 +76,8 @@
             startDateInput.addEventListener('change', (e) => {
                 state.startDate = e.target.value;
                 updateClearDatesVisibility();
-                if (state.startDate && state.endDate) {
-                    periodSelect.value = 'all'; // visually reset
-                    state.period = 'custom';
-                    state.page = 1;
-                    fetchReportData();
-                }
+                state.page = 1;
+                fetchReportData();
             });
         }
 
@@ -89,12 +85,8 @@
             endDateInput.addEventListener('change', (e) => {
                 state.endDate = e.target.value;
                 updateClearDatesVisibility();
-                if (state.startDate && state.endDate) {
-                    periodSelect.value = 'all'; // visually reset
-                    state.period = 'custom';
-                    state.page = 1;
-                    fetchReportData();
-                }
+                state.page = 1;
+                fetchReportData();
             });
         }
 
@@ -113,86 +105,25 @@
             });
         }
 
-        // Export CSV logic with Modal
-        const exportCsvBtnEl = document.getElementById('exportCsvBtn');
+        if (reportTabMostViewed) {
+            reportTabMostViewed.addEventListener('click', () => {
+                switchReportType('most_viewed');
+            });
+        }
 
-        if (exportCsvBtnEl) {
-            exportCsvBtnEl.addEventListener('click', () => {
-                const now = new Date();
+        if (reportTabFileSummary) {
+            reportTabFileSummary.addEventListener('click', () => {
+                switchReportType('file_summary');
+            });
+        }
 
-                // Helper: format a Date to "Month DD, YYYY"
-                const fmt = (d) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                // Helper: format a yyyy-mm-dd string to "Month DD, YYYY"
-                const fmtStr = (s) => fmt(new Date(s + 'T00:00:00'));
+        // Export logic with Modal
+        const exportPdfBtnEl = document.getElementById('exportPdfBtn');
 
-                let periodLabel = '';
-                let dateRangeText = '';
-                let badgeClass = 'bg-primary bg-opacity-10 text-primary border border-primary-subtle';
-
-                if (state.period === 'today') {
-                    periodLabel = 'Today';
-                    dateRangeText = fmt(now);
-                    badgeClass = 'bg-info bg-opacity-10 text-info border border-info-subtle';
-
-                } else if (state.period === 'weekly') {
-                    const weekStart = new Date(now);
-                    weekStart.setDate(now.getDate() - 6);
-                    periodLabel = 'This Week';
-                    dateRangeText = `${fmt(weekStart)} &ndash; ${fmt(now)}`;
-                    badgeClass = 'bg-success bg-opacity-10 text-success border border-success-subtle';
-
-                } else if (state.period === 'monthly') {
-                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                    periodLabel = 'This Month';
-                    dateRangeText = `${fmt(monthStart)} &ndash; ${fmt(now)}`;
-                    badgeClass = 'bg-warning bg-opacity-10 text-warning border border-warning-subtle';
-
-                } else if (state.period === 'yearly') {
-                    const yearStart = new Date(now.getFullYear(), 0, 1);
-                    periodLabel = 'This Year';
-                    dateRangeText = `${fmt(yearStart)} &ndash; ${fmt(now)}`;
-                    badgeClass = 'bg-danger bg-opacity-10 text-danger border border-danger-subtle';
-
-                } else if (state.period === 'custom' && state.startDate && state.endDate) {
-                    periodLabel = 'Custom Date Range';
-                    dateRangeText = `${fmtStr(state.startDate)} &ndash; ${fmtStr(state.endDate)}`;
-                    badgeClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle';
-
-                } else {
-                    periodLabel = 'All Time';
-                    dateRangeText = 'All available records';
-                }
-
-                // Build modal content (avoid template literals to prevent encoding issues)
-                var msgParts = [];
-                msgParts.push('<div class="mb-3">');
-                msgParts.push('<span class="badge rounded-pill px-3 py-2 ' + badgeClass + '" style="font-size:12px;font-weight:600;letter-spacing:.5px;">');
-                msgParts.push('<i class="bi bi-clock-history me-1"></i>' + periodLabel);
-                msgParts.push('</span></div>');
-                msgParts.push('<p class="mb-2 text-secondary" style="font-size:14px;">You are about to export the <strong>Most Read Files</strong> report covering:</p>');
-                msgParts.push('<div class="rounded-3 px-3 py-2 mb-3" style="background:#f8f9fa;border:1px solid #e9ecef;font-size:13px;">');
-                msgParts.push('<i class="bi bi-calendar-range me-2 text-muted"></i><strong>' + dateRangeText + '</strong>');
-                msgParts.push('</div>');
-
-                if (state.search) {
-                    msgParts.push('<div class="rounded-3 px-3 py-2 mb-3" style="background:#fff3cd;border:1px solid #ffc107;font-size:13px;">');
-                    msgParts.push('<i class="bi bi-funnel me-2 text-warning"></i>Filtered by keyword: <strong>"' + state.search + '"</strong>');
-                    msgParts.push('</div>');
-                }
-
-                msgParts.push('<p class="mb-0 text-muted" style="font-size:13px;">The CSV file will open correctly in Excel and other spreadsheet apps.</p>');
-
-                // Look up at runtime — modal HTML lives after this script tag
-                var msgEl = document.getElementById('exportModalMessage');
-                if (msgEl) {
-                    msgEl.innerHTML = msgParts.join('');
-                }
-
-                // Use getOrCreateInstance to avoid stale references
-                const exportModalEl2 = document.getElementById('exportModal');
-                if (exportModalEl2) {
-                    bootstrap.Modal.getOrCreateInstance(exportModalEl2).show();
-                }
+        if (exportPdfBtnEl) {
+            exportPdfBtnEl.addEventListener('click', () => {
+                state.exportMode = 'print';
+                openExportModal();
             });
         }
 
@@ -201,13 +132,31 @@
             var btn = e.target && e.target.id === 'confirmExportBtn' ? e.target : (e.target && e.target.closest ? e.target.closest('#confirmExportBtn') : null);
             if (btn) {
                 const params = new URLSearchParams({
-                    export: 'csv',
+                    export: 'print',
+                    report_type: state.reportType,
                     search: state.search,
                     period: state.period,
                     start_date: state.startDate,
                     end_date: state.endDate
                 });
-                window.location.href = `${APP_URL}/backend/api/report.php?${params.toString()}`;
+
+                const url = `${APP_URL}/backend/api/report.php?${params.toString()}`;
+                fetch(url, { credentials: 'same-origin' })
+                    .then(response => response.text())
+                    .then(html => {
+                        const printWindow = window.open('', '_blank');
+                        if (!printWindow) {
+                            window.location.href = url;
+                            return;
+                        }
+
+                        printWindow.document.open();
+                        printWindow.document.write(html);
+                        printWindow.document.close();
+                    })
+                    .catch(() => {
+                        window.location.href = url;
+                    });
 
                 const exportModalEl2 = document.getElementById('exportModal');
                 if (exportModalEl2) {
@@ -218,17 +167,78 @@
         });
     }
 
+    function switchReportType(type) {
+        if (state.reportType === type) {
+            return;
+        }
+
+        state.reportType = type;
+        state.page = 1;
+
+        if (reportTabMostViewed) {
+            const isActive = type === 'most_viewed';
+            reportTabMostViewed.classList.toggle('active', isActive);
+            reportTabMostViewed.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+
+        if (reportTabFileSummary) {
+            const isActive = type === 'file_summary';
+            reportTabFileSummary.classList.toggle('active', isActive);
+            reportTabFileSummary.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+
+        renderTableHead();
+        fetchReportData();
+    }
+
+    function renderTableHead() {
+        if (!tableHead) {
+            return;
+        }
+
+        if (state.reportType === 'most_viewed') {
+            tableHead.innerHTML = `
+                <tr>
+                    <th class="ps-4 py-3 text-uppercase text-secondary" style="width: 80px; text-align: center;">Rank</th>
+                    <th class="py-3 text-uppercase text-secondary" style="width: 100px;">Thumbnail</th>
+                    <th class="py-3 text-uppercase text-secondary">Title</th>
+                    <th class="py-3 text-uppercase text-secondary" style="width: 14%">Publication Type</th>
+                    <th class="py-3 text-uppercase text-secondary" style="width: 14%">Category</th>
+                    <th class="text-end pe-4 py-3 text-uppercase text-secondary" style="width: 14%">Total Views</th>
+                </tr>
+            `;
+            return;
+        }
+
+        tableHead.innerHTML = `
+            <tr>
+                <th class="ps-4 py-3 text-uppercase text-secondary" style="width: 80px; text-align: center;">Rank</th>
+                <th class="py-3 text-uppercase text-secondary" style="width: 100px;">Thumbnail</th>
+                <th class="py-3 text-uppercase text-secondary">Title</th>
+                <th class="py-3 text-uppercase text-secondary" style="width: 12%">Publication Type</th>
+                <th class="py-3 text-uppercase text-secondary" style="width: 12%">Category</th>
+                <th class="py-3 text-uppercase text-secondary" style="width: 12%">Uploader</th>
+                <th class="py-3 text-uppercase text-secondary" style="width: 12%">Uploaded At</th>
+                <th class="text-end pe-4 py-3 text-uppercase text-secondary" style="width: 10%">File Size</th>
+            </tr>
+        `;
+    }
+
+    function getCurrentColspan() {
+        return state.reportType === 'most_viewed' ? 6 : 8;
+    }
+
     function updateClearDatesVisibility() {
         if (!reportDateActions) {
             return;
         }
 
-        const hasCustomDates = Boolean(
+        const hasDateFilters = Boolean(
             (startDateInput && startDateInput.value) ||
             (endDateInput && endDateInput.value)
         );
 
-        reportDateActions.classList.toggle('d-none', !hasCustomDates);
+        reportDateActions.classList.toggle('d-none', !hasDateFilters);
     }
 
     function clearDateFilters() {
@@ -237,7 +247,6 @@
 
         state.startDate = '';
         state.endDate = '';
-        state.period = periodSelect ? periodSelect.value : 'all';
         state.page = 1;
 
         updateClearDatesVisibility();
@@ -248,6 +257,7 @@
         setLoading(true);
 
         const params = new URLSearchParams({
+            report_type: state.reportType,
             search: state.search,
             period: state.period,
             start_date: state.startDate,
@@ -277,13 +287,101 @@
             });
     }
 
+    function openExportModal() {
+        const now = new Date();
+        const fmt = (d) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const fmtStr = (s) => fmt(new Date(s + 'T00:00:00'));
+
+        let periodLabel = 'All Time';
+        let dateRangeText = 'All available records';
+        let badgeClass = 'bg-primary bg-opacity-10 text-primary border border-primary-subtle';
+
+        if (state.period === 'daily') {
+            periodLabel = 'Daily';
+            dateRangeText = fmt(now);
+            badgeClass = 'bg-info bg-opacity-10 text-info border border-info-subtle';
+        } else if (state.period === 'weekly') {
+            const day = now.getDay();
+            const diffToMonday = day === 0 ? 6 : day - 1;
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - diffToMonday);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            periodLabel = 'This Week';
+            dateRangeText = `${fmt(weekStart)} - ${fmt(weekEnd)}`;
+            badgeClass = 'bg-success bg-opacity-10 text-success border border-success-subtle';
+        } else if (state.period === 'monthly') {
+            periodLabel = 'This Month';
+            dateRangeText = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            badgeClass = 'bg-warning bg-opacity-10 text-warning border border-warning-subtle';
+        } else if (state.period === 'yearly') {
+            periodLabel = 'This Year';
+            dateRangeText = now.getFullYear().toString();
+            badgeClass = 'bg-danger bg-opacity-10 text-danger border border-danger-subtle';
+        }
+
+        if (state.startDate && state.endDate) {
+            periodLabel = 'Date Range';
+            dateRangeText = `${fmtStr(state.startDate)} - ${fmtStr(state.endDate)}`;
+            badgeClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle';
+        } else if (state.startDate) {
+            periodLabel = 'Date Range';
+            dateRangeText = `${fmtStr(state.startDate)} onward`;
+            badgeClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle';
+        } else if (state.endDate) {
+            periodLabel = 'Date Range';
+            dateRangeText = `Until ${fmtStr(state.endDate)}`;
+            badgeClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle';
+        }
+
+        const formatName = 'PDF / Print';
+        const reportTypeLabel = state.reportType === 'most_viewed' ? 'Most Viewed File' : 'File Summary';
+        const formatHint = 'A print-ready view will open in a new tab. Save it as PDF from the print dialog.';
+
+        const msgParts = [];
+        msgParts.push('<div class="mb-3">');
+        msgParts.push('<span class="badge rounded-pill px-3 py-2 ' + badgeClass + '" style="font-size:12px;font-weight:600;letter-spacing:.5px;">');
+        msgParts.push('<i class="bi bi-clock-history me-1"></i>' + periodLabel);
+        msgParts.push('</span></div>');
+        msgParts.push('<p class="mb-2 text-secondary" style="font-size:14px;">You are about to export the <strong>' + reportTypeLabel + '</strong> report in <strong>' + formatName + '</strong> format:</p>');
+        msgParts.push('<div class="rounded-3 px-3 py-2 mb-3" style="background:#f8f9fa;border:1px solid #e9ecef;font-size:13px;">');
+        msgParts.push('<i class="bi bi-calendar-range me-2 text-muted"></i><strong>' + dateRangeText + '</strong>');
+        msgParts.push('</div>');
+
+        if (state.search) {
+            msgParts.push('<div class="rounded-3 px-3 py-2 mb-3" style="background:#fff3cd;border:1px solid #ffc107;font-size:13px;">');
+            msgParts.push('<i class="bi bi-funnel me-2 text-warning"></i>Filtered by keyword: <strong>"' + escapeHtml(state.search) + '"</strong>');
+            msgParts.push('</div>');
+        }
+
+        msgParts.push('<p class="mb-0 text-muted" style="font-size:13px;">' + formatHint + '</p>');
+
+        const msgEl = document.getElementById('exportModalMessage');
+        const titleEl = document.getElementById('exportModalLabel');
+        const confirmBtn = document.getElementById('confirmExportBtn');
+        if (msgEl) {
+            msgEl.innerHTML = msgParts.join('');
+        }
+        if (titleEl) {
+            titleEl.textContent = 'Export PDF Report';
+        }
+        if (confirmBtn) {
+            confirmBtn.innerHTML = '<i class="bi bi-printer"></i> Open Print View';
+        }
+
+        const exportModalEl = document.getElementById('exportModal');
+        if (exportModalEl) {
+            bootstrap.Modal.getOrCreateInstance(exportModalEl).show();
+        }
+    }
+
     function renderTable(data) {
         if (!data || data.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center py-5 text-muted">
+                    <td colspan="${getCurrentColspan()}" class="text-center py-5 text-muted">
                         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                        No recorded views found for the selected criteria.
+                        No records found for the selected criteria.
                     </td>
                 </tr>
             `;
@@ -303,37 +401,75 @@
                 : `<div class="report-thumbnail-placeholder"><i class="bi bi-file-earmark-text"></i></div>`;
 
             let typeBadge = '';
+            let categoryBadge = '';
 
             // Use publication_type provided by the backend API
-            let pubType = item.publication_type || item.file_type || 'Document';
+            let pubType = item.publication_type || '-';
+            let category = item.category || '-';
 
             if (pubType.toLowerCase() === 'newspaper') {
                 typeBadge = `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">Newspaper</span>`;
             } else if (pubType.toLowerCase() === 'magazine') {
                 typeBadge = `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle">Magazine</span>`;
             } else {
-                typeBadge = `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle">${escapeHtml(pubType || 'Document')}</span>`;
+                typeBadge = `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle">${escapeHtml(pubType)}</span>`;
             }
 
-            html += `
-                <tr class="report-row-link" data-report-index="${index}">
-                    <td class="text-center">
-                        <span class="rank-badge ${rankClass}">${rank}</span>
-                    </td>
-                    <td>
-                        ${thumbHtml}
-                    </td>
-                    <td class="report-title-cell">
-                        ${escapeHtml(item.title)}
-                    </td>
-                    <td>
-                        ${typeBadge}
-                    </td>
-                    <td class="text-end report-views-cell">
-                        ${parseInt(item.view_count).toLocaleString()}
-                    </td>
-                </tr>
-            `;
+            categoryBadge = `<span class="badge bg-info bg-opacity-10 text-info border border-info-subtle">${escapeHtml(category)}</span>`;
+
+            if (state.reportType === 'most_viewed') {
+                html += `
+                    <tr class="report-row-link" data-report-index="${index}">
+                        <td class="text-center">
+                            <span class="rank-badge ${rankClass}">${rank}</span>
+                        </td>
+                        <td>
+                            ${thumbHtml}
+                        </td>
+                        <td class="report-title-cell">
+                            ${escapeHtml(item.title)}
+                        </td>
+                        <td>
+                            ${typeBadge}
+                        </td>
+                        <td>
+                            ${categoryBadge}
+                        </td>
+                        <td class="text-end report-views-cell">
+                            ${Number(item.total_views || 0).toLocaleString()}
+                        </td>
+                    </tr>
+                `;
+            } else {
+                html += `
+                    <tr class="report-row-link" data-report-index="${index}">
+                        <td class="text-center">
+                            <span class="rank-badge ${rankClass}">${rank}</span>
+                        </td>
+                        <td>
+                            ${thumbHtml}
+                        </td>
+                        <td class="report-title-cell">
+                            ${escapeHtml(item.title)}
+                        </td>
+                        <td>
+                            ${typeBadge}
+                        </td>
+                        <td>
+                            ${categoryBadge}
+                        </td>
+                        <td>
+                            ${escapeHtml(item.uploader_name || 'Unknown User')}
+                        </td>
+                        <td>
+                            ${formatDateTime(item.created_at)}
+                        </td>
+                        <td class="text-end report-views-cell">
+                            ${formatFileSize(Number(item.file_size || 0))}
+                        </td>
+                    </tr>
+                `;
+            }
         });
 
         tableBody.innerHTML = html;
@@ -393,7 +529,7 @@
         }
 
         if (reportPreviewCategory) {
-            const categoryText = (item.publication_type || 'Document').toUpperCase();
+            const categoryText = (item.category || item.publication_type || 'DOCUMENT').toUpperCase();
             reportPreviewCategory.textContent = categoryText;
             reportPreviewCategory.className = 'public-modal-category-badge';
             reportPreviewCategory.style.display = '';
@@ -414,7 +550,7 @@
         }
 
         if (editBtn) {
-            editBtn.href = `${APP_URL}/upload?edit=${item.id}`;
+            editBtn.href = `${APP_URL}/upload?edit=${item.id}&return_to=report`;
         }
 
         if (deleteBtn) {
@@ -563,7 +699,14 @@
         html.push(`
             <div class="public-modal-meta-row">
                 <span class="public-modal-meta-label"><i class="bi bi-bar-chart-line"></i> Total Views</span>
-                <span class="public-modal-meta-value report-total-views-value">${Number(item.view_count || 0).toLocaleString()}</span>
+                <span class="public-modal-meta-value report-total-views-value">${Number(item.total_views || 0).toLocaleString()}</span>
+            </div>
+        `);
+
+        html.push(`
+            <div class="public-modal-meta-row">
+                <span class="public-modal-meta-label"><i class="bi bi-clock-history"></i> Uploaded At</span>
+                <span class="public-modal-meta-value report-total-views-value">${escapeHtml(formatDateTime(item.created_at))}</span>
             </div>
         `);
 
@@ -571,6 +714,13 @@
             <div class="public-modal-meta-row">
                 <span class="public-modal-meta-label"><i class="bi bi-file-earmark"></i> Format</span>
                 <span class="public-format-badge">${escapeHtml(String(item.file_type || 'Document').toUpperCase())}</span>
+            </div>
+        `);
+
+        html.push(`
+            <div class="public-modal-meta-row">
+                <span class="public-modal-meta-label"><i class="bi bi-hdd"></i> File Size</span>
+                <span class="public-modal-meta-value">${escapeHtml(formatFileSize(Number(item.file_size || 0)))}</span>
             </div>
         `);
 
@@ -670,6 +820,10 @@
             const prevDisabled = state.page <= 1 ? 'disabled' : '';
             html += `<button class="pagination-circle ${prevDisabled}" id="btnReportPrev"><i class="bi bi-chevron-left"></i></button>`;
 
+            if (totalPages === 0) {
+                html += '<button class="pagination-circle active" data-page="1">1</button>';
+            }
+
             // Page Numbers
             const startPage = Math.max(1, state.page - 2);
             const endPage = Math.min(totalPages, state.page + 2);
@@ -729,7 +883,7 @@
         if (isLoading) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center py-5">
+                    <td colspan="${getCurrentColspan()}" class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
@@ -742,11 +896,48 @@
     function showError(message) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center py-4 text-danger">
+                <td colspan="${getCurrentColspan()}" class="text-center py-4 text-danger">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i> ${message}
                 </td>
             </tr>
         `;
+    }
+
+    function formatDateTime(value) {
+        if (!value) {
+            return '-';
+        }
+
+        const date = new Date(value.replace(' ', 'T'));
+        if (Number.isNaN(date.getTime())) {
+            return String(value);
+        }
+
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (!Number.isFinite(bytes) || bytes <= 0) {
+            return '0 B';
+        }
+
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex += 1;
+        }
+
+        const decimals = unitIndex === 0 ? 0 : 2;
+        return `${size.toFixed(decimals)} ${units[unitIndex]}`;
     }
 
     function escapeHtml(unsafe) {

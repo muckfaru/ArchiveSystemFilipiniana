@@ -13,10 +13,6 @@ require_once __DIR__ . '/../backend/core/functions.php';
 // Get alert message
 $alert = getAlert();
 
-// Get categories and languages
-$categories = getCategories();
-$languages = getLanguages();
-
 // Get active form template and its fields (with fallback if tables don't exist)
 $activeForm = null;
 $formFields = [];

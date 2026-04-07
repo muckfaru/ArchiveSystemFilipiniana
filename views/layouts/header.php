@@ -15,6 +15,8 @@ require_once __DIR__ . '/../../backend/core/config.php';
         <?= APP_NAME ?>
     </title>
 
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
+
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"

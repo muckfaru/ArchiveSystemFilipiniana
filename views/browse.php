@@ -1,6 +1,6 @@
 <?php
 // Helper function to build URL with filter arrays
-function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, $dateTo, $sort, $pubType = '') {
+function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, $dateTo, $sort, $pubType = '', $featuredCollectionFilter = [], $popularCollectionFilter = []) {
     $params = [];
     if ($search) $params[] = 'q=' . urlencode($search);
     foreach ($categories as $cat) {
@@ -16,6 +16,12 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     if ($dateTo) $params[] = 'date_to=' . urlencode($dateTo);
     if ($sort) $params[] = 'sort=' . urlencode($sort);
     if ($pubType) $params[] = 'publication_type=' . urlencode($pubType);
+    foreach ($featuredCollectionFilter as $featuredSlug) {
+        $params[] = 'featured_collection[]=' . urlencode($featuredSlug);
+    }
+    foreach ($popularCollectionFilter as $popularSlug) {
+        $params[] = 'popular_collection[]=' . urlencode($popularSlug);
+    }
     return '?' . implode('&', $params);
 }
 ?>
@@ -26,6 +32,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Archives - Quezon City Public Library</title>
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
     <meta name="description" content="Browse and filter through our comprehensive digital archive collection.">
 
     <!-- Google Fonts -->
@@ -94,6 +101,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
 </head>
 
 <body class="public-page browse-page">
+    <div class="public-search-focus-backdrop" id="publicSearchFocusBackdrop" aria-hidden="true"></div>
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
@@ -145,6 +153,12 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                 <?php if ($publicationType): ?>
                     <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
                 <?php endif; ?>
+                <?php foreach ($featuredCollectionFilter as $featuredSlug): ?>
+                    <input type="hidden" name="featured_collection[]" value="<?= htmlspecialchars($featuredSlug) ?>">
+                <?php endforeach; ?>
+                <?php foreach ($popularCollectionFilter as $popularSlug): ?>
+                    <input type="hidden" name="popular_collection[]" value="<?= htmlspecialchars($popularSlug) ?>">
+                <?php endforeach; ?>
                 <label for="publicHeaderSearchInput" class="visually-hidden">Search archives</label>
                 <div class="public-header-search-bar">
                     <i class="bi bi-search"></i>
@@ -160,6 +174,9 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <i class="bi bi-x-lg"></i>
                     </button>
                     <button type="submit" class="public-header-search-submit">Search</button>
+                </div>
+                <div class="public-header-search-surface" id="publicHeaderSearchSurface" aria-hidden="true">
+                    <div class="public-header-search-results" id="publicHeaderSearchResults"></div>
                 </div>
             </form>
         </div>
@@ -198,7 +215,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
         <aside class="browse-sidebar-redesign">
             <div class="browse-sidebar-header">
                 <h3 class="browse-sidebar-title">Filters</h3>
-                <?php if ($searchQuery || $categoryFilter || $languageFilter || $editionFilter || $dateFrom || $dateTo || $publicationType): ?>
+                <?php if ($searchQuery || $categoryFilter || $languageFilter || $editionFilter || $dateFrom || $dateTo || $publicationType || $featuredCollectionFilter || $popularCollectionFilter): ?>
                     <a href="<?= route_url('browse') ?>" class="browse-clear-all">
                         <i class="bi bi-x-circle"></i>
                         Clear all
@@ -218,7 +235,7 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <li class="browse-category-item-redesign">
                             <label class="browse-checkbox-label">
                                 <input type="checkbox" name="category" <?= empty($categoryFilter) ? 'checked' : '' ?> 
-                                    onchange="if(this.checked) window.location.href='<?= buildFilterUrl([], $searchQuery, $languageFilter, $editionFilter, $dateFrom, $dateTo, $sortFilter, $publicationType) ?>'">
+                                    onchange="if(this.checked) window.location.href='<?= buildFilterUrl([], $searchQuery, $languageFilter, $editionFilter, $dateFrom, $dateTo, $sortFilter, $publicationType, $featuredCollectionFilter, $popularCollectionFilter) ?>'">
                                 <span>All Categories</span>
                                 <span class="browse-count-badge"><?= number_format($totalCollectionsCount) ?></span>
                             </label>
@@ -263,6 +280,72 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                                             onchange="if(this.checked) togglePublicationType('<?= addslashes($type['publication_type']) ?>')">
                                         <span><?= htmlspecialchars($type['publication_type']) ?></span>
                                         <span class="browse-count-badge"><?= number_format($type['count']) ?></span>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($popularCollectionsWithCounts)): ?>
+                <div class="browse-filter-section">
+                    <button class="browse-filter-toggle" type="button" data-target="popular-collections">
+                        <span>MOST POPULAR COLLECTIONS</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="browse-filter-content" id="popular-collections">
+                        <ul class="browse-category-list-redesign">
+                            <li class="browse-category-item-redesign">
+                                <label class="browse-checkbox-label">
+                                    <input type="checkbox" name="popular_collection_all" <?= empty($popularCollectionFilter) ? 'checked' : '' ?>
+                                        onchange="if(this.checked) clearPopularCollections()">
+                                    <span>All Popular Collections</span>
+                                    <span class="browse-count-badge"><?= number_format($totalCollectionsCount) ?></span>
+                                </label>
+                            </li>
+                            <?php foreach ($popularCollectionsWithCounts as $collection): ?>
+                                <?php if (strcasecmp(trim((string) ($collection['name'] ?? '')), 'Homepage Featured Collection') === 0) continue; ?>
+                                <?php $isActive = in_array($collection['slug'], $popularCollectionFilter, true); ?>
+                                <li class="browse-category-item-redesign">
+                                    <label class="browse-checkbox-label">
+                                        <input type="checkbox" name="popular_collection[]" value="<?= htmlspecialchars($collection['slug']) ?>" <?= $isActive ? 'checked' : '' ?>
+                                            onchange="togglePopularCollection('<?= addslashes($collection['slug']) ?>', this.checked)">
+                                        <span><?= htmlspecialchars($collection['name']) ?></span>
+                                        <span class="browse-count-badge"><?= number_format($collection['count']) ?></span>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($featuredCollectionsWithCounts)): ?>
+                <div class="browse-filter-section">
+                    <button class="browse-filter-toggle" type="button" data-target="featured-collections">
+                        <span>FEATURED COLLECTIONS</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="browse-filter-content" id="featured-collections">
+                        <ul class="browse-category-list-redesign">
+                            <li class="browse-category-item-redesign">
+                                <label class="browse-checkbox-label">
+                                    <input type="checkbox" name="featured_collection_all" <?= empty($featuredCollectionFilter) ? 'checked' : '' ?>
+                                        onchange="if(this.checked) clearFeaturedCollections()">
+                                    <span>All Collections</span>
+                                    <span class="browse-count-badge"><?= number_format($totalCollectionsCount) ?></span>
+                                </label>
+                            </li>
+                            <?php foreach ($featuredCollectionsWithCounts as $collection): ?>
+                                <?php if (strcasecmp(trim((string) ($collection['name'] ?? '')), 'Homepage Featured Collection') === 0) continue; ?>
+                                <?php $isActive = in_array($collection['slug'], $featuredCollectionFilter, true); ?>
+                                <li class="browse-category-item-redesign">
+                                    <label class="browse-checkbox-label">
+                                        <input type="checkbox" name="featured_collection[]" value="<?= htmlspecialchars($collection['slug']) ?>" <?= $isActive ? 'checked' : '' ?>
+                                            onchange="toggleFeaturedCollection('<?= addslashes($collection['slug']) ?>', this.checked)">
+                                        <span><?= htmlspecialchars($collection['name']) ?></span>
+                                        <span class="browse-count-badge"><?= number_format($collection['count']) ?></span>
                                     </label>
                                 </li>
                             <?php endforeach; ?>
@@ -354,6 +437,12 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <?php if ($publicationType): ?>
                             <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
                         <?php endif; ?>
+                        <?php foreach ($featuredCollectionFilter as $featuredSlug): ?>
+                            <input type="hidden" name="featured_collection[]" value="<?= htmlspecialchars($featuredSlug) ?>">
+                        <?php endforeach; ?>
+                        <?php foreach ($popularCollectionFilter as $popularSlug): ?>
+                            <input type="hidden" name="popular_collection[]" value="<?= htmlspecialchars($popularSlug) ?>">
+                        <?php endforeach; ?>
                         
                         <div class="browse-date-inputs">
                             <div class="browse-date-input-group">
@@ -413,6 +502,12 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
                         <?php if ($publicationType): ?>
                             <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
                         <?php endif; ?>
+                        <?php foreach ($featuredCollectionFilter as $featuredSlug): ?>
+                            <input type="hidden" name="featured_collection[]" value="<?= htmlspecialchars($featuredSlug) ?>">
+                        <?php endforeach; ?>
+                        <?php foreach ($popularCollectionFilter as $popularSlug): ?>
+                            <input type="hidden" name="popular_collection[]" value="<?= htmlspecialchars($popularSlug) ?>">
+                        <?php endforeach; ?>
                         
                         <label for="sortSelect">Sort by:</label>
                         <select class="browse-sort-select-redesign" name="sort" id="sortSelect" onchange="this.form.submit()">
@@ -821,6 +916,8 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             const currentCategories = <?= json_encode($categoryFilter) ?>;
             const currentLanguages = <?= json_encode($languageFilter) ?>;
             const currentEditions = <?= json_encode($editionFilter) ?>;
+            const currentFeaturedCollections = <?= json_encode($featuredCollectionFilter) ?>;
+            const currentPopularCollections = <?= json_encode($popularCollectionFilter) ?>;
 
             if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
             currentCategories.forEach(c => params.append('category[]', c));
@@ -831,6 +928,119 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             params.set('sort', '<?= addslashes($sortFilter) ?>');
             params.set('view', '<?= addslashes($viewMode) ?>');
             if (pubType) params.set('publication_type', pubType);
+            currentFeaturedCollections.forEach(fc => params.append('featured_collection[]', fc));
+            currentPopularCollections.forEach(pc => params.append('popular_collection[]', pc));
+
+            window.location.href = '?' + params.toString();
+        }
+
+        // Featured collection filter toggle function
+        function toggleFeaturedCollection(collectionSlug, isChecked) {
+            const params = new URLSearchParams();
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            const currentFeaturedCollections = <?= json_encode($featuredCollectionFilter) ?>;
+            const currentPopularCollections = <?= json_encode($popularCollectionFilter) ?>;
+            const pubType = '<?= addslashes($publicationType) ?>';
+            let nextFeaturedCollections = [...currentFeaturedCollections];
+
+            if (isChecked) {
+                if (!nextFeaturedCollections.includes(collectionSlug)) {
+                    nextFeaturedCollections.push(collectionSlug);
+                }
+            } else {
+                nextFeaturedCollections = nextFeaturedCollections.filter(slug => slug !== collectionSlug);
+            }
+
+            if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
+            currentCategories.forEach(c => params.append('category[]', c));
+            currentLanguages.forEach(l => params.append('language[]', l));
+            currentEditions.forEach(e => params.append('edition[]', e));
+            if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
+            if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
+            params.set('sort', '<?= addslashes($sortFilter) ?>');
+            params.set('view', '<?= addslashes($viewMode) ?>');
+            if (pubType) params.set('publication_type', pubType);
+            nextFeaturedCollections.forEach(fc => params.append('featured_collection[]', fc));
+            currentPopularCollections.forEach(pc => params.append('popular_collection[]', pc));
+
+            window.location.href = '?' + params.toString();
+        }
+
+        function clearFeaturedCollections() {
+            const params = new URLSearchParams();
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            const pubType = '<?= addslashes($publicationType) ?>';
+            const currentPopularCollections = <?= json_encode($popularCollectionFilter) ?>;
+
+            if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
+            currentCategories.forEach(c => params.append('category[]', c));
+            currentLanguages.forEach(l => params.append('language[]', l));
+            currentEditions.forEach(e => params.append('edition[]', e));
+            if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
+            if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
+            params.set('sort', '<?= addslashes($sortFilter) ?>');
+            params.set('view', '<?= addslashes($viewMode) ?>');
+            if (pubType) params.set('publication_type', pubType);
+            currentPopularCollections.forEach(pc => params.append('popular_collection[]', pc));
+
+            window.location.href = '?' + params.toString();
+        }
+
+        function togglePopularCollection(collectionSlug, isChecked) {
+            const params = new URLSearchParams();
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            const currentFeaturedCollections = <?= json_encode($featuredCollectionFilter) ?>;
+            const currentPopularCollections = <?= json_encode($popularCollectionFilter) ?>;
+            const pubType = '<?= addslashes($publicationType) ?>';
+            let nextPopularCollections = [...currentPopularCollections];
+
+            if (isChecked) {
+                if (!nextPopularCollections.includes(collectionSlug)) {
+                    nextPopularCollections.push(collectionSlug);
+                }
+            } else {
+                nextPopularCollections = nextPopularCollections.filter(slug => slug !== collectionSlug);
+            }
+
+            if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
+            currentCategories.forEach(c => params.append('category[]', c));
+            currentLanguages.forEach(l => params.append('language[]', l));
+            currentEditions.forEach(e => params.append('edition[]', e));
+            if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
+            if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
+            params.set('sort', '<?= addslashes($sortFilter) ?>');
+            params.set('view', '<?= addslashes($viewMode) ?>');
+            if (pubType) params.set('publication_type', pubType);
+            currentFeaturedCollections.forEach(fc => params.append('featured_collection[]', fc));
+            nextPopularCollections.forEach(pc => params.append('popular_collection[]', pc));
+
+            window.location.href = '?' + params.toString();
+        }
+
+        function clearPopularCollections() {
+            const params = new URLSearchParams();
+            const currentCategories = <?= json_encode($categoryFilter) ?>;
+            const currentLanguages = <?= json_encode($languageFilter) ?>;
+            const currentEditions = <?= json_encode($editionFilter) ?>;
+            const currentFeaturedCollections = <?= json_encode($featuredCollectionFilter) ?>;
+            const pubType = '<?= addslashes($publicationType) ?>';
+
+            if ('<?= addslashes($searchQuery) ?>') params.set('q', '<?= addslashes($searchQuery) ?>');
+            currentCategories.forEach(c => params.append('category[]', c));
+            currentLanguages.forEach(l => params.append('language[]', l));
+            currentEditions.forEach(e => params.append('edition[]', e));
+            if ('<?= addslashes($dateFrom) ?>') params.set('date_from', '<?= addslashes($dateFrom) ?>');
+            if ('<?= addslashes($dateTo) ?>') params.set('date_to', '<?= addslashes($dateTo) ?>');
+            params.set('sort', '<?= addslashes($sortFilter) ?>');
+            params.set('view', '<?= addslashes($viewMode) ?>');
+            if (pubType) params.set('publication_type', pubType);
+            currentFeaturedCollections.forEach(fc => params.append('featured_collection[]', fc));
 
             window.location.href = '?' + params.toString();
         }
@@ -848,6 +1058,10 @@ function buildFilterUrl($categories, $search, $languages, $editions, $dateFrom, 
             params.set('view', '<?= addslashes($viewMode) ?>');
             const pubType = '<?= addslashes($publicationType) ?>';
             if (pubType) params.set('publication_type', pubType);
+            const currentFeaturedCollections = <?= json_encode($featuredCollectionFilter) ?>;
+            currentFeaturedCollections.forEach(fc => params.append('featured_collection[]', fc));
+            const currentPopularCollections = <?= json_encode($popularCollectionFilter) ?>;
+            currentPopularCollections.forEach(pc => params.append('popular_collection[]', pc));
             
             window.location.href = '?' + params.toString();
         }

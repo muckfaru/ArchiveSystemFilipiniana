@@ -74,7 +74,7 @@ define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png'
 // Mac: /Applications/calibre.app/Contents/MacOS/ebook-convert
 // Linux: /usr/bin/ebook-convert
 // Leave empty string '' if Calibre is not installed (MOBI files will offer download instead)
-define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\Calibre Portable\\Calibre\\ebook-convert.exe');
+define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
 
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:
@@ -82,7 +82,7 @@ define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\Calibre Portable\\Calibre\\eb
 // 2. Generate an App Password at https://myaccount.google.com/apppasswords
 // 3. Replace the values below with your Gmail and App Password
 define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
+define('SMTP_PORT', 465);
 define('SMTP_USERNAME', 'archivesystemfilipiniana@gmail.com'); // Your Gmail address
 define('SMTP_PASSWORD', 'esth ctfj cuaq bswk'); // Your Gmail App Password
 define('SMTP_FROM_NAME', 'Archive System Periodical');

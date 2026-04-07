@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/../backend/core/config.php';
 require_once __DIR__ . '/../backend/core/functions.php';
+require_once __DIR__ . '/../backend/core/analytics.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
@@ -241,6 +242,45 @@ if ($isSearchMode) {
         }
     } catch (Throwable $e) {
         // If the featured tables are unavailable, fall back to the normal catalog shelves.
+    }
+
+    // Load most-viewed files so they appear after the featured shelf.
+    try {
+        $popularSql = "SELECT
+                            n.*,
+                            COUNT(v.id) AS view_count
+                       FROM newspapers n
+                       INNER JOIN newspaper_views v ON v.newspaper_id = n.id
+                       WHERE n.deleted_at IS NULL
+                       GROUP BY n.id
+                       ORDER BY view_count DESC, n.created_at DESC
+                       LIMIT 15";
+        $popularDocs = $pdo->query($popularSql)->fetchAll();
+
+        if (!empty($popularDocs)) {
+            applyTitleOverrides($popularDocs, $pdo);
+            attachMetadataToDocs($popularDocs, $pdo, $cardFields, $modalFields);
+
+            $popularCountStmt = $pdo->query("
+                SELECT COUNT(*) FROM (
+                    SELECT n.id
+                    FROM newspapers n
+                    INNER JOIN newspaper_views v ON v.newspaper_id = n.id
+                    WHERE n.deleted_at IS NULL
+                    GROUP BY n.id
+                ) popular_files
+            ");
+            $popularTotal = (int) $popularCountStmt->fetchColumn();
+
+            $catalogShelves[] = [
+                'type' => 'Most Popular Collection',
+                'docs' => $popularDocs,
+                'total' => $popularTotal,
+                'see_all_url' => route_url('browse'),
+            ];
+        }
+    } catch (Throwable $e) {
+        // If analytics storage is unavailable, skip the popular shelf.
     }
 
     // Get all distinct Publication Type values

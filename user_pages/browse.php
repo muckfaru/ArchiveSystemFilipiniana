@@ -31,6 +31,20 @@ $dateFrom = trim($_GET['date_from'] ?? '');
 $dateTo = trim($_GET['date_to'] ?? '');
 $sortFilter = $_GET['sort'] ?? 'newest';
 $publicationType = trim($_GET['publication_type'] ?? '');
+$featuredCollectionFilter = isset($_GET['featured_collection'])
+    ? (is_array($_GET['featured_collection']) ? $_GET['featured_collection'] : [$_GET['featured_collection']])
+    : [];
+$featuredCollectionFilter = array_values(array_filter(
+    $featuredCollectionFilter,
+    fn($f) => $f !== '' && $f !== 'all'
+));
+$popularCollectionFilter = isset($_GET['popular_collection'])
+    ? (is_array($_GET['popular_collection']) ? $_GET['popular_collection'] : [$_GET['popular_collection']])
+    : [];
+$popularCollectionFilter = array_values(array_filter(
+    $popularCollectionFilter,
+    fn($f) => $f !== '' && $f !== 'all'
+));
 
 // Convert year-only input to full date for SQL comparison
 $dateFromSql = $dateFrom;
@@ -91,6 +105,48 @@ $pubTypeSql = "SELECT cmv.field_value as publication_type, COUNT(DISTINCT n.id) 
                GROUP BY cmv.field_value
                ORDER BY cmv.field_value ASC";
 $publicationTypesWithCounts = $pdo->query($pubTypeSql)->fetchAll();
+
+// Get featured collections for filter with counts
+$featuredCollectionsWithCounts = [];
+try {
+    $featuredCollectionSql = "SELECT
+                                fc.slug,
+                                fc.name,
+                                COUNT(DISTINCT n.id) as count
+                              FROM featured_collections fc
+                              LEFT JOIN featured_collection_items fci ON fci.collection_id = fc.id
+                              LEFT JOIN newspapers n ON n.id = fci.file_id AND n.deleted_at IS NULL
+                              WHERE fc.is_active = 1
+                              GROUP BY fc.id, fc.slug, fc.name, fc.sort_order
+                              HAVING COUNT(DISTINCT n.id) > 0
+                              ORDER BY fc.sort_order ASC, fc.name ASC";
+    $featuredCollectionsWithCounts = $pdo->query($featuredCollectionSql)->fetchAll();
+} catch (Throwable $e) {
+    $featuredCollectionsWithCounts = [];
+}
+
+// Get most popular featured collections based on total view count
+$popularCollectionsWithCounts = [];
+try {
+    $popularCollectionsSql = "SELECT
+                                fc.slug,
+                                fc.name,
+                                COUNT(DISTINCT n.id) as count,
+                                COUNT(v.id) as total_views
+                              FROM featured_collections fc
+                              INNER JOIN featured_collection_items fci ON fci.collection_id = fc.id
+                              INNER JOIN newspapers n ON n.id = fci.file_id AND n.deleted_at IS NULL
+                              LEFT JOIN newspaper_views v ON v.newspaper_id = n.id
+                              WHERE fc.is_active = 1
+                              GROUP BY fc.id, fc.slug, fc.name, fc.sort_order
+                              HAVING COUNT(v.id) > 0
+                              ORDER BY total_views DESC, count DESC, fc.sort_order ASC, fc.name ASC
+                              LIMIT 10";
+    $popularCollectionsWithCounts = $pdo->query($popularCollectionsSql)->fetchAll();
+} catch (Throwable $e) {
+    // If analytics table is unavailable, skip popular collections filter.
+    $popularCollectionsWithCounts = [];
+}
 
 // Get min and max publication dates for the date range filter
 $dateRangeSql = "SELECT 
@@ -155,6 +211,32 @@ if ($publicationType !== '') {
         AND cmv2.field_value = ?
     )";
     $params[] = $publicationType;
+}
+
+if (!empty($featuredCollectionFilter)) {
+    $placeholders = implode(',', array_fill(0, count($featuredCollectionFilter), '?'));
+    $whereClause .= " AND EXISTS (
+        SELECT 1
+        FROM featured_collection_items fci2
+        INNER JOIN featured_collections fc2 ON fc2.id = fci2.collection_id
+        WHERE fci2.file_id = n.id
+        AND fc2.is_active = 1
+        AND fc2.slug IN ($placeholders)
+    )";
+    $params = array_merge($params, $featuredCollectionFilter);
+}
+
+if (!empty($popularCollectionFilter)) {
+    $placeholders = implode(',', array_fill(0, count($popularCollectionFilter), '?'));
+    $whereClause .= " AND EXISTS (
+        SELECT 1
+        FROM featured_collection_items fci3
+        INNER JOIN featured_collections fc3 ON fc3.id = fci3.collection_id
+        WHERE fci3.file_id = n.id
+        AND fc3.is_active = 1
+        AND fc3.slug IN ($placeholders)
+    )";
+    $params = array_merge($params, $popularCollectionFilter);
 }
 
 if ($searchQuery) {
@@ -317,16 +399,18 @@ if (!empty($documents)) {
 }
 
 // --- Generate Filter Display Label with Remove Buttons ---
-function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categories, $languages, $searchQuery, $sortFilter, $publicationType = '', $viewMode = 'grid')
+function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categories, $languages, $searchQuery, $sortFilter, $publicationType = '', $featuredCollectionFilter = [], $featuredCollections = [], $popularCollectionFilter = [], $popularCollections = [], $viewMode = 'grid')
 {
     $filters = [];
 
     // Helper function to build URL params
-    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null, $overrideSearch = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType, $viewMode) {
+    $buildParams = function ($cats, $langs, $editions, $overrideDateFrom = null, $overrideDateTo = null, $overridePubType = null, $overrideSearch = null, $overrideFeaturedCollectionFilter = null, $overridePopularCollectionFilter = null) use ($searchQuery, $dateFrom, $dateTo, $sortFilter, $publicationType, $featuredCollectionFilter, $popularCollectionFilter, $viewMode) {
         $useSearch = ($overrideSearch !== null) ? $overrideSearch : $searchQuery;
         $useDateFrom = ($overrideDateFrom !== null) ? $overrideDateFrom : $dateFrom;
         $useDateTo = ($overrideDateTo !== null) ? $overrideDateTo : $dateTo;
         $usePubType = ($overridePubType !== null) ? $overridePubType : $publicationType;
+        $useFeaturedCollectionFilter = ($overrideFeaturedCollectionFilter !== null) ? $overrideFeaturedCollectionFilter : $featuredCollectionFilter;
+        $usePopularCollectionFilter = ($overridePopularCollectionFilter !== null) ? $overridePopularCollectionFilter : $popularCollectionFilter;
         $params = [];
         if ($useSearch)
             $params[] = 'q=' . urlencode($useSearch);
@@ -344,6 +428,10 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
             $params[] = 'sort=' . urlencode($sortFilter);
         if ($usePubType)
             $params[] = 'publication_type=' . urlencode($usePubType);
+        foreach ($useFeaturedCollectionFilter as $featuredSlug)
+            $params[] = 'featured_collection[]=' . urlencode($featuredSlug);
+        foreach ($usePopularCollectionFilter as $popularSlug)
+            $params[] = 'popular_collection[]=' . urlencode($popularSlug);
         if ($viewMode && $viewMode !== 'grid')
             $params[] = 'view=' . urlencode($viewMode);
         return '?' . implode('&', $params);
@@ -369,6 +457,50 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
                 <i class="bi bi-x"></i>
             </a>
         </span>';
+    }
+
+    // Featured Collection
+    if (!empty($featuredCollectionFilter)) {
+        foreach ($featuredCollectionFilter as $featuredSlug) {
+            $featuredCollectionName = $featuredSlug;
+            foreach ($featuredCollections as $collection) {
+                if (($collection['slug'] ?? '') === $featuredSlug) {
+                    $featuredCollectionName = $collection['name'];
+                    break;
+                }
+            }
+
+            $remainingFeatured = array_values(array_filter($featuredCollectionFilter, fn($slug) => $slug !== $featuredSlug));
+            $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter, null, null, null, null, $remainingFeatured);
+            $filters[] = '<span class="filter-tag filter-pubtype">
+                <i class="bi bi-stars me-1"></i>' . htmlspecialchars($featuredCollectionName) . '
+                <a href="' . $removeUrl . '" class="filter-remove" title="Remove filter">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>';
+        }
+    }
+
+    // Most Popular Collection
+    if (!empty($popularCollectionFilter)) {
+        foreach ($popularCollectionFilter as $popularSlug) {
+            $popularCollectionName = $popularSlug;
+            foreach ($popularCollections as $collection) {
+                if (($collection['slug'] ?? '') === $popularSlug) {
+                    $popularCollectionName = $collection['name'];
+                    break;
+                }
+            }
+
+            $remainingPopular = array_values(array_filter($popularCollectionFilter, fn($slug) => $slug !== $popularSlug));
+            $removeUrl = $buildParams($categoryFilter, $languageFilter, $editionFilter, null, null, null, null, null, $remainingPopular);
+            $filters[] = '<span class="filter-tag filter-pubtype">
+                <i class="bi bi-graph-up-arrow me-1"></i>' . htmlspecialchars($popularCollectionName) . '
+                <a href="' . $removeUrl . '" class="filter-remove" title="Remove filter">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>';
+        }
     }
 
     // Categories (multiple)
@@ -457,8 +589,8 @@ function generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $
     return $filters;
 }
 
-$activeFilters = generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categoriesWithCounts, $languages, $searchQuery, $sortFilter, $publicationType, $viewMode);
-$hasActiveFilters = !empty($activeFilters) || ($publicationType !== '');
+$activeFilters = generateFilterLabel($categoryFilter, $languageFilter, $editionFilter, $dateFrom, $dateTo, $categoriesWithCounts, $languages, $searchQuery, $sortFilter, $publicationType, $featuredCollectionFilter, $featuredCollectionsWithCounts, $popularCollectionFilter, $popularCollectionsWithCounts, $viewMode);
+$hasActiveFilters = !empty($activeFilters) || ($publicationType !== '') || !empty($featuredCollectionFilter) || !empty($popularCollectionFilter);
 
 // Helper function to format numbers
 function formatNumberShortcut($n)

@@ -323,6 +323,8 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trash - <?= APP_NAME ?></title>
 
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->

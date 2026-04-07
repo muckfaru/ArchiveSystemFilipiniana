@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore the Archive - Quezon City Public Library</title>
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
     <meta name="description"
         content="Explore centuries of global history, news, and culture through our comprehensive digital archive collection.">
 
@@ -23,6 +24,7 @@
 </head>
 
 <body class="public-page public-page-home">
+    <div class="public-search-focus-backdrop" id="publicSearchFocusBackdrop" aria-hidden="true"></div>
 
     <!-- ==================== HEADER ==================== -->
     <header class="public-header">
@@ -68,6 +70,9 @@
                         <i class="bi bi-x-lg"></i>
                     </button>
                     <button type="submit" class="public-header-search-submit">Search</button>
+                </div>
+                <div class="public-header-search-surface" id="publicHeaderSearchSurface" aria-hidden="true">
+                    <div class="public-header-search-results" id="publicHeaderSearchResults"></div>
                 </div>
             </form>
         </div>

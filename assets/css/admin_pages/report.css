@@ -12,6 +12,54 @@
     margin-bottom: 24px;
 }
 
+.report-tabs-wrap {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+}
+
+.report-tabs {
+    display: flex;
+    width: 100%;
+    background: #EEF2F7;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.report-tab-btn {
+    flex: 1;
+    border: 0;
+    background: #FFFFFF;
+    color: #4B5563;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.18s ease;
+}
+
+.report-tab-btn:hover {
+    background: #E0E7FF;
+    color: #1E3A8A;
+}
+
+.report-tab-btn.active {
+    background: #2563EB;
+    color: #FFFFFF;
+    box-shadow: inset 0 0 0 1px #1D4ED8;
+}
+
+.report-tab-btn:focus-visible {
+    outline: 2px solid #1D4ED8;
+    outline-offset: 2px;
+}
+
 .report-date-actions {
     display: flex;
     justify-content: flex-end;

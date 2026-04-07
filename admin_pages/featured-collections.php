@@ -325,12 +325,7 @@ include __DIR__ . '/../views/layouts/header.php';
     </div>
 </div>
 
-<?php if ($status !== '' && $status !== 'error'): ?>
-    <div class="alert alert-success fc-feedback-alert" role="alert">
-        <i class="bi bi-check-circle-fill"></i>
-        <span>Featured collection updated successfully.</span>
-    </div>
-<?php elseif ($status === 'error' && $statusMessage !== ''): ?>
+<?php if ($status === 'error' && $statusMessage !== ''): ?>
     <div class="alert alert-danger fc-feedback-alert" role="alert">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <span><?= htmlspecialchars($statusMessage) ?></span>
@@ -425,7 +420,7 @@ include __DIR__ . '/../views/layouts/header.php';
                                     </div>
                                     <div class="fc-title-copy">
                                         <div class="fc-title-text"><?= htmlspecialchars((string) $file['display_title']) ?></div>
-                                        <div class="fc-file-meta"><?= htmlspecialchars((string) $file['file_name']) ?></div>
+                                        <div class="fc-file-meta"><?= htmlspecialchars(strtoupper((string) $file['file_type'])) ?></div>
                                     </div>
                                 </div>
                             </td>
@@ -515,6 +510,17 @@ include __DIR__ . '/../views/layouts/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    <?php if ($status !== '' && $status !== 'error'): ?>
+    if (typeof showToast === 'function') {
+        showToast('Featured collection updated successfully.', 'success');
+    }
+
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete('status');
+    currentUrl.searchParams.delete('message');
+    window.history.replaceState({}, document.title, currentUrl.toString());
+    <?php endif; ?>
+
     const filterForm = document.querySelector('.fc-toolbar-grid');
     if (!filterForm) {
         return;

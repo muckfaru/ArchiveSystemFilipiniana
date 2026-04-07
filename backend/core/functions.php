@@ -147,33 +147,64 @@ function updateSetting($key, $value)
 }
 
 /**
- * Get all categories
+ * Get all categories from metadata values
  */
 function getCategories()
 {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
-    return $stmt->fetchAll();
+    $stmt = $pdo->query("
+        SELECT DISTINCT cmv.field_value AS name
+        FROM custom_metadata_values cmv
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN newspapers n ON cmv.file_id = n.id
+        WHERE LOWER(ff.field_label) IN ('category', 'categories')
+          AND n.deleted_at IS NULL
+          AND cmv.field_value IS NOT NULL
+          AND TRIM(cmv.field_value) != ''
+        ORDER BY cmv.field_value ASC
+    ");
+
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return array_map(function ($row) {
+        return [
+            'id' => $row['name'],
+            'name' => $row['name']
+        ];
+    }, $rows);
 }
 
 /**
- * Get all languages (prioritize English, Filipino, Tagalog first)
+ * Get all languages from metadata values
  */
 function getLanguages()
 {
     global $pdo;
     $stmt = $pdo->query("
-        SELECT * FROM languages 
-        ORDER BY 
-            CASE 
-                WHEN name = 'English' THEN 1
-                WHEN name = 'Filipino' THEN 2
-                WHEN name = 'Tagalog' THEN 3
+        SELECT DISTINCT cmv.field_value AS name
+        FROM custom_metadata_values cmv
+        INNER JOIN form_fields ff ON cmv.field_id = ff.id
+        INNER JOIN newspapers n ON cmv.file_id = n.id
+        WHERE LOWER(ff.field_label) IN ('language', 'languages')
+          AND n.deleted_at IS NULL
+          AND cmv.field_value IS NOT NULL
+          AND TRIM(cmv.field_value) != ''
+        ORDER BY
+            CASE
+                WHEN LOWER(cmv.field_value) = 'english' THEN 1
+                WHEN LOWER(cmv.field_value) = 'filipino' THEN 2
+                WHEN LOWER(cmv.field_value) = 'tagalog' THEN 3
                 ELSE 4
             END,
-            name ASC
+            cmv.field_value ASC
     ");
-    return $stmt->fetchAll();
+
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return array_map(function ($row) {
+        return [
+            'id' => $row['name'],
+            'name' => $row['name']
+        ];
+    }, $rows);
 }
 
 /**
@@ -800,9 +831,9 @@ function renderCustomMetadata($customMetadata, $maxDisplay = 3)
     return $html;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��
 // Metadata Display Configuration Functions
-// ═══════════════════════════════════════════════════════════════════════════
+// G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��G��
 
 /**
  * Get display configuration for all custom metadata fields
@@ -1131,13 +1162,13 @@ function renderCardMetadata($customMetadata)
         $val = $meta['field_value'] ?? '';
         $label = strtolower(trim($meta['field_label'] ?? ''));
 
-        // Skip the Title field — it's already shown as the card's main title
+        // Skip the Title field G�� it's already shown as the card's main title
         if ($label === 'title') {
             continue;
         }
 
         // Format the display value based on field type
-        $displayVal = '—'; // default dash for empty
+        $displayVal = 'G��'; // default dash for empty
 
         if (!empty($val)) {
             if ($meta['field_type'] === 'date') {

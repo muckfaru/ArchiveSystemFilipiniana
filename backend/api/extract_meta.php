@@ -366,16 +366,65 @@ if (mb_strlen($meta['description']) > 1000) {
     $meta['description'] = mb_substr($meta['description'], 0, 1000) . '…';
 }
 
-// Language: try to match against DB languages by ISO code or name
+// Language: try to match against active form language options
 $detectedLang = $meta['language'];
 $languageId = null;
 if ($detectedLang) {
-    // Try exact match by name, then by first 2 chars (ISO code)
-    $stmt = $pdo->prepare("SELECT id FROM languages WHERE LOWER(name) = LOWER(?) OR LOWER(SUBSTR(name,1,2)) = LOWER(SUBSTR(?,1,2)) ORDER BY id ASC LIMIT 1");
-    $stmt->execute([$detectedLang, $detectedLang]);
-    $row = $stmt->fetch();
-    if ($row)
-        $languageId = $row['id'];
+    try {
+                $stmt = $pdo->prepare("
+                        SELECT ff.field_options
+                        FROM form_fields ff
+                        INNER JOIN form_templates ft ON ff.form_id = ft.id
+                        WHERE ft.is_active = 1
+                            AND LOWER(ff.field_label) IN ('language', 'languages')
+                            AND ff.field_options IS NOT NULL
+                            AND TRIM(ff.field_options) != ''
+                        ORDER BY ff.id ASC
+                        LIMIT 1
+                ");
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!empty($row['field_options'])) {
+            $options = json_decode($row['field_options'], true);
+            if (is_array($options)) {
+                $detectedNorm = strtolower(trim($detectedLang));
+                $detectedIso = substr($detectedNorm, 0, 2);
+
+                foreach ($options as $opt) {
+                    $value = null;
+                    $label = null;
+
+                    if (is_array($opt)) {
+                        $value = isset($opt['value']) ? (string) $opt['value'] : null;
+                        $label = isset($opt['label']) ? (string) $opt['label'] : $value;
+                    } elseif (is_string($opt) || is_numeric($opt)) {
+                        $value = (string) $opt;
+                        $label = $value;
+                    }
+
+                    if ($value === null || trim($value) === '') {
+                        continue;
+                    }
+
+                    $valueNorm = strtolower(trim($value));
+                    $labelNorm = strtolower(trim((string) $label));
+
+                    if (
+                        $valueNorm === $detectedNorm ||
+                        $labelNorm === $detectedNorm ||
+                        substr($valueNorm, 0, 2) === $detectedIso ||
+                        substr($labelNorm, 0, 2) === $detectedIso
+                    ) {
+                        $languageId = $value;
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        // Keep languageId null when lookup tables/options are unavailable.
+    }
 }
 
 echo json_encode([

@@ -22,20 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- Categories Table (kept for reference data - can be used in custom field options)
-CREATE TABLE IF NOT EXISTS categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
--- Languages Table (kept for reference data - can be used in custom field options)
-CREATE TABLE IF NOT EXISTS languages (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
-    code VARCHAR(10) NOT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
 -- Form Templates Table
 -- Stores reusable form templates with predefined field configurations
 CREATE TABLE IF NOT EXISTS form_templates (
@@ -200,48 +186,8 @@ CREATE TABLE IF NOT EXISTS password_resets (
 -- Default Data Inserts
 -- =====================
 
--- Default Categories
-INSERT INTO
-    categories (name)
-VALUES ('Politics'),
-    ('Sports'),
-    ('Business'),
-    ('Culture'),
-    ('Entertainment'),
-    ('Technology'),
-    ('Health'),
-    ('Education'),
-    ('Science'),
-    ('Local News');
-
--- Default Languages
-INSERT INTO
-    languages (name, code)
-VALUES ('English', 'en'),
-    ('Filipino', 'fil'),
-    ('Tagalog', 'tl'),
-    ('Cebuano', 'ceb'),
-    ('Ilocano', 'ilo');
-
--- Default Admin User (password: admin123)
-INSERT INTO
-    users (
-        username,
-        password,
-        full_name,
-        email,
-        role,
-        status
-    )
-VALUES (
-        'admin',
-        '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        'Super Administrator',
-        'admin@qcpl.gov.ph',
-        'super_admin',
-        'active'
-    );
--- Note: Default password is 'password' - change it after first login!
+-- No default admin credentials are seeded here.
+-- Create your first administrator account manually with your own username/password.
 
 -- Default Settings
 INSERT INTO

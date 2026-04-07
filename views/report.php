@@ -11,16 +11,27 @@ include __DIR__ . '/layouts/header.php';
     <!-- Page Header -->
     <div class="page-header d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="page-title">Report</h1>
-            <p class="page-subtitle mb-0">View analytics and reading statistics for archived files.</p>
+            <h1 class="page-title">Reports</h1>
+            <p class="page-subtitle mb-0">Track uploaded files by date and generate exports for reporting.</p>
         </div>
         <div class="report-header-actions">
             <div class="current-datetime-display d-flex flex-column text-end pe-4">
                 <div id="currentDate" class="fw-bold text-dark mb-0 report-current-date">Monday, 21 October 2024</div>
                 <div id="currentTime" class="text-muted report-current-time">14:32:05 PM</div>
             </div>
-            <button id="exportCsvBtn" class="btn btn-primary d-flex align-items-center gap-2" style="border-radius: 8px; font-weight: 500;">
-                <i class="bi bi-file-earmark-spreadsheet"></i> Export to CSV
+            <button id="exportPdfBtn" class="btn btn-primary d-flex align-items-center gap-2" style="border-radius: 8px; font-weight: 500;">
+                <i class="bi bi-printer"></i> Export PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="report-tabs-wrap mb-3">
+        <div class="report-tabs" role="tablist" aria-label="Report views">
+            <button type="button" id="reportTabMostViewed" class="report-tab-btn active" data-report-type="most_viewed" aria-selected="true">
+                Most Viewed File
+            </button>
+            <button type="button" id="reportTabFileSummary" class="report-tab-btn" data-report-type="file_summary" aria-selected="false">
+                File Summary
             </button>
         </div>
     </div>
@@ -48,21 +59,21 @@ include __DIR__ . '/layouts/header.php';
                     <label class="form-label text-muted fw-semibold" style="font-size:12px;">PERIOD</label>
                     <select id="reportPeriod" class="form-select">
                         <option value="all">All Time</option>
-                        <option value="today">Today</option>
+                        <option value="daily">Daily</option>
                         <option value="weekly">This Week</option>
                         <option value="monthly">This Month</option>
                         <option value="yearly">This Year</option>
                     </select>
                 </div>
-                
+
                 <div class="col-md-5 col-sm-12" id="customDateRange">
                     <div class="row gx-2">
                         <div class="col-6">
-                            <label class="form-label text-muted fw-semibold" style="font-size:12px;">START DATE</label>
+                            <label class="form-label text-muted fw-semibold" style="font-size:12px;">DATE RANGE START</label>
                             <input type="date" id="reportStartDate" class="form-control">
                         </div>
                         <div class="col-6">
-                            <label class="form-label text-muted fw-semibold" style="font-size:12px;">END DATE</label>
+                            <label class="form-label text-muted fw-semibold" style="font-size:12px;">DATE RANGE END</label>
                             <input type="date" id="reportEndDate" class="form-control">
                         </div>
                     </div>
@@ -75,15 +86,7 @@ include __DIR__ . '/layouts/header.php';
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="table-responsive">
             <table class="table report-table mb-0 w-100">
-                <thead>
-                    <tr>
-                        <th class="ps-4 py-3 text-uppercase text-secondary" style="width: 80px; text-align: center;">Rank</th>
-                        <th class="py-3 text-uppercase text-secondary" style="width: 100px;">Thumbnail</th>
-                        <th class="py-3 text-uppercase text-secondary">Title</th>
-                        <th class="py-3 text-uppercase text-secondary" style="width: 15%">Publication Type</th>
-                        <th class="text-end pe-4 py-3 text-uppercase text-secondary" style="width: 15%">Total Views</th>
-                    </tr>
-                </thead>
+                <thead id="reportTableHead"></thead>
                 <tbody id="reportTableBody">
                     <tr>
                         <td colspan="5" class="text-center py-5">
@@ -221,10 +224,10 @@ include __DIR__ . '/layouts/header.php';
         <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.12);">
             <div class="modal-header border-0 pb-0">
                 <div class="d-flex align-items-center gap-2">
-                    <div style="width:38px;height:38px;border-radius:10px;background:rgba(25,135,84,0.1);display:flex;align-items:center;justify-content:center;">
-                        <i class="bi bi-file-earmark-spreadsheet text-success fs-5"></i>
+                    <div style="width:38px;height:38px;border-radius:10px;background:rgba(37,99,235,0.12);display:flex;align-items:center;justify-content:center;">
+                        <i class="bi bi-printer text-primary fs-5"></i>
                     </div>
-                    <h5 class="modal-title fw-bold mb-0" id="exportModalLabel">Export to CSV</h5>
+                    <h5 class="modal-title fw-bold mb-0" id="exportModalLabel">Export Report</h5>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -233,8 +236,8 @@ include __DIR__ . '/layouts/header.php';
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius:8px;">Cancel</button>
-                <button type="button" id="confirmExportBtn" class="btn btn-success px-4 d-flex align-items-center gap-2" style="border-radius:8px;">
-                    <i class="bi bi-download"></i> Download CSV
+                <button type="button" id="confirmExportBtn" class="btn btn-primary px-4 d-flex align-items-center gap-2" style="border-radius:8px;">
+                    <i class="bi bi-download"></i> Download
                 </button>
             </div>
         </div>

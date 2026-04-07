@@ -50,6 +50,9 @@ function runMigration($pdo) {
         
         $fieldIdMap = [];
         
+        $hasCategoriesTable = $pdo->query("SHOW TABLES LIKE 'categories'")->rowCount() > 0;
+        $hasLanguagesTable = $pdo->query("SHOW TABLES LIKE 'languages'")->rowCount() > 0;
+
         foreach ($defaultFields as $field) {
             // Check if field already exists
             $stmt = $pdo->prepare("SELECT id FROM custom_metadata_fields WHERE field_name = ?");
@@ -62,10 +65,10 @@ function runMigration($pdo) {
             } else {
                 // Get field options for select fields
                 $fieldOptions = null;
-                if ($field['field_name'] === 'category') {
+                if ($field['field_name'] === 'category' && $hasCategoriesTable) {
                     $categories = $pdo->query("SELECT name FROM categories ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
                     $fieldOptions = json_encode($categories);
-                } elseif ($field['field_name'] === 'language') {
+                } elseif ($field['field_name'] === 'language' && $hasLanguagesTable) {
                     $languages = $pdo->query("SELECT name FROM languages ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
                     $fieldOptions = json_encode($languages);
                 }
@@ -124,7 +127,7 @@ function runMigration($pdo) {
             ];
             
             // Handle category (convert ID to name)
-            if ($newspaper['category_id']) {
+            if ($newspaper['category_id'] && $hasCategoriesTable) {
                 $stmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
                 $stmt->execute([$newspaper['category_id']]);
                 $category = $stmt->fetchColumn();
@@ -132,7 +135,7 @@ function runMigration($pdo) {
             }
             
             // Handle language (convert ID to name)
-            if ($newspaper['language_id']) {
+            if ($newspaper['language_id'] && $hasLanguagesTable) {
                 $stmt = $pdo->prepare("SELECT name FROM languages WHERE id = ?");
                 $stmt->execute([$newspaper['language_id']]);
                 $language = $stmt->fetchColumn();

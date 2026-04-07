@@ -90,9 +90,9 @@
                         if (tags.length === 0) {
                             return;
                         }
-                        displayHtml = tags.map(function (t) {
+                        displayHtml = '<span class="public-modal-keywords-wrap">' + tags.map(function (t) {
                             return '<span class="public-modal-keyword-pill">' + escapeHtml(t) + '</span>';
-                        }).join(' ');
+                        }).join('') + '</span>';
                     } else if (fieldType === 'date' || fieldName === 'date_published' || fieldName === 'publication_date') {
                         displayHtml = escapeHtml(formatDate(trimmedValue));
                     } else if (fieldType === 'textarea' || fieldName === 'description') {
@@ -103,6 +103,9 @@
 
                     const row = document.createElement('div');
                     row.className = 'public-modal-meta-row';
+                    if (fieldType === 'tags' || fieldName === 'tags' || fieldName === 'keywords') {
+                        row.classList.add('public-modal-meta-row-keywords');
+                    }
                     row.innerHTML =
                         '<span class="public-modal-meta-label"><i class="bi ' + iconClass + '"></i> ' + escapeHtml(label) + '</span>' +
                         '<span class="public-modal-meta-value">' + displayHtml + '</span>';
@@ -227,8 +230,13 @@
     const headerSearchToggle = document.getElementById('publicHeaderSearchToggle');
     const headerSearchForm = document.getElementById('publicHeaderSearchForm');
     const headerSearchInput = document.getElementById('publicHeaderSearchInput');
+    const headerSearchBar = headerSearchForm ? headerSearchForm.querySelector('.public-header-search-bar') : null;
     const headerSearchClear = document.getElementById('publicHeaderSearchClear');
+    const headerSearchSurface = document.getElementById('publicHeaderSearchSurface');
+    const headerSearchResults = document.getElementById('publicHeaderSearchResults');
+    const headerSearchBackdrop = document.getElementById('publicSearchFocusBackdrop');
     const headerSearchPersistKey = 'publicHeaderSearchKeepOpen';
+    const currentPageType = document.body.classList.contains('browse-page') ? 'browse' : 'public';
 
     function buildSearchUrl(form) {
         const action = form.getAttribute('action') || window.location.pathname;
@@ -258,23 +266,160 @@
             return;
         }
 
-        let debounceTimer = null;
         let isComposing = false;
+        let suggestionTimer = null;
+        let suggestionAbortController = null;
 
-        function submitLiveSearch() {
-            const nextUrl = buildSearchUrl(form);
-            const currentUrl = new URL(window.location.href);
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-            if (nextUrl === currentUrl.toString()) {
+        function setSearchFocusState(isActive) {
+            document.body.classList.toggle('public-search-active', isActive);
+        }
+
+        function setSuggestionsVisible(isVisible) {
+            if (!headerSearchSurface) {
                 return;
             }
 
-            window.location.href = nextUrl;
+            headerSearchSurface.classList.toggle('is-visible', isVisible);
+            headerSearchSurface.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+            setSearchFocusState(isVisible || (header && header.classList.contains('public-header-search-open')));
         }
 
-        function queueLiveSearch() {
-            window.clearTimeout(debounceTimer);
-            debounceTimer = window.setTimeout(submitLiveSearch, 280);
+        function buildPublicationTypeUrl(publicationType) {
+            const url = new URL(APP_URL + '/browse', window.location.origin);
+            const params = new URLSearchParams();
+            params.set('publication_type', publicationType);
+            url.search = params.toString();
+            return url.toString();
+        }
+
+        function renderSuggestions(data, queryValue) {
+            if (!headerSearchResults) {
+                return;
+            }
+
+            const publications = Array.isArray(data.publications) ? data.publications : [];
+            const publicationTypes = Array.isArray(data.publication_types) ? data.publication_types : [];
+            const sections = [];
+
+            if (publications.length > 0) {
+                sections.push(
+                    '<section class="public-search-section">' +
+                        '<div class="public-search-section-header">' +
+                            '<div class="public-search-section-title">Publications</div>' +
+                            '<a class="public-search-section-link" href="' + escapeHtml(data.see_all_url || buildSearchUrl(form)) + '">See All</a>' +
+                        '</div>' +
+                        '<div class="public-search-publications">' +
+                            publications.map(function (item) {
+                                const thumbHtml = item.thumbnail
+                                    ? '<img src="' + escapeHtml(item.thumbnail) + '" alt="' + escapeHtml(item.title) + '">'
+                                    : '<i class="bi bi-newspaper"></i>';
+                                const metaParts = [];
+                                if (item.publication_date) {
+                                    metaParts.push('<span>' + escapeHtml(item.publication_date) + '</span>');
+                                }
+                                if (item.publication_type) {
+                                    metaParts.push('<span>' + escapeHtml(item.publication_type) + '</span>');
+                                }
+
+                                return (
+                                    '<a class="public-search-publication" href="' + escapeHtml(item.url) + '">' +
+                                        '<span class="public-search-publication-thumb">' + thumbHtml + '</span>' +
+                                        '<span>' +
+                                            '<span class="public-search-publication-title">' + escapeHtml(item.title) + '</span>' +
+                                            '<span class="public-search-publication-meta">' + metaParts.join('') + '</span>' +
+                                        '</span>' +
+                                    '</a>'
+                                );
+                            }).join('') +
+                        '</div>' +
+                    '</section>'
+                );
+            }
+
+            if (publicationTypes.length > 0) {
+                sections.push(
+                    '<section class="public-search-section">' +
+                        '<div class="public-search-section-header">' +
+                            '<div class="public-search-section-title">Publication Types</div>' +
+                        '</div>' +
+                        '<div class="public-search-tags">' +
+                            publicationTypes.map(function (item) {
+                                return '<a class="public-search-tag" href="' + escapeHtml(buildPublicationTypeUrl(item.name)) + '">' + escapeHtml(item.name) + '</a>';
+                            }).join('') +
+                        '</div>' +
+                    '</section>'
+                );
+            }
+
+            if (sections.length === 0) {
+                sections.push('<div class="public-header-search-empty">No quick matches found for "' + escapeHtml(queryValue) + '". Press Search to view full results.</div>');
+            } else {
+                sections.push('<div class="public-search-helper">Press Enter or Search to open the full result list.</div>');
+            }
+
+            headerSearchResults.innerHTML = sections.join('');
+            setSuggestionsVisible(true);
+        }
+
+        function clearSuggestions() {
+            if (!headerSearchResults) {
+                return;
+            }
+
+            headerSearchResults.innerHTML = '';
+            setSuggestionsVisible(false);
+        }
+
+        function requestSuggestions() {
+            const queryValue = input.value.trim();
+
+            if (queryValue === '') {
+                clearSuggestions();
+                return;
+            }
+
+            if (suggestionAbortController) {
+                suggestionAbortController.abort();
+            }
+
+            suggestionAbortController = new AbortController();
+
+            const endpoint = new URL(APP_URL + '/backend/api/public-search-suggestions.php');
+            endpoint.searchParams.set('q', queryValue);
+            endpoint.searchParams.set('page_type', currentPageType);
+
+            fetch(endpoint.toString(), {
+                cache: 'no-store',
+                signal: suggestionAbortController.signal
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (!data || !data.success) {
+                        clearSuggestions();
+                        return;
+                    }
+
+                    renderSuggestions(data, queryValue);
+                })
+                .catch(function (error) {
+                    if (error && error.name === 'AbortError') {
+                        return;
+                    }
+                    clearSuggestions();
+                });
+        }
+
+        function queueSuggestions() {
+            window.clearTimeout(suggestionTimer);
+            suggestionTimer = window.setTimeout(requestSuggestions, 180);
         }
 
         input.addEventListener('compositionstart', function () {
@@ -283,24 +428,46 @@
 
         input.addEventListener('compositionend', function () {
             isComposing = false;
-            queueLiveSearch();
+            queueSuggestions();
         });
 
         input.addEventListener('input', function () {
             updateHeaderSearchClear();
+            queueSuggestions();
 
             if (isComposing) {
                 return;
             }
-
-            queueLiveSearch();
         });
 
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
-                window.clearTimeout(debounceTimer);
+                persistHeaderSearchOpen(true);
+                clearSuggestions();
+            }
+
+            if (e.key === 'Escape') {
+                clearSuggestions();
             }
         });
+
+        input.addEventListener('focus', function () {
+            setSearchFocusState(true);
+            if (input.value.trim() !== '') {
+                queueSuggestions();
+            }
+        });
+
+        if (headerSearchBackdrop) {
+            headerSearchBackdrop.addEventListener('click', function () {
+                clearSuggestions();
+            });
+        }
+
+        return {
+            clearSuggestions: clearSuggestions,
+            refreshSuggestions: queueSuggestions
+        };
     }
 
     // ── Rotating hero chips ───────────────────────────────────────────────────
@@ -313,6 +480,7 @@
 
         header.classList.toggle('public-header-search-open', isOpen);
         headerSearchToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        document.body.classList.toggle('public-search-active', isOpen);
 
         if (isOpen && headerSearchInput) {
             window.setTimeout(() => {
@@ -362,6 +530,8 @@
     }
 
     if (header && headerSearchToggle && headerSearchForm) {
+        const liveSearchControls = initLiveSearch(headerSearchForm, headerSearchInput);
+
         updateHeaderSearchClear();
 
         if (shouldKeepHeaderSearchOpen() || shouldRestoreHeaderSearchOpen()) {
@@ -369,15 +539,33 @@
             persistHeaderSearchOpen(false);
         }
 
+        if (headerSearchBar && headerSearchInput) {
+            headerSearchBar.addEventListener('click', function (e) {
+                if (e.target.closest('button, a, input')) {
+                    return;
+                }
+
+                headerSearchInput.focus();
+            });
+        }
+
         headerSearchToggle.addEventListener('click', function (e) {
             e.preventDefault();
-            const willOpen = shouldKeepHeaderSearchOpen() ? true : !header.classList.contains('public-header-search-open');
+            const willOpen = true; // Always open when clicked
             setHeaderSearchOpen(willOpen);
+            document.body.classList.toggle('public-search-active', willOpen);
+            if (headerSearchInput) {
+                headerSearchInput.focus();
+            }
         });
 
         headerSearchForm.addEventListener('submit', function () {
             persistHeaderSearchOpen(true);
             setHeaderSearchOpen(true);
+            document.body.classList.add('public-search-active');
+            if (liveSearchControls) {
+                liveSearchControls.clearSuggestions();
+            }
         });
 
         if (headerSearchClear && headerSearchInput) {
@@ -386,18 +574,45 @@
                 updateHeaderSearchClear();
                 persistHeaderSearchOpen(true);
                 setHeaderSearchOpen(true);
+                document.body.classList.add('public-search-active');
                 headerSearchInput.focus();
-                window.location.href = buildSearchUrl(headerSearchForm);
+                if (liveSearchControls) {
+                    liveSearchControls.clearSuggestions();
+                }
             });
         }
 
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && header.classList.contains('public-header-search-open') && !shouldKeepHeaderSearchOpen()) {
+            if (e.key === 'Escape' && header.classList.contains('public-header-search-open')) {
+                persistHeaderSearchOpen(false);
                 setHeaderSearchOpen(false);
+                document.body.classList.remove('public-search-active');
+                if (liveSearchControls) {
+                    liveSearchControls.clearSuggestions();
+                }
             }
         });
 
-        initLiveSearch(headerSearchForm, headerSearchInput);
+        document.addEventListener('click', function (e) {
+            if (!header.classList.contains('public-header-search-open')) {
+                return;
+            }
+
+            // Keep search open if clicking inside header
+            if (header.contains(e.target)) {
+                return;
+            }
+
+            // Close search if clicking outside and input is not focused
+            if (document.activeElement !== headerSearchInput) {
+                persistHeaderSearchOpen(false);
+                setHeaderSearchOpen(false);
+                document.body.classList.remove('public-search-active');
+                if (liveSearchControls) {
+                    liveSearchControls.clearSuggestions();
+                }
+            }
+        });
     }
 
     // ── Live update polling (reflects admin upload/delete) ────────────────────

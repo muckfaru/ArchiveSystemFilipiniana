@@ -20,9 +20,16 @@ function runMigration()
 
         echo "Starting Migration 006: Sync Category Field Options...\n";
 
-        // Get all categories from categories table
-        $stmt = $pdo->query("SELECT name FROM categories ORDER BY name ASC");
-        $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        // Get categories from legacy categories table when available, otherwise derive from metadata values.
+        $hasCategoriesTable = $pdo->query("SHOW TABLES LIKE 'categories'")->rowCount() > 0;
+
+        if ($hasCategoriesTable) {
+            $stmt = $pdo->query("SELECT name FROM categories ORDER BY name ASC");
+            $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } else {
+            $stmt = $pdo->query("\n+                SELECT DISTINCT TRIM(cmv.field_value) AS name\n+                FROM custom_metadata_values cmv\n+                INNER JOIN form_fields ff ON ff.id = cmv.field_id\n+                WHERE LOWER(ff.field_label) IN ('category', 'categories')\n+                  AND TRIM(COALESCE(cmv.field_value, '')) != ''\n+                ORDER BY name ASC\n+            ");
+            $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        }
 
         if (empty($categories)) {
             echo "Warning: No categories found in categories table. Skipping migration.\n";

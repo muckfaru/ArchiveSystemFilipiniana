@@ -137,6 +137,8 @@ $formatLabel = match (true) {
         <?= htmlspecialchars($file['title']) ?> — <?= APP_NAME ?>
     </title>
 
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
+
     <!-- Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&family=Lora:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap"

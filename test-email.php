@@ -74,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['to'])) {
 <head>
 <meta charset="UTF-8">
 <title>Email Diagnostics</title>
+<link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
 <style>
   body { font-family: Arial, sans-serif; max-width: 750px; margin: 40px auto; padding: 20px; }
   h1  { color: #3A9AFF; }

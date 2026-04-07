@@ -13,6 +13,8 @@
         <?= APP_NAME ?>
     </title>
 
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/images/website_logo.jpg">
+
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"

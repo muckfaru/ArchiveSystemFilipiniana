@@ -51,6 +51,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const thumbnailPlaceholder = document.getElementById('thumbnailPlaceholder');
     const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
     const publicationDateInput = document.getElementById('publication_date');
+    const returnTo = new URLSearchParams(window.location.search).get('return_to');
+
+    function getPostSaveRedirect(isEdit) {
+        if (isEdit && returnTo === 'report') {
+            return APP_URL + '/report?success=edit';
+        }
+        return APP_URL + (isEdit ? '/dashboard?success=edit' : '/dashboard?success=upload');
+    }
 
     function getFileExtension(file) {
         return (file?.name || '').split('.').pop().toLowerCase();
@@ -995,15 +1003,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (result.success) {
                     window.isNavigatingAway = true;
                     const isEdit = document.querySelector('input[name="action"]').value === 'edit';
-                    if (isEdit) {
-                        window.hasUnsavedChanges = function () { return false; };
-                        window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/dashboard?success=edit';
-                    } else {
-                        window.hasUnsavedChanges = function () { return false; };
-                        window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/dashboard?success=upload';
-                    }
+                    window.hasUnsavedChanges = function () { return false; };
+                    window.onbeforeunload = null;
+                    window.location.href = getPostSaveRedirect(isEdit);
                 } else {
                     showAlert('danger', result.message || 'Upload failed');
                     resetBtn(btn, text);
@@ -1014,15 +1016,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (response.ok) {
                     window.isNavigatingAway = true;
                     const isEdit = document.querySelector('input[name="action"]').value === 'edit';
-                    if (isEdit) {
-                        window.hasUnsavedChanges = function () { return false; };
-                        window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/dashboard?success=edit';
-                    } else {
-                        window.hasUnsavedChanges = function () { return false; };
-                        window.onbeforeunload = null;
-                        window.location.href = APP_URL + '/dashboard?success=upload';
-                    }
+                    window.hasUnsavedChanges = function () { return false; };
+                    window.onbeforeunload = null;
+                    window.location.href = getPostSaveRedirect(isEdit);
                 } else {
                     throw new Error(rawBody || ('Server returned ' + response.status));
                 }

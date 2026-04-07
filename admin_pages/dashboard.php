@@ -35,7 +35,6 @@ $catStmt = $pdo->query("
     ORDER BY cmv.field_value ASC
 ");
 $categories = $catStmt->fetchAll();
-$languages = getLanguages();
 
 $recentUploadsPerPage = 8;
 $recentUploadsPage = max(1, intval($_GET['recent_page'] ?? 1));
