@@ -84,7 +84,7 @@ define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebo
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 465);
 define('SMTP_USERNAME', 'archivesystemfilipiniana@gmail.com'); // Your Gmail address
-define('SMTP_PASSWORD', 'esth ctfj cuaq bswk'); // Your Gmail App Password
+define('SMTP_PASSWORD', 'cgyk kcmf oaxo ycqn'); // Your Gmail App Password
 define('SMTP_FROM_NAME', 'Archive System Periodical');
 
 // Session settings
