@@ -54,8 +54,8 @@ define('CALIBRE_CONVERT_PATH', 'define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdoc
 ---
 
 ## Default Admin Login
-**Username: admin**
-**Password: password**
+**Username: admin**  
+**Password: password**  
 
 
 ## Tech Stack
