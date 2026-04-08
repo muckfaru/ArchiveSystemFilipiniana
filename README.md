@@ -54,9 +54,8 @@ define('CALIBRE_CONVERT_PATH', 'define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdoc
 ---
 
 ## Default Admin Login
-No default admin credentials are provided.
-
-Create your administrator account using your own secure username and password.
+Username: admin
+Password: password
 
 
 ## Tech Stack
