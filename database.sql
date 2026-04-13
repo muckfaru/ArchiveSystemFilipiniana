@@ -186,8 +186,20 @@ CREATE TABLE IF NOT EXISTS password_resets (
 -- Default Data Inserts
 -- =====================
 
--- No default admin credentials are seeded here.
--- Create your first administrator account manually with your own username/password.
+-- Default administrator account
+-- Username: admin
+-- Password: password
+INSERT INTO users (username, password, full_name, email, role, status)
+SELECT
+    'admin',
+    '$2y$10$k7LJlWlRIvklEQK6djK6kurWpSVZU9xv73Uh6ImjpUXYKRWe9f8wy',
+    'Administrator',
+    'admin@archive-system.local',
+    'super_admin',
+    'active'
+WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE username = 'admin'
+);
 
 -- Default Settings
 INSERT INTO

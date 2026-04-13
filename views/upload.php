@@ -50,7 +50,7 @@
                 </svg>
                 <p class="drop-title">Drag and drop files here</p>
                 <p class="drop-subtitle">or <span class="click-browse" onclick="document.getElementById('fileInput').click()">click to browse</span> your computer</p>
-                <p class="drop-allowed-types">Allowed file types: PDF, EPUB, MOBI, TXT, JPG, JPEG, PNG, WEBP, TIF, TIFF</p>
+                <p class="drop-allowed-types">Allowed file types: PDF, EPUB, MOBI, JPG, JPEG, PNG, WEBP</p>
             </div>
         </div>
 

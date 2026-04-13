@@ -205,7 +205,48 @@ function fileHasExpectedMobiSignature($tmpPath)
         return true;
     }
 
-    return preg_match('/BOOK(MOBI|TEXt|READ)/', substr($header, 0, 128)) === 1;
+    if (preg_match('/BOOK(MOBI|TEXt|READ)/', substr($header, 0, 128)) === 1) {
+        return true;
+    }
+
+    // Fallback to parsing the PalmDB record header like the metadata extractor.
+    // This is more reliable for KF8/AZW3-style MOBI variants whose outer creator
+    // bytes can differ while still containing a valid MOBI record.
+    if (strlen($header) < 82) {
+        return false;
+    }
+
+    fseek($handle, 76);
+    $recordCountRaw = fread($handle, 2);
+    if (strlen($recordCountRaw) !== 2) {
+        fclose($handle);
+        return false;
+    }
+
+    $recordCount = unpack('n', $recordCountRaw)[1];
+    if ($recordCount < 1) {
+        fclose($handle);
+        return false;
+    }
+
+    fseek($handle, 78);
+    $recordOffsetRaw = fread($handle, 4);
+    if (strlen($recordOffsetRaw) !== 4) {
+        fclose($handle);
+        return false;
+    }
+
+    $recordOffset = unpack('N', $recordOffsetRaw)[1];
+    if ($recordOffset < 0) {
+        fclose($handle);
+        return false;
+    }
+
+    fseek($handle, $recordOffset + 16);
+    $mobiId = fread($handle, 4);
+    fclose($handle);
+
+    return $mobiId === 'MOBI';
 }
 
 function fileHasExpectedSignature($tmpPath, $extension)
@@ -499,7 +540,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Handle thumbnail upload - organized by year/month
                     $thumbnailPath = null;
                     if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                        $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png'], 10 * 1024 * 1024, true);
+                        $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff'], 10 * 1024 * 1024, true);
 
                         if (!$thumbValidation['ok']) {
                             if (file_exists($uploadPath)) {
@@ -827,7 +868,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $thumbnailPath = $_POST['existing_thumbnail'] ?? null;
         if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-            $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png'], 10 * 1024 * 1024, true);
+            $thumbValidation = validateUploadedFile($_FILES['thumbnail'], ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff'], 10 * 1024 * 1024, true);
             if (!$thumbValidation['ok']) {
                 if (isAjaxRequest()) {
                     http_response_code(400);

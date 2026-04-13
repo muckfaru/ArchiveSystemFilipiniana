@@ -5010,21 +5010,21 @@ body.public-page {
 
 .browse-grid-compact {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .browse-file-card-compact {
     overflow: hidden;
-    border-radius: 22px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.04);
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .browse-file-card-compact:hover {
-    border-color: rgba(96, 165, 250, 0.38);
-    box-shadow: 0 22px 36px rgba(15, 23, 42, 0.09);
+    border-color: #E2E8F0;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .browse-file-card-compact .public-thumb-wrap {
@@ -5033,26 +5033,26 @@ body.public-page {
 
 .browse-file-card-compact .public-file-thumbnail,
 .browse-file-card-compact .public-file-thumbnail-placeholder {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 3 / 4;
 }
 
 .browse-file-card-compact .public-file-info {
-    padding: 12px 12px 14px;
+    padding: 12px 14px 14px;
 }
 
 .browse-file-card-compact .public-file-category-top {
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 .browse-file-card-compact .public-file-title {
-    font-size: 0.98rem;
-    line-height: 1.42;
-    min-height: 2.8em;
+    font-size: 13px;
+    line-height: 1.35;
+    min-height: 36px;
 }
 
 .browse-file-card-compact .public-file-date {
-    margin-top: 10px;
-    font-size: 0.92rem;
+    margin-top: auto;
+    font-size: 11px;
     color: #64748B;
 }
 
@@ -5481,20 +5481,20 @@ body.public-page.browse-page {
 
 .browse-page .browse-grid-compact {
     display: grid;
-    grid-template-columns: repeat(4, minmax(240px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .browse-page .browse-file-card-compact {
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    background: #fff;
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .browse-page .browse-file-card-compact:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+    border-color: #E2E8F0;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .browse-page .browse-file-card-compact .public-thumb-wrap {
@@ -5506,19 +5506,19 @@ body.public-page.browse-page {
 }
 
 .browse-page .browse-file-card-compact .public-file-info {
-    padding: 12px 12px 14px;
+    padding: 12px 14px 14px;
 }
 
 .browse-page .browse-file-card-compact .public-file-title {
-    font-size: 0.98rem;
-    line-height: 1.4;
-    min-height: 2.8em;
-    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.35;
+    min-height: 36px;
+    margin-bottom: 6px;
 }
 
 .browse-page .browse-file-card-compact .public-file-date {
-    margin-top: 0;
-    font-size: 0.84rem;
+    margin-top: auto;
+    font-size: 11px;
     line-height: 1.35;
     color: #64748b;
 }

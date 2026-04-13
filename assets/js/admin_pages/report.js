@@ -13,6 +13,8 @@
         period: 'all',
         startDate: '',
         endDate: '',
+        publicationType: '',
+        category: '',
         limit: 10,
         page: 1,
         total: 0,
@@ -26,8 +28,15 @@
     const periodSelect = document.getElementById('reportPeriod');
     const startDateInput = document.getElementById('reportStartDate');
     const endDateInput = document.getElementById('reportEndDate');
+    const publicationTypeSelect = document.getElementById('reportPublicationType');
+    const categorySelect = document.getElementById('reportCategory');
+    const reportPeriodWrap = document.getElementById('reportPeriodWrap');
+    const customDateRange = document.getElementById('customDateRange');
+    const reportPublicationTypeWrap = document.getElementById('reportPublicationTypeWrap');
+    const reportCategoryWrap = document.getElementById('reportCategoryWrap');
     const reportDateActions = document.getElementById('reportDateActions');
     const clearReportDatesBtn = document.getElementById('clearReportDatesBtn');
+    const reportPage = document.querySelector('.report-page');
 
     const limitSelect = document.getElementById('reportLimit');
     const btnPrev = document.getElementById('btnPrevPage');
@@ -44,6 +53,7 @@
     initEvents();
     updateDateTime();
     renderTableHead();
+    updateFilterVisibility();
     updateClearDatesVisibility();
     fetchReportData();
     setInterval(updateDateTime, 1000);
@@ -96,6 +106,22 @@
             });
         }
 
+        if (publicationTypeSelect) {
+            publicationTypeSelect.addEventListener('change', (e) => {
+                state.publicationType = e.target.value;
+                state.page = 1;
+                fetchReportData();
+            });
+        }
+
+        if (categorySelect) {
+            categorySelect.addEventListener('change', (e) => {
+                state.category = e.target.value;
+                state.page = 1;
+                fetchReportData();
+            });
+        }
+
         // Limit
         if (limitSelect) {
             limitSelect.addEventListener('change', (e) => {
@@ -137,7 +163,9 @@
                     search: state.search,
                     period: state.period,
                     start_date: state.startDate,
-                    end_date: state.endDate
+                    end_date: state.endDate,
+                    publication_type: state.publicationType,
+                    category: state.category
                 });
 
                 const url = `${APP_URL}/backend/api/report.php?${params.toString()}`;
@@ -188,7 +216,33 @@
         }
 
         renderTableHead();
+        updateFilterVisibility();
+        updateClearDatesVisibility();
         fetchReportData();
+    }
+
+    function updateFilterVisibility() {
+        const isFileSummary = state.reportType === 'file_summary';
+
+        if (reportPage) {
+            reportPage.classList.toggle('file-summary-filters', isFileSummary);
+        }
+
+        if (reportPeriodWrap) {
+            reportPeriodWrap.classList.toggle('d-none', isFileSummary);
+        }
+
+        if (customDateRange) {
+            customDateRange.classList.remove('d-none');
+        }
+
+        if (reportPublicationTypeWrap) {
+            reportPublicationTypeWrap.classList.toggle('d-none', !isFileSummary);
+        }
+
+        if (reportCategoryWrap) {
+            reportCategoryWrap.classList.toggle('d-none', !isFileSummary);
+        }
     }
 
     function renderTableHead() {
@@ -262,6 +316,8 @@
             period: state.period,
             start_date: state.startDate,
             end_date: state.endDate,
+            publication_type: state.publicationType,
+            category: state.category,
             limit: state.limit,
             page: state.page
         });
@@ -274,6 +330,7 @@
                     state.total = result.total;
                     state.limit = result.limit;
                     state.page = result.page;
+                    updateFilterOptions(result.filter_options || {});
                     renderTable(result.data);
                     updatePaginationUI();
                 } else {
@@ -354,6 +411,20 @@
             msgParts.push('</div>');
         }
 
+        if (state.reportType === 'file_summary' && (state.publicationType || state.category)) {
+            const filterParts = [];
+            if (state.publicationType) {
+                filterParts.push('Publication Type: <strong>' + escapeHtml(state.publicationType) + '</strong>');
+            }
+            if (state.category) {
+                filterParts.push('Category: <strong>' + escapeHtml(state.category) + '</strong>');
+            }
+
+            msgParts.push('<div class="rounded-3 px-3 py-2 mb-3" style="background:#eff6ff;border:1px solid #93c5fd;font-size:13px;">');
+            msgParts.push('<i class="bi bi-tags me-2 text-primary"></i>' + filterParts.join(' | '));
+            msgParts.push('</div>');
+        }
+
         msgParts.push('<p class="mb-0 text-muted" style="font-size:13px;">' + formatHint + '</p>');
 
         const msgEl = document.getElementById('exportModalMessage');
@@ -372,6 +443,51 @@
         const exportModalEl = document.getElementById('exportModal');
         if (exportModalEl) {
             bootstrap.Modal.getOrCreateInstance(exportModalEl).show();
+        }
+    }
+
+    function updateFilterOptions(filterOptions) {
+        populateSelectOptions(
+            publicationTypeSelect,
+            Array.isArray(filterOptions.publication_types) ? filterOptions.publication_types : [],
+            'All publication types',
+            state.publicationType
+        );
+
+        populateSelectOptions(
+            categorySelect,
+            Array.isArray(filterOptions.categories) ? filterOptions.categories : [],
+            'All categories',
+            state.category
+        );
+    }
+
+    function populateSelectOptions(selectEl, values, defaultLabel, selectedValue) {
+        if (!selectEl) {
+            return;
+        }
+
+        const normalizedValues = values
+            .map(value => String(value || '').trim())
+            .filter(Boolean);
+
+        const currentValue = normalizedValues.includes(selectedValue) ? selectedValue : '';
+        const options = [`<option value="">${escapeHtml(defaultLabel)}</option>`];
+
+        normalizedValues.forEach(value => {
+            const isSelected = value === currentValue ? ' selected' : '';
+            options.push(`<option value="${escapeHtml(value)}"${isSelected}>${escapeHtml(value)}</option>`);
+        });
+
+        selectEl.innerHTML = options.join('');
+        if (selectEl.value !== currentValue) {
+            selectEl.value = currentValue;
+        }
+
+        if (selectEl === publicationTypeSelect) {
+            state.publicationType = currentValue;
+        } else if (selectEl === categorySelect) {
+            state.category = currentValue;
         }
     }
 

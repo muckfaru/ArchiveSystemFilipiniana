@@ -8,7 +8,6 @@
 require_once __DIR__ . '/../backend/core/config.php';
 require_once __DIR__ . '/../backend/core/auth.php';
 require_once __DIR__ . '/../backend/core/functions.php';
-require_once __DIR__ . '/../backend/core/analytics.php';
 
 $rawId = isset($_GET['id']) ? $_GET['id'] : '';
 
@@ -1152,34 +1151,6 @@ $formatLabel = match (true) {
                 </span>
             </div>
         <?php endforeach; ?>
-        
-        <!-- Reading Analytics (Admin Only) -->
-        <?php if (isset($currentUser)): ?>
-            <?php
-            $analytics = getNewspaperAnalytics($pdo, $fileId);
-            ?>
-            <div class="info-row" style="border-top: 2px solid rgba(128, 128, 128, 0.2); padding-top: 16px; margin-top: 16px;">
-                <span class="info-label" style="font-weight: 700; color: var(--accent);">
-                    <i class="bi bi-graph-up me-1"></i>Reading Analytics
-                </span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Today</span>
-                <span class="info-val"><?= $analytics['daily'] ?> reads</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">This Week</span>
-                <span class="info-val"><?= $analytics['weekly'] ?> reads</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">This Month</span>
-                <span class="info-val"><?= $analytics['monthly'] ?> reads</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">This Year</span>
-                <span class="info-val"><?= $analytics['yearly'] ?> reads</span>
-            </div>
-        <?php endif; ?>
     </div>
 
     <!-- ======= SCRIPTS ======= -->

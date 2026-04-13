@@ -19,7 +19,7 @@ let singleSelectionAction = 'change';
 const ALLOWED_UPLOAD_EXTENSIONS = ['pdf', 'epub', 'mobi', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff'];
 const ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'epub', 'mobi', 'txt'];
 const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff'];
-const ALLOWED_FILE_TYPES_LABEL = 'PDF, EPUB, MOBI, TXT, JPG, JPEG, PNG, WEBP, TIF, TIFF';
+const ALLOWED_FILE_TYPES_LABEL = 'PDF, EPUB, MOBI, JPG, JPEG, PNG, WEBP';
 
 document.addEventListener('DOMContentLoaded', function () {
     // FIX: BUG 1 - Add defensive guard for APP_URL
@@ -1502,6 +1502,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (files.length > 0) {
             console.log('First file:', files[0].name, files[0].size, 'bytes');
         }
+        if (singleSelectionAction === 'add' && selectedFile && !isBulkMode) {
+            console.log('Promoting single file selection to bulk mode before adding new file(s)');
+            promoteSingleSelectionToBulk();
+        }
         handleFiles(files);
         singleSelectionAction = 'change';
     }
@@ -1533,10 +1537,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const isEdit = document.querySelector('input[name="action"]')?.value === 'edit';
         console.log('📝 Mode:', isEdit ? 'Edit' : 'Upload');
-
-        if (!isEdit && singleSelectionAction === 'add' && selectedFile && !isBulkMode) {
-            promoteSingleSelectionToBulk();
-        }
 
         // FIX: BUG 2 - Detect single non-image file and route as single upload
         // Only route to bulk mode if: multiple files OR starting fresh with images
@@ -2144,6 +2144,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.startAddFileMode = function () {
         singleSelectionAction = 'add';
         if (fileInput) {
+            fileInput.value = '';
             fileInput.click();
         }
     }

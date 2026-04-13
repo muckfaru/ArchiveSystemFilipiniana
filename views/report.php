@@ -45,17 +45,32 @@ include __DIR__ . '/layouts/header.php';
                     <span>Clear Dates</span>
                 </button>
             </div>
-            <div class="row gx-3 gy-3 align-items-end">
-                <div class="col-md-4 col-sm-12">
+            <div id="reportFiltersGrid" class="report-filters-grid">
+                <div class="report-filter-item report-filter-search">
                     <label class="form-label text-muted fw-semibold" style="font-size:12px;">SEARCH</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
-                        <input type="text" id="reportSearch" class="form-control border-start-0 ps-0" placeholder="Search title or type...">
+                        <input type="text" id="reportSearch" class="form-control border-start-0 ps-0" placeholder="Search title, filename, type, or uploader...">
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
+
+                <div class="report-filter-item report-filter-select d-none" id="reportPublicationTypeWrap">
+                    <label class="form-label text-muted fw-semibold" style="font-size:12px;">PUBLICATION TYPE</label>
+                    <select id="reportPublicationType" class="form-select">
+                        <option value="">All publication types</option>
+                    </select>
+                </div>
+
+                <div class="report-filter-item report-filter-select d-none" id="reportCategoryWrap">
+                    <label class="form-label text-muted fw-semibold" style="font-size:12px;">CATEGORY</label>
+                    <select id="reportCategory" class="form-select">
+                        <option value="">All categories</option>
+                    </select>
+                </div>
+
+                <div class="report-filter-item report-filter-period" id="reportPeriodWrap">
                     <label class="form-label text-muted fw-semibold" style="font-size:12px;">PERIOD</label>
                     <select id="reportPeriod" class="form-select">
                         <option value="all">All Time</option>
@@ -66,13 +81,13 @@ include __DIR__ . '/layouts/header.php';
                     </select>
                 </div>
 
-                <div class="col-md-5 col-sm-12" id="customDateRange">
-                    <div class="row gx-2">
-                        <div class="col-6">
+                <div class="report-filter-item report-filter-date" id="customDateRange">
+                    <div class="report-date-range-grid">
+                        <div class="report-filter-subitem">
                             <label class="form-label text-muted fw-semibold" style="font-size:12px;">DATE RANGE START</label>
                             <input type="date" id="reportStartDate" class="form-control">
                         </div>
-                        <div class="col-6">
+                        <div class="report-filter-subitem">
                             <label class="form-label text-muted fw-semibold" style="font-size:12px;">DATE RANGE END</label>
                             <input type="date" id="reportEndDate" class="form-control">
                         </div>

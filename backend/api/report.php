@@ -34,45 +34,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $period = isset($_GET['period']) ? trim($_GET['period']) : 'all';
         $startDate = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
         $endDate = isset($_GET['end_date']) ? trim($_GET['end_date']) : '';
+        $publicationType = isset($_GET['publication_type']) ? trim($_GET['publication_type']) : '';
+        $category = isset($_GET['category']) ? trim($_GET['category']) : '';
         $limit = isset($_GET['limit']) ? max(1, intval($_GET['limit'])) : 10;
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
         $offset = ($page - 1) * $limit;
 
-        $params = [];
-        $whereClause = 'n.deleted_at IS NULL';
+        $baseParams = [];
+        $baseWhereClause = 'n.deleted_at IS NULL';
 
         $currentUserRole = $currentUser['role'] ?? 'admin';
         if ($currentUserRole !== 'super_admin') {
-            $whereClause .= ' AND n.uploaded_by = ?';
-            $params[] = intval($currentUser['id'] ?? 0);
+            $baseWhereClause .= ' AND n.uploaded_by = ?';
+            $baseParams[] = intval($currentUser['id'] ?? 0);
         }
 
-        switch ($period) {
-            case 'daily':
-                $whereClause .= ' AND DATE(n.created_at) = CURDATE()';
-                break;
-            case 'weekly':
-                $whereClause .= ' AND YEARWEEK(n.created_at, 1) = YEARWEEK(CURDATE(), 1)';
-                break;
-            case 'monthly':
-                $whereClause .= ' AND YEAR(n.created_at) = YEAR(CURDATE()) AND MONTH(n.created_at) = MONTH(CURDATE())';
-                break;
-            case 'yearly':
-                $whereClause .= ' AND YEAR(n.created_at) = YEAR(CURDATE())';
-                break;
-            default:
-                $period = 'all';
-                break;
-        }
+        $params = $baseParams;
+        $whereClause = $baseWhereClause;
 
-        if (!empty($startDate)) {
-            $whereClause .= ' AND DATE(n.created_at) >= ?';
-            $params[] = $startDate;
-        }
+        if ($reportType === 'most_viewed') {
+            switch ($period) {
+                case 'daily':
+                    $whereClause .= ' AND DATE(n.created_at) = CURDATE()';
+                    break;
+                case 'weekly':
+                    $whereClause .= ' AND YEARWEEK(n.created_at, 1) = YEARWEEK(CURDATE(), 1)';
+                    break;
+                case 'monthly':
+                    $whereClause .= ' AND YEAR(n.created_at) = YEAR(CURDATE()) AND MONTH(n.created_at) = MONTH(CURDATE())';
+                    break;
+                case 'yearly':
+                    $whereClause .= ' AND YEAR(n.created_at) = YEAR(CURDATE())';
+                    break;
+                default:
+                    $period = 'all';
+                    break;
+            }
 
-        if (!empty($endDate)) {
-            $whereClause .= ' AND DATE(n.created_at) <= ?';
-            $params[] = $endDate;
+            if (!empty($startDate)) {
+                $whereClause .= ' AND DATE(n.created_at) >= ?';
+                $params[] = $startDate;
+            }
+
+            if (!empty($endDate)) {
+                $whereClause .= ' AND DATE(n.created_at) <= ?';
+                $params[] = $endDate;
+            }
+        } else {
+            $period = 'all';
+
+            if (!empty($startDate)) {
+                $whereClause .= ' AND DATE(n.created_at) >= ?';
+                $params[] = $startDate;
+            }
+
+            if (!empty($endDate)) {
+                $whereClause .= ' AND DATE(n.created_at) <= ?';
+                $params[] = $endDate;
+            }
+
+            if ($publicationType !== '') {
+                $whereClause .= "
+                    AND EXISTS (
+                        SELECT 1
+                        FROM custom_metadata_values cmv_pt
+                        INNER JOIN form_fields ff_pt ON cmv_pt.field_id = ff_pt.id
+                        WHERE cmv_pt.file_id = n.id
+                          AND LOWER(TRIM(ff_pt.field_label)) IN ('publication type', 'publication_type', 'type')
+                          AND cmv_pt.field_value = ?
+                    )
+                ";
+                $params[] = $publicationType;
+            }
+
+            if ($category !== '') {
+                $whereClause .= "
+                    AND EXISTS (
+                        SELECT 1
+                        FROM custom_metadata_values cmv_cat
+                        INNER JOIN form_fields ff_cat ON cmv_cat.field_id = ff_cat.id
+                        WHERE cmv_cat.file_id = n.id
+                          AND LOWER(TRIM(ff_cat.field_label)) = 'category'
+                          AND cmv_cat.field_value = ?
+                    )
+                ";
+                $params[] = $category;
+            }
         }
 
         if (!empty($search)) {
@@ -109,6 +156,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'total_size' => 0,
             'unique_uploaders' => 0
         ];
+
+        $filterOptions = [
+            'publication_types' => [],
+            'categories' => []
+        ];
+
+        $publicationTypeOptionsQuery = "
+            SELECT DISTINCT TRIM(cmv.field_value) AS option_value
+            FROM custom_metadata_values cmv
+            INNER JOIN form_fields ff ON cmv.field_id = ff.id
+            INNER JOIN newspapers n ON n.id = cmv.file_id
+            WHERE $baseWhereClause
+              AND LOWER(TRIM(ff.field_label)) IN ('publication type', 'publication_type', 'type')
+              AND cmv.field_value IS NOT NULL
+              AND TRIM(cmv.field_value) <> ''
+            ORDER BY option_value ASC
+        ";
+        $stmtPublicationTypeOptions = $pdo->prepare($publicationTypeOptionsQuery);
+        $stmtPublicationTypeOptions->execute($baseParams);
+        $filterOptions['publication_types'] = array_values(array_map(
+            static fn(array $row): string => (string) $row['option_value'],
+            $stmtPublicationTypeOptions->fetchAll(PDO::FETCH_ASSOC)
+        ));
+
+        $categoryOptionsQuery = "
+            SELECT DISTINCT TRIM(cmv.field_value) AS option_value
+            FROM custom_metadata_values cmv
+            INNER JOIN form_fields ff ON cmv.field_id = ff.id
+            INNER JOIN newspapers n ON n.id = cmv.file_id
+            WHERE $baseWhereClause
+              AND LOWER(TRIM(ff.field_label)) = 'category'
+              AND cmv.field_value IS NOT NULL
+              AND TRIM(cmv.field_value) <> ''
+            ORDER BY option_value ASC
+        ";
+        $stmtCategoryOptions = $pdo->prepare($categoryOptionsQuery);
+        $stmtCategoryOptions->execute($baseParams);
+        $filterOptions['categories'] = array_values(array_map(
+            static fn(array $row): string => (string) $row['option_value'],
+            $stmtCategoryOptions->fetchAll(PDO::FETCH_ASSOC)
+        ));
 
         $orderByClause = $reportType === 'file_summary'
             ? 'n.created_at DESC, n.id DESC'
@@ -358,6 +446,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'limit' => $limit,
             'total_pages' => ceil($totalRecords / max(1, $limit)),
             'report_type' => $reportType,
+            'filter_options' => $filterOptions,
             'summary' => [
                 'total_uploads' => intval($summary['total_uploads'] ?? 0),
                 'total_size' => intval($summary['total_size'] ?? 0),
