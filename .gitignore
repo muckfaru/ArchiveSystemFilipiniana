@@ -10,7 +10,7 @@ node_modules/
 
 # IDE files
 .idea/
-.kiro/
+.kiro/specs/
 .vscode/
 .codex/
 .agent/
