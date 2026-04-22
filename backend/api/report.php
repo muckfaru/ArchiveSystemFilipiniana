@@ -53,6 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $whereClause = $baseWhereClause;
 
         if ($reportType === 'most_viewed') {
+            $whereClause .= '
+                AND EXISTS (
+                    SELECT 1
+                    FROM newspaper_views nv
+                    WHERE nv.newspaper_id = n.id
+                )
+            ';
+
             switch ($period) {
                 case 'daily':
                     $whereClause .= ' AND DATE(n.created_at) = CURDATE()';

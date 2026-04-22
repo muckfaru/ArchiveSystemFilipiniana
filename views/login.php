@@ -108,6 +108,17 @@
             padding-right: 40px;
         }
 
+        .pass-wrap input::-ms-reveal,
+        .pass-wrap input::-ms-clear {
+            display: none;
+        }
+
+        .pass-wrap input::-webkit-credentials-auto-fill-button,
+        .pass-wrap input::-webkit-textfield-decoration-container {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
         .pass-wrap .eye-btn {
             position: absolute;
             right: 10px;

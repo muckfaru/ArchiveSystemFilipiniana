@@ -74,7 +74,7 @@ define('ALLOWED_EXTENSIONS', ['pdf', 'mobi', 'epub', 'txt', 'jpg', 'jpeg', 'png'
 // Mac: /Applications/calibre.app/Contents/MacOS/ebook-convert
 // Linux: /usr/bin/ebook-convert
 // Leave empty string '' if Calibre is not installed (MOBI files will offer download instead)
-define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\CalibrePortable\\Calibre\\ebook-convert.exe');
+define('CALIBRE_CONVERT_PATH', 'C:\\xampp\\htdocs\\Calibre Portable\\Calibre\\ebook-convert.exe');
 
 // Email SMTP Settings (Gmail)
 // To use Gmail SMTP, you need to:

@@ -1530,6 +1530,17 @@ mark.pub-hl {
     padding-right: 40px;
 }
 
+.admin-pass-wrap input::-ms-reveal,
+.admin-pass-wrap input::-ms-clear {
+    display: none;
+}
+
+.admin-pass-wrap input::-webkit-credentials-auto-fill-button,
+.admin-pass-wrap input::-webkit-textfield-decoration-container {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .admin-pass-wrap button {
     position: absolute;
     right: 10px;

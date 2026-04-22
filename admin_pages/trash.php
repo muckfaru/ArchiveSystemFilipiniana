@@ -14,9 +14,46 @@ require_once __DIR__ . '/../backend/core/auth.php';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 4;
 $search = $_GET['search'] ?? '';
-$typeFilter = $_GET['type'] ?? '';
-$dateFilter = $_GET['date'] ?? '';
 $sortBy = $_GET['sort'] ?? 'newest';
+
+if (!in_array($sortBy, ['newest', 'oldest'], true)) {
+    $sortBy = 'newest';
+}
+
+if ($limit <= 0) {
+    $limit = 4;
+}
+
+function buildTrashUrl(array $overrides = []): string
+{
+    global $page, $limit, $search, $sortBy;
+
+    $params = array_merge([
+        'page' => $page,
+        'limit' => $limit,
+        'search' => $search,
+        'sort' => $sortBy,
+    ], $overrides);
+
+    if (($params['sort'] ?? 'newest') === 'newest') {
+        unset($params['sort']);
+    }
+
+    if (($params['search'] ?? '') === '') {
+        unset($params['search']);
+    }
+
+    if (($params['page'] ?? 1) <= 1) {
+        unset($params['page']);
+    }
+
+    if (($params['limit'] ?? 4) === 4) {
+        unset($params['limit']);
+    }
+
+    $query = http_build_query($params);
+    return $_SERVER['PHP_SELF'] . ($query !== '' ? '?' . $query : '');
+}
 
 // Base WHERE clauses
 $fileWhere = "n.deleted_at IS NOT NULL";
@@ -32,22 +69,6 @@ if ($search) {
     $userWhere .= " AND (u.username LIKE ? OR u.email LIKE ?)";
     $userParams[] = "%$search%";
     $userParams[] = "%$search%";
-}
-
-// Apply Type Filter
-if ($typeFilter === 'file') {
-    $userWhere .= " AND 1=0";
-} elseif ($typeFilter === 'user') {
-    $fileWhere .= " AND 1=0";
-}
-
-// Apply Date
-if ($dateFilter) {
-    $fileWhere .= " AND DATE(n.deleted_at) = ?";
-    $fileParams[] = $dateFilter;
-    
-    $userWhere .= " AND DATE(u.deleted_at) = ?";
-    $userParams[] = $dateFilter;
 }
 
 // Merge params for UNION query
@@ -472,8 +493,6 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                         <i class="bi bi-search" style="font-size: 14px;"></i>
                     </button>
                     <!-- Keep hidden inputs for filters -->
-                    <?php if ($typeFilter): ?><input type="hidden" name="type" value="<?= htmlspecialchars($typeFilter) ?>"><?php endif; ?>
-                    <?php if ($dateFilter): ?><input type="hidden" name="date" value="<?= htmlspecialchars($dateFilter) ?>"><?php endif; ?>
                     <?php if ($sortBy): ?><input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>"><?php endif; ?>
                     <?php if ($limit !== 4): ?><input type="hidden" name="limit" value="<?= htmlspecialchars($limit) ?>"><?php endif; ?>
                 </form>
@@ -482,36 +501,14 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
             <!-- Filters -->
             <div class="admin-toolbar-filters">
                 <div class="trash-filter-group">
-                <!-- Type Filter Dropdown -->
-                <div class="dropdown">
-                    <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <?= $typeFilter === 'file' ? 'Files' : ($typeFilter === 'user' ? 'Users' : 'All Types') ?>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 13px;">
-                        <li><a class="dropdown-item <?= empty($typeFilter) ? 'active' : '' ?>" href="?type=&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">All Types</a></li>
-                        <li><a class="dropdown-item <?= $typeFilter === 'file' ? 'active' : '' ?>" href="?type=file&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Files Only</a></li>
-                        <li><a class="dropdown-item <?= $typeFilter === 'user' ? 'active' : '' ?>" href="?type=user&search=<?= urlencode($search) ?>&sort=<?= urlencode($sortBy) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Users Only</a></li>
-                    </ul>
-                </div>
-
-                <div class="dropdown">
-                    <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <?= $dateFilter ? date('d M Y', strtotime($dateFilter)) : 'All Dates' ?>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-sm p-3" style="min-width: 220px;">
-                        <label for="dateFilterInput" class="form-label text-muted small fw-semibold mb-2">Date Deleted</label>
-                        <input type="date" class="form-control shadow-none" id="dateFilterInput" value="<?= htmlspecialchars($dateFilter) ?>">
-                    </div>
-                </div>
-
                 <!-- Sort By -->
                 <div class="dropdown">
-                    <button class="filter-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <button class="filter-pill dropdown-toggle" type="button" id="trashSortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <?= $sortBy === 'oldest' ? 'Oldest First' : 'Newest First' ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 13px;">
-                        <li><a class="dropdown-item <?= $sortBy === 'newest' ? 'active' : '' ?>" href="?sort=newest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Newest First</a></li>
-                        <li><a class="dropdown-item <?= $sortBy === 'oldest' ? 'active' : '' ?>" href="?sort=oldest&search=<?= urlencode($search) ?>&type=<?= urlencode($typeFilter) ?>&date=<?= urlencode($dateFilter) ?>&limit=<?= $limit ?>">Oldest First</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" aria-labelledby="trashSortDropdown" style="font-size: 13px;">
+                        <li><a class="dropdown-item <?= $sortBy === 'newest' ? 'active' : '' ?>" href="<?= htmlspecialchars(buildTrashUrl(['sort' => 'newest', 'page' => 1])) ?>">Newest First</a></li>
+                        <li><a class="dropdown-item <?= $sortBy === 'oldest' ? 'active' : '' ?>" href="<?= htmlspecialchars(buildTrashUrl(['sort' => 'oldest', 'page' => 1])) ?>">Oldest First</a></li>
                     </ul>
                 </div>
                 </div>
@@ -647,7 +644,7 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
-                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&date=<?= urlencode($dateFilter) ?>&search=<?= urlencode($search) ?>"
+                    <a href="<?= htmlspecialchars(buildTrashUrl(['page' => max(1, $page - 1)])) ?>"
                         class="pagination-circle <?= $page <= 1 ? 'disabled' : '' ?>">
                         <i class="bi bi-chevron-left"></i>
                     </a>
@@ -657,13 +654,13 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                     $startPage = max(1, $page - 2);
                     $endPage = min($totalPages, $page + 2);
                     for ($i = $startPage; $i <= $endPage; $i++): ?>
-                        <a href="?page=<?= $i ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&date=<?= urlencode($dateFilter) ?>&search=<?= urlencode($search) ?>"
+                        <a href="<?= htmlspecialchars(buildTrashUrl(['page' => $i])) ?>"
                             class="pagination-circle <?= $i == $page ? 'active' : '' ?>">
                             <?= $i ?>
                         </a>
                     <?php endfor; ?>
 
-                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>&type=<?= $typeFilter ?>&sort=<?= $sortBy ?>&date=<?= urlencode($dateFilter) ?>&search=<?= urlencode($search) ?>"
+                    <a href="<?= htmlspecialchars(buildTrashUrl(['page' => min($totalPages, $page + 1)])) ?>"
                         class="pagination-circle <?= $page >= $totalPages ? 'disabled' : '' ?>">
                         <i class="bi bi-chevron-right"></i>
                     </a>
@@ -1175,44 +1172,11 @@ $pdo->prepare("DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < D
                 }
             }
 
-            // Type Items
-            document.querySelectorAll('.type-filter-item').forEach(item => {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    updateFilter('type', this.dataset.value);
-                });
-            });
-
-            // Sort Items
-            document.querySelectorAll('.sort-filter-item').forEach(item => {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    updateFilter('sort', this.dataset.value);
-                });
-            });
-
-            // Clear Date Icon
-            document.querySelectorAll('.clear-date-icon').forEach(icon => {
-                icon.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation(); // Prevent dropdown toggle
-                    updateFilter('date', '');
-                });
-            });
-
             // Rows per page
             const rowsPerPage = document.getElementById('rowsPerPage');
             if (rowsPerPage) {
                 rowsPerPage.addEventListener('change', function () {
                     updateFilter('limit', this.value);
-                });
-            }
-
-            // Date Filter
-            const dateInput = document.getElementById('dateFilterInput');
-            if (dateInput) {
-                dateInput.addEventListener('change', function () {
-                    updateFilter('date', this.value);
                 });
             }
 

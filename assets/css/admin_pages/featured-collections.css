@@ -85,6 +85,8 @@
     transform: translateY(-50%);
     color: #94a3b8;
     pointer-events: none;
+    z-index: 2;
+    font-size: 15px;
 }
 
 .fc-search .form-control,
@@ -102,7 +104,21 @@
     position: relative;
     z-index: 1;
     cursor: text;
-    caret-color: #0f172a;
+    background: #ffffff;
+    color: #0f172a !important;
+    caret-color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a;
+}
+
+.fc-search .form-control::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+.fc-search .form-control:hover,
+.fc-search .form-control:focus {
+    color: #0f172a !important;
+    caret-color: #0f172a !important;
 }
 
 .fc-filter label {
