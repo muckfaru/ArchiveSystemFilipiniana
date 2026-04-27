@@ -1163,7 +1163,7 @@ function renderCardMetadata($customMetadata)
         $label = strtolower(trim($meta['field_label'] ?? ''));
 
         // Skip the Title field G�� it's already shown as the card's main title
-        if ($label === 'title') {
+        if (in_array($label, ['title', 'category', 'categories'], true)) {
             continue;
         }
 

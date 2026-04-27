@@ -38,7 +38,6 @@ if (!function_exists('route_url')) {
         'featured-collections' => '/featured-collections',
         'form-library' => '/form-library',
         'form-builder' => '/form-builder',
-        'metadata-display' => '/metadata-display',
         'report' => '/report',
         'settings' => '/settings',
         'admin-reader' => '/admin/read',

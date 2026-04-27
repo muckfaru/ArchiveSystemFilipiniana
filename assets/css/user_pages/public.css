@@ -5529,9 +5529,11 @@ body.public-page.browse-page {
 
 .browse-page .browse-file-card-compact .public-file-date {
     margin-top: auto;
-    font-size: 11px;
-    line-height: 1.35;
-    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #334155;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 
 @media (max-width: 1180px) {

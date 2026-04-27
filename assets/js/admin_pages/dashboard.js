@@ -459,8 +459,10 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => modal.hide(), 2500);
             // Refresh stat cards
             refreshStats();
-            // Clean up URL
-            history.replaceState({}, document.title, window.location.pathname);
+            // Clean up only the one-time success flag.
+            urlParams.delete('success');
+            const cleanQuery = urlParams.toString();
+            history.replaceState({}, document.title, window.location.pathname + (cleanQuery ? '?' + cleanQuery : ''));
         }
     }
 
@@ -472,6 +474,336 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = APP_URL + '/dashboard';
         }
     }
+
+    // Dashboard chart rendering
+    const uploadChartCanvas = document.getElementById('uploadSummaryChart');
+    const viewsChartCanvas = document.getElementById('viewsTrendChart');
+    const uploadRangeSelect = document.getElementById('uploadChartRange');
+    const uploadTypeSelect = document.getElementById('uploadChartType');
+    const viewsRangeSelect = document.getElementById('viewsChartRange');
+    let uploadChartData = null;
+    let viewsChartData = null;
+    let uploadChartHits = [];
+    let viewsChartHits = [];
+    let chartTooltip = null;
+
+    function sumValues(values) {
+        return values.reduce((total, value) => total + Number(value || 0), 0);
+    }
+
+    function setupCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        const width = Math.max(320, Math.floor(rect.width || canvas.parentElement.clientWidth || 600));
+        const height = Math.max(220, Number(canvas.getAttribute('height')) || 240);
+        canvas.width = Math.floor(width * ratio);
+        canvas.height = Math.floor(height * ratio);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        return { ctx, width, height };
+    }
+
+    function drawGrid(ctx, plot, maxValue) {
+        ctx.strokeStyle = '#EEF2F7';
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '11px Poppins, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+
+        for (let i = 0; i <= 4; i++) {
+            const y = plot.bottom - (plot.height * i / 4);
+            const value = Math.round(maxValue * i / 4);
+            ctx.beginPath();
+            ctx.moveTo(plot.left, y);
+            ctx.lineTo(plot.right, y);
+            ctx.stroke();
+            ctx.fillText(value.toLocaleString(), plot.left - 10, y);
+        }
+    }
+
+    function drawXAxisLabels(ctx, labels, plot) {
+        const count = labels.length;
+        const skip = count > 16 ? Math.ceil(count / 8) : count > 8 ? 2 : 1;
+        ctx.fillStyle = '#64748B';
+        ctx.font = '11px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
+        labels.forEach((label, index) => {
+            if (index % skip !== 0 && index !== count - 1) return;
+            const x = plot.left + (count <= 1 ? plot.width / 2 : (plot.width * index / (count - 1)));
+            ctx.fillText(label, x, plot.bottom + 14);
+        });
+    }
+
+    function updateLegend(elementId, series) {
+        const legend = document.getElementById(elementId);
+        if (!legend) return;
+        legend.innerHTML = series.map(item => `
+            <span class="dashboard-chart-legend-item">
+                <span class="dashboard-chart-legend-dot" style="background:${item.color}"></span>
+                ${escapeHtml(item.label)}
+            </span>
+        `).join('');
+    }
+
+    function setChartEmpty(elementId, show) {
+        const empty = document.getElementById(elementId);
+        if (empty) empty.style.display = show ? 'flex' : 'none';
+    }
+
+    function getChartTooltip() {
+        if (chartTooltip) return chartTooltip;
+        chartTooltip = document.createElement('div');
+        chartTooltip.className = 'dashboard-chart-tooltip';
+        chartTooltip.style.display = 'none';
+        document.body.appendChild(chartTooltip);
+        return chartTooltip;
+    }
+
+    function showChartTooltip(canvas, event, hit) {
+        const tooltip = getChartTooltip();
+        const rows = hit.rows
+            .filter(row => Number(row.value || 0) > 0 || hit.kind === 'views')
+            .map(row => `
+                <div class="dashboard-chart-tooltip-row">
+                    <span class="dashboard-chart-tooltip-dot" style="background:${row.color}"></span>
+                    <span>${escapeHtml(row.label)}</span>
+                    <strong>${Number(row.value || 0).toLocaleString()}</strong>
+                </div>
+            `).join('');
+
+        tooltip.innerHTML = `
+            <div class="dashboard-chart-tooltip-title">${escapeHtml(hit.label)}</div>
+            ${rows || '<div class="dashboard-chart-tooltip-row"><span>No data</span><strong>0</strong></div>'}
+            ${hit.total !== undefined ? `<div class="dashboard-chart-tooltip-total">Total: ${Number(hit.total || 0).toLocaleString()}</div>` : ''}
+        `;
+
+        const offset = 14;
+        tooltip.style.display = 'block';
+        tooltip.style.left = event.clientX + offset + 'px';
+        tooltip.style.top = event.clientY + offset + 'px';
+
+        const tooltipRect = tooltip.getBoundingClientRect();
+        if (tooltipRect.right > window.innerWidth - 12) {
+            tooltip.style.left = event.clientX - tooltipRect.width - offset + 'px';
+        }
+        if (tooltipRect.bottom > window.innerHeight - 12) {
+            tooltip.style.top = event.clientY - tooltipRect.height - offset + 'px';
+        }
+
+        canvas.style.cursor = 'pointer';
+    }
+
+    function hideChartTooltip(canvas) {
+        if (chartTooltip) chartTooltip.style.display = 'none';
+        if (canvas) canvas.style.cursor = '';
+    }
+
+    function getCanvasPointer(canvas, event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+        };
+    }
+
+    function bindChartHover(canvas, getHits) {
+        if (!canvas || canvas.dataset.hoverBound === '1') return;
+        canvas.dataset.hoverBound = '1';
+
+        canvas.addEventListener('mousemove', function (event) {
+            const pointer = getCanvasPointer(canvas, event);
+            const hit = getHits().find(region =>
+                pointer.x >= region.left &&
+                pointer.x <= region.right &&
+                pointer.y >= region.top &&
+                pointer.y <= region.bottom
+            );
+
+            if (hit) {
+                showChartTooltip(canvas, event, hit);
+            } else {
+                hideChartTooltip(canvas);
+            }
+        });
+
+        canvas.addEventListener('mouseleave', function () {
+            hideChartTooltip(canvas);
+        });
+    }
+
+    function drawUploadChart(data) {
+        if (!uploadChartCanvas || !data) return;
+        const { ctx, width, height } = setupCanvas(uploadChartCanvas);
+        ctx.clearRect(0, 0, width, height);
+        uploadChartHits = [];
+
+        const labels = data.labels || [];
+        const series = data.series || [];
+        const totals = labels.map((_, index) => series.reduce((sum, item) => sum + Number(item.values[index] || 0), 0));
+        const maxValue = Math.max(1, ...totals);
+        const hasData = totals.some(value => value > 0);
+        setChartEmpty('uploadSummaryEmpty', !hasData);
+        updateLegend('uploadSummaryLegend', series);
+
+        const plot = { left: 52, right: width - 20, top: 18, bottom: height - 46 };
+        plot.width = plot.right - plot.left;
+        plot.height = plot.bottom - plot.top;
+
+        drawGrid(ctx, plot, maxValue);
+        if (!labels.length) return;
+
+        const slot = plot.width / labels.length;
+        const barWidth = Math.max(8, Math.min(34, slot * 0.58));
+
+        labels.forEach((_, index) => {
+            const x = plot.left + slot * index + slot / 2 - barWidth / 2;
+            let yCursor = plot.bottom;
+            const rows = [];
+            series.forEach(item => {
+                const value = Number(item.values[index] || 0);
+                rows.push({
+                    label: item.label,
+                    value,
+                    color: item.color,
+                });
+                if (value <= 0) return;
+                const barHeight = Math.max(2, plot.height * value / maxValue);
+                yCursor -= barHeight;
+                ctx.fillStyle = item.color;
+                ctx.fillRect(x, yCursor, barWidth, barHeight);
+            });
+
+            uploadChartHits.push({
+                kind: 'uploads',
+                label: labels[index],
+                rows,
+                total: sumValues(rows.map(row => row.value)),
+                left: x - Math.max(5, slot * 0.12),
+                right: x + barWidth + Math.max(5, slot * 0.12),
+                top: plot.top,
+                bottom: plot.bottom,
+            });
+        });
+
+        drawXAxisLabels(ctx, labels, plot);
+    }
+
+    function drawViewsChart(data) {
+        if (!viewsChartCanvas || !data) return;
+        const { ctx, width, height } = setupCanvas(viewsChartCanvas);
+        ctx.clearRect(0, 0, width, height);
+        viewsChartHits = [];
+
+        const labels = data.labels || [];
+        const series = (data.series || [])[0] || { values: [], color: '#3A9AFF', label: 'Views' };
+        const values = series.values || [];
+        const maxValue = Math.max(1, ...values.map(value => Number(value || 0)));
+        const hasData = values.some(value => Number(value || 0) > 0);
+        setChartEmpty('viewsTrendEmpty', !hasData);
+        updateLegend('viewsTrendLegend', [series]);
+
+        const plot = { left: 52, right: width - 22, top: 20, bottom: height - 46 };
+        plot.width = plot.right - plot.left;
+        plot.height = plot.bottom - plot.top;
+
+        drawGrid(ctx, plot, maxValue);
+        if (!labels.length) return;
+
+        const points = labels.map((_, index) => {
+            const x = plot.left + (labels.length <= 1 ? plot.width / 2 : (plot.width * index / (labels.length - 1)));
+            const y = plot.bottom - (plot.height * Number(values[index] || 0) / maxValue);
+            return { x, y, value: Number(values[index] || 0) };
+        });
+
+        ctx.strokeStyle = series.color || '#3A9AFF';
+        ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        points.forEach((point, index) => {
+            if (index === 0) ctx.moveTo(point.x, point.y);
+            else ctx.lineTo(point.x, point.y);
+        });
+        ctx.stroke();
+
+        points.forEach(point => {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = series.color || '#3A9AFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        });
+
+        points.forEach((point, index) => {
+            viewsChartHits.push({
+                kind: 'views',
+                label: labels[index],
+                rows: [{
+                    label: series.label || 'Views',
+                    value: point.value,
+                    color: series.color || '#3A9AFF',
+                }],
+                left: point.x - 12,
+                right: point.x + 12,
+                top: point.y - 18,
+                bottom: point.y + 18,
+            });
+        });
+
+        drawXAxisLabels(ctx, labels, plot);
+    }
+
+    function loadUploadChart() {
+        if (!uploadChartCanvas) return;
+        const range = uploadRangeSelect ? uploadRangeSelect.value : '30';
+        const fileType = uploadTypeSelect ? uploadTypeSelect.value : 'all';
+        fetch(APP_URL + `/backend/api/dashboard.php?action=charts&range=${encodeURIComponent(range)}&file_type=${encodeURIComponent(fileType)}`, { cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) return;
+                uploadChartData = data.uploads;
+                drawUploadChart(uploadChartData);
+            })
+            .catch(error => console.error('Error loading upload chart:', error));
+    }
+
+    function loadViewsChart() {
+        if (!viewsChartCanvas) return;
+        const range = viewsRangeSelect ? viewsRangeSelect.value : '30';
+        fetch(APP_URL + `/backend/api/dashboard.php?action=charts&range=${encodeURIComponent(range)}&file_type=all`, { cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) return;
+                viewsChartData = data.views;
+                drawViewsChart(viewsChartData);
+            })
+            .catch(error => console.error('Error loading views chart:', error));
+    }
+
+    if (uploadChartCanvas) {
+        bindChartHover(uploadChartCanvas, () => uploadChartHits);
+        loadUploadChart();
+        uploadRangeSelect?.addEventListener('change', loadUploadChart);
+        uploadTypeSelect?.addEventListener('change', loadUploadChart);
+    }
+
+    if (viewsChartCanvas) {
+        bindChartHover(viewsChartCanvas, () => viewsChartHits);
+        loadViewsChart();
+        viewsRangeSelect?.addEventListener('change', loadViewsChart);
+    }
+
+    window.addEventListener('resize', function () {
+        if (uploadChartData) drawUploadChart(uploadChartData);
+        if (viewsChartData) drawViewsChart(viewsChartData);
+    });
 
     // Real-time Date and Time Logic
     function updateDateTime() {

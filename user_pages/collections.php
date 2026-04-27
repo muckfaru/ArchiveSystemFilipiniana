@@ -9,10 +9,11 @@ require_once __DIR__ . '/../backend/core/functions.php';
 
 // --- Pagination & Filters ---
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
+$limit = 8;
 
 $categoryFilter = $_GET['category'] ?? ''; // Category name or ID, let's use ID for consistency but UI shows name. Let's use ID for querying. Wait, the mockup has names.
 // It's better to filter by ID but display names. We'll fetch categories first.
+$publicationType = trim($_GET['publication_type'] ?? '');
 
 $formatFilters = isset($_GET['format']) ? (array) $_GET['format'] : []; // Array of formats like 'pdf', 'mobi', 'images'
 $sortBy = $_GET['sort'] ?? 'newest';
@@ -37,6 +38,9 @@ $activeFilterSummary = [];
 if ($categoryFilter && $categoryFilter !== 'all') {
     $activeFilterSummary[] = $categoryFilter;
 }
+if ($publicationType !== '') {
+    $activeFilterSummary[] = $publicationType;
+}
 if (!empty($selectedFormatLabels)) {
     $activeFilterSummary[] = implode(', ', $selectedFormatLabels);
 }
@@ -52,6 +56,18 @@ $catSql = "SELECT DISTINCT cmv.field_value as name, COUNT(DISTINCT n.id) as coun
            GROUP BY cmv.field_value
            ORDER BY cmv.field_value ASC";
 $categoriesWithCounts = $pdo->query($catSql)->fetchAll();
+
+// Get publication types from custom metadata "Publication Type" field
+$pubTypeSql = "SELECT cmv.field_value as publication_type, COUNT(DISTINCT n.id) as count
+               FROM custom_metadata_values cmv
+               INNER JOIN form_fields cmf ON cmv.field_id = cmf.id
+               INNER JOIN newspapers n ON cmv.file_id = n.id AND n.deleted_at IS NULL
+               WHERE cmf.field_label = 'Publication Type'
+               AND cmv.field_value IS NOT NULL
+               AND TRIM(cmv.field_value) != ''
+               GROUP BY cmv.field_value
+               ORDER BY cmv.field_value ASC";
+$publicationTypesWithCounts = $pdo->query($pubTypeSql)->fetchAll();
 
 // Total documents overall
 $totalDocsSql = "SELECT COUNT(id) FROM newspapers WHERE deleted_at IS NULL";
@@ -72,6 +88,17 @@ if ($categoryFilter) {
         )";
         $params[] = $categoryFilter;
     }
+}
+
+if ($publicationType !== '') {
+    $whereClause .= " AND EXISTS (
+        SELECT 1 FROM custom_metadata_values cmv4
+        INNER JOIN form_fields cmf4 ON cmv4.field_id = cmf4.id
+        WHERE cmv4.file_id = n.id
+        AND cmf4.field_label = 'Publication Type'
+        AND cmv4.field_value = ?
+    )";
+    $params[] = $publicationType;
 }
 
 if ($searchQuery) {
@@ -122,46 +149,6 @@ if ($sortBy === 'oldest') {
     $orderBy = 'n.created_at DESC';
 }
 
-// Handle Export CSV
-if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    $filename = 'collections_export_' . date('Y-m-d') . '.csv';
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-
-    $output = fopen('php://output', 'w');
-    fputcsv($output, ['Title', 'Category', 'Publication Date', 'Edition', 'Pages', 'File Type', 'Keywords']);
-
-    $exportSql = "SELECT DISTINCT n.*
-                  FROM newspapers n 
-                  $whereClause ORDER BY $orderBy";
-
-    $stmt = $pdo->prepare($exportSql);
-    $stmt->execute($params);
-
-    while ($row = $stmt->fetch()) {
-        // Get custom metadata for this row
-        $customMeta = getFileMetadataForDisplay($pdo, $row['id'], 'card');
-        $category = getCategoryFromMetadata($customMeta);
-        $pubDate = getMetadataValueByLabel($customMeta, ['Publication Date', 'Date']);
-        $edition = getMetadataValueByLabel($customMeta, ['Edition']);
-        $pageCount = getMetadataValueByLabel($customMeta, ['Page Count', 'Pages']);
-        $keywords = getMetadataValueByLabel($customMeta, ['Keywords', 'Tags']);
-        
-        fputcsv($output, [
-            $row['title'],
-            $category,
-            $pubDate ? date('Y-m-d', strtotime($pubDate)) : 'N/A',
-            $edition,
-            $pageCount,
-            $row['file_type'],
-            $keywords
-        ]);
-    }
-
-    fclose($output);
-    exit;
-}
-
 // Fetch actual documents for current page
 $sql = "SELECT DISTINCT n.*
         FROM newspapers n 
@@ -209,6 +196,10 @@ include __DIR__ . '/../views/layouts/header.php';
         <div class="col-md-7 col-lg-8">
             <form method="GET" action="" class="m-0" id="searchFilterForm">
                 <input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>">
+                <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
+                <?php if ($publicationType !== ''): ?>
+                    <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+                <?php endif; ?>
                 <?php foreach ($formatFilters as $fmt): ?>
                     <input type="hidden" name="format[]" value="<?= htmlspecialchars($fmt) ?>">
                 <?php endforeach; ?>
@@ -250,7 +241,7 @@ include __DIR__ . '/../views/layouts/header.php';
             <!-- All Collections Base Item -->
             <li class="nav-item mb-1">
                 <?php $isAllActive = empty($categoryFilter) || $categoryFilter === 'all'; ?>
-                <a href="?category=all&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
+                <a href="?category=all&publication_type=<?= urlencode($publicationType) ?>&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
                     class="nav-link d-flex justify-content-between align-items-center rounded-pill py-2 px-3 <?= $isAllActive ? 'fw-bold' : 'fw-semibold text-secondary' ?>"
                     style="<?= $isAllActive ? 'background-color: #EBF5FF; color: #3A9AFF !important;' : 'font-size: 14px; color: #4B5563;' ?>">
                     <span>All Collections</span>
@@ -270,7 +261,7 @@ include __DIR__ . '/../views/layouts/header.php';
             <?php foreach ($categoriesWithCounts as $cat): ?>
                 <?php $isActive = $categoryFilter == $cat['name']; ?>
                 <li class="nav-item mb-1">
-                    <a href="?category=<?= urlencode($cat['name']) ?>&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
+                    <a href="?category=<?= urlencode($cat['name']) ?>&publication_type=<?= urlencode($publicationType) ?>&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
                         class="nav-link d-flex justify-content-between align-items-center rounded-pill py-2 px-3 <?= $isActive ? 'fw-bold' : 'fw-semibold text-secondary' ?>"
                         style="<?= $isActive ? 'background-color: #EBF5FF; color: #3A9AFF !important;' : 'font-size: 14px; color: #4B5563;' ?>">
                         <span>
@@ -291,6 +282,58 @@ include __DIR__ . '/../views/layouts/header.php';
             <?php endforeach; ?>
         </ul>
 
+        <?php if (!empty($publicationTypesWithCounts)): ?>
+            <!-- Publication Type Section -->
+            <h6 class="sidebar-heading mt-4 mb-3"
+                style="font-size: 11px; font-weight: 700; color: #9CA3AF; letter-spacing: 1.5px; text-transform: uppercase;">
+                PUBLICATION TYPE
+            </h6>
+
+            <ul class="nav flex-column mb-4 category-list">
+                <li class="nav-item mb-1">
+                    <?php $isAllTypesActive = $publicationType === ''; ?>
+                    <a href="?category=<?= urlencode($categoryFilter ?: 'all') ?>&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
+                        class="nav-link d-flex justify-content-between align-items-center rounded-pill py-2 px-3 <?= $isAllTypesActive ? 'fw-bold' : 'fw-semibold text-secondary' ?>"
+                        style="<?= $isAllTypesActive ? 'background-color: #EBF5FF; color: #3A9AFF !important;' : 'font-size: 14px; color: #4B5563;' ?>">
+                        <span>All Types</span>
+                        <?php if ($isAllTypesActive): ?>
+                            <span class="badge rounded-pill"
+                                style="background-color: #D0E8FF; color: #3A9AFF; font-weight: 600;">
+                                <?= formatNumberShortcut($totalCollectionsCount) ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="text-muted" style="font-size: 13px; font-weight: 500;">
+                                <?= formatNumberShortcut($totalCollectionsCount) ?>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+
+                <?php foreach ($publicationTypesWithCounts as $type): ?>
+                    <?php $isActive = $publicationType === $type['publication_type']; ?>
+                    <li class="nav-item mb-1">
+                        <a href="?category=<?= urlencode($categoryFilter ?: 'all') ?>&publication_type=<?= urlencode($type['publication_type']) ?>&sort=<?= $sortBy ?>&limit=<?= $limit ?>&q=<?= urlencode($searchQuery) ?>"
+                            class="nav-link d-flex justify-content-between align-items-center rounded-pill py-2 px-3 <?= $isActive ? 'fw-bold' : 'fw-semibold text-secondary' ?>"
+                            style="<?= $isActive ? 'background-color: #EBF5FF; color: #3A9AFF !important;' : 'font-size: 14px; color: #4B5563;' ?>">
+                            <span>
+                                <?= htmlspecialchars($type['publication_type']) ?>
+                            </span>
+                            <?php if ($isActive): ?>
+                                <span class="badge rounded-pill"
+                                    style="background-color: #D0E8FF; color: #3A9AFF; font-weight: 600;">
+                                    <?= formatNumberShortcut($type['count']) ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-muted" style="font-size: 13px; font-weight: 500;">
+                                    <?= formatNumberShortcut($type['count']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+
         <!-- Format Section -->
         <h6 class="sidebar-heading mt-4 mb-3"
             style="font-size: 11px; font-weight: 700; color: #9CA3AF; letter-spacing: 1.5px; text-transform: uppercase;">
@@ -301,6 +344,9 @@ include __DIR__ . '/../views/layouts/header.php';
             <!-- Preserve other GET params -->
             <input type="hidden" name="q" value="<?= htmlspecialchars($searchQuery) ?>">
             <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
+            <?php if ($publicationType !== ''): ?>
+                <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+            <?php endif; ?>
             <input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>">
             <input type="hidden" name="limit" value="<?= htmlspecialchars($limit) ?>">
 
@@ -361,6 +407,9 @@ include __DIR__ . '/../views/layouts/header.php';
                         <!-- Preserve other GET params -->
                         <input type="hidden" name="q" value="<?= htmlspecialchars($searchQuery) ?>">
                         <input type="hidden" name="category" value="<?= htmlspecialchars($categoryFilter) ?>">
+                        <?php if ($publicationType !== ''): ?>
+                            <input type="hidden" name="publication_type" value="<?= htmlspecialchars($publicationType) ?>">
+                        <?php endif; ?>
                         <?php foreach ($formatFilters as $fmt): ?>
                             <input type="hidden" name="format[]" value="<?= htmlspecialchars($fmt) ?>">
                         <?php endforeach; ?>
@@ -375,18 +424,6 @@ include __DIR__ . '/../views/layouts/header.php';
                         </select>
                     </form>
                 </div>
-
-                <!-- Export CSV Button -->
-                <?php
-                // Build query string for export
-                $exportParams = $_GET;
-                $exportParams['export'] = 'csv';
-                $exportUrl = '?' . http_build_query($exportParams);
-                ?>
-                <a href="<?= $exportUrl ?>" class="btn text-white rounded-3 px-3 py-2 fw-medium ms-2"
-                    style="background-color: #3A9AFF; font-size: 13px;">
-                    <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i> Export
-                </a>
 
             </div>
         </div>
@@ -405,6 +442,8 @@ include __DIR__ . '/../views/layouts/header.php';
                         $ml = $paper['metadata_by_label'] ?? [];
                         $pubDate = $ml['publication date'] ?? $ml['publication_date'] ?? $ml['date'] ?? '';
                         $publicationShort = $pubDate ? formatPublicationDate($pubDate, false) : 'N/A';
+                        $categoryVal = getCategoryFromMetadata($paper['custom_metadata'] ?? []);
+                        $catClass = 'dashboard-cat-' . strtolower(preg_replace('/[^a-z0-9]/i', '-', $categoryVal));
                     ?>
                     <!-- Newspaper Card Component identical to dashboard -->
                     <div class="col-md-6 col-lg-3">
@@ -428,8 +467,13 @@ include __DIR__ . '/../views/layouts/header.php';
                             data-language="<?= htmlspecialchars($ml['language'] ?? '') ?>">
 
                             <?php if ($paper['thumbnail_path']): ?>
-                                <div class="position-relative">
+                                <div class="dashboard-thumb-wrap">
                                     <img src="<?= APP_URL ?>/<?= $paper['thumbnail_path'] ?>" class="newspaper-thumbnail" alt="">
+                                    <?php if ($categoryVal && strtolower($categoryVal) !== 'uncategorized'): ?>
+                                        <span class="dashboard-thumb-badge <?= htmlspecialchars($catClass) ?>">
+                                            <?= htmlspecialchars($categoryVal) ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <?php if (!empty($paper['is_bulk_image'])): ?>
                                         <div class="position-absolute top-0 end-0 m-2 badge shadow-sm"
                                             style="font-size: 10px; background-color: #3A9AFF; color: white;">
@@ -438,15 +482,19 @@ include __DIR__ . '/../views/layouts/header.php';
                                     <?php endif; ?>
                                 </div>
                             <?php else: ?>
-                                <div class="newspaper-thumbnail bg-secondary d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-newspaper text-white" style="font-size: 48px;"></i>
+                                <div class="dashboard-thumb-wrap">
+                                    <div class="newspaper-thumbnail bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-newspaper text-white" style="font-size: 48px;"></i>
+                                    </div>
+                                    <?php if ($categoryVal && strtolower($categoryVal) !== 'uncategorized'): ?>
+                                        <span class="dashboard-thumb-badge <?= htmlspecialchars($catClass) ?>">
+                                            <?= htmlspecialchars($categoryVal) ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
 
                             <div class="newspaper-info">
-                                <div class="newspaper-category <?= strtolower(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>">
-                                    <?= strtoupper(getCategoryFromMetadata($paper['custom_metadata'] ?? [])) ?>
-                                </div>
                                 <h6 class="newspaper-title">
                                     <?= htmlspecialchars(!empty($paper['title']) ? $paper['title'] : $paper['file_name']) ?>
                                 </h6>
@@ -464,7 +512,6 @@ include __DIR__ . '/../views/layouts/header.php';
             function getColPaginationUrl($page, $paramsArr)
             {
                 $paramsArr['page'] = $page;
-                unset($paramsArr['export']);
                 return '?' . http_build_query($paramsArr);
             }
             ?>

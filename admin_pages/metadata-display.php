@@ -11,6 +11,8 @@ require_once __DIR__ . '/../backend/core/config.php';
 require_once __DIR__ . '/../backend/core/auth.php';
 require_once __DIR__ . '/../backend/core/functions.php';
 
+redirect(route_url('dashboard'));
+
 // Check admin permissions
 if (!in_array($currentUser['role'], ['super_admin', 'admin'])) {
     redirect(route_url('dashboard', ['error' => 'Access denied']));

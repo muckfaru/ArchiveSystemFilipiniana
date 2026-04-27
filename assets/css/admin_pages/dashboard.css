@@ -33,6 +33,10 @@ body .sidebar-title {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
+#recentUploadsSection {
+    scroll-margin-top: 110px;
+}
+
 .recent-activities-header {
     display: flex;
     justify-content: space-between;
@@ -71,6 +75,159 @@ body .sidebar-title {
 .view-all-link:hover {
     color: var(--primary-dark);
     text-decoration: underline;
+}
+
+/* Dashboard Charts */
+.dashboard-chart-card {
+    height: 100%;
+    background: #FFFFFF;
+    border: 1px solid #E8EBF0;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.dashboard-chart-title {
+    margin: 0;
+    color: #1E293B;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.dashboard-chart-subtitle {
+    margin: 4px 0 0;
+    color: #64748B;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.dashboard-chart-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.dashboard-chart-select {
+    width: auto;
+    min-width: 112px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: none !important;
+}
+
+.dashboard-chart-canvas-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 240px;
+}
+
+.dashboard-chart-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    height: 240px;
+}
+
+.dashboard-chart-empty {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #94A3B8;
+    font-size: 13px;
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.dashboard-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    min-height: 22px;
+    margin-top: 12px;
+}
+
+.dashboard-chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dashboard-chart-legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+}
+
+.dashboard-chart-tooltip {
+    position: fixed;
+    z-index: 3000;
+    min-width: 170px;
+    max-width: 260px;
+    padding: 12px 14px;
+    background: #111827;
+    color: #FFFFFF;
+    border-radius: 10px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22);
+    pointer-events: none;
+}
+
+.dashboard-chart-tooltip-title {
+    margin-bottom: 8px;
+    color: #F8FAFC;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.dashboard-chart-tooltip-row {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    color: #CBD5E1;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dashboard-chart-tooltip-row + .dashboard-chart-tooltip-row {
+    margin-top: 6px;
+}
+
+.dashboard-chart-tooltip-row strong {
+    color: #FFFFFF;
+    font-weight: 800;
+}
+
+.dashboard-chart-tooltip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+}
+
+.dashboard-chart-tooltip-total {
+    margin-top: 9px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    color: #F8FAFC;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
 }
 
 /* Empty State Styling */
@@ -836,7 +993,7 @@ body .sidebar-title {
 /* Card metadata rows (matches Live Preview style) */
 .dashboard-card-meta-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     font-size: 11.5px;
     padding: 3px 0;
@@ -845,19 +1002,18 @@ body .sidebar-title {
 }
 
 .dashboard-card-meta-label {
-    font-weight: 600;
-    color: #6B7280;
-    flex-shrink: 0;
-    margin-right: 8px;
+    display: none;
 }
 
 .dashboard-card-meta-value {
     color: #374151;
-    text-align: right;
-    max-width: 55%;
+    text-align: left;
+    max-width: 100%;
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-weight: 600;
 }
 
 /* Admin-specific: Action buttons overlay (REMOVED - actions now only in preview modal) */

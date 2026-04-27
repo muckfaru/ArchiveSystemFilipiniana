@@ -98,10 +98,66 @@
 <?php endif; ?>
 
 <?php if (empty($searchQuery) && empty($categoryFilter) && empty($languageFilter) && empty($dateFrom) && empty($dateTo)): ?>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <section class="dashboard-chart-card">
+                <div class="dashboard-chart-header">
+                    <div>
+                        <h2 class="dashboard-chart-title">File Summary</h2>
+                        <p class="dashboard-chart-subtitle">Uploaded files by period</p>
+                    </div>
+                    <div class="dashboard-chart-controls">
+                        <select class="form-select form-select-sm dashboard-chart-select" id="uploadChartRange">
+                            <option value="7">7 days</option>
+                            <option value="30" selected>30 days</option>
+                            <option value="year">This year</option>
+                            <option value="all">All time</option>
+                        </select>
+                        <select class="form-select form-select-sm dashboard-chart-select" id="uploadChartType">
+                            <option value="all" selected>All files</option>
+                            <option value="pdf">PDF</option>
+                            <option value="mobi">MOBI</option>
+                            <option value="images">Images</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dashboard-chart-canvas-wrap">
+                    <canvas id="uploadSummaryChart" height="240"></canvas>
+                    <div class="dashboard-chart-empty" id="uploadSummaryEmpty">No upload data for this filter.</div>
+                </div>
+                <div class="dashboard-chart-legend" id="uploadSummaryLegend"></div>
+            </section>
+        </div>
+
+        <div class="col-lg-5">
+            <section class="dashboard-chart-card">
+                <div class="dashboard-chart-header">
+                    <div>
+                        <h2 class="dashboard-chart-title">Views Trend</h2>
+                        <p class="dashboard-chart-subtitle">Reader views over time</p>
+                    </div>
+                    <div class="dashboard-chart-controls">
+                        <select class="form-select form-select-sm dashboard-chart-select" id="viewsChartRange">
+                            <option value="7">7 days</option>
+                            <option value="30" selected>30 days</option>
+                            <option value="year">This year</option>
+                            <option value="all">All time</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dashboard-chart-canvas-wrap">
+                    <canvas id="viewsTrendChart" height="240"></canvas>
+                    <div class="dashboard-chart-empty" id="viewsTrendEmpty">No view data for this filter.</div>
+                </div>
+                <div class="dashboard-chart-legend" id="viewsTrendLegend"></div>
+            </section>
+        </div>
+    </div>
+
     <div class="row g-4">
         <!-- Left Column: Recent Activities (8/12) -->
         <div class="col-lg-8">
-            <div class="recent-activities h-100 mt-0">
+            <div class="recent-activities h-100 mt-0" id="recentUploadsSection">
                 <div class="recent-activities-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-3">
                         <h2 class="recent-activities-title mb-0">Recent Uploads</h2>
@@ -205,26 +261,26 @@
                     <?php 
                         if ($recentUploadsTotalPages > 1):
                             $recentUploadsParams = $_GET;
-                            unset($recentUploadsParams['recent_page']);
+                            unset($recentUploadsParams['recent_page'], $recentUploadsParams['success']);
                     ?>
                     <div class="d-flex justify-content-center mt-4">
                         <nav aria-label="Recent uploads pagination">
                             <ul class="pagination pagination-sm mb-0 shadow-sm" id="recentUploadsPagination">
                                 <li class="page-item <?= $recentUploadsPage <= 1 ? 'disabled' : '' ?>">
                                     <?php $prevPageParams = http_build_query(array_merge($recentUploadsParams, ['recent_page' => max(1, $recentUploadsPage - 1)])); ?>
-                                    <a class="page-link" href="<?= $recentUploadsPage <= 1 ? '#' : '?' . $prevPageParams ?>" aria-label="Previous">
+                                    <a class="page-link" href="<?= $recentUploadsPage <= 1 ? '#' : '?' . $prevPageParams . '#recentUploadsSection' ?>" aria-label="Previous">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
                                 <?php for ($p = 1; $p <= $recentUploadsTotalPages; $p++): ?>
                                     <?php $pageParams = http_build_query(array_merge($recentUploadsParams, ['recent_page' => $p])); ?>
                                     <li class="page-item <?= $p === $recentUploadsPage ? 'active' : '' ?>">
-                                        <a class="page-link" href="?<?= $pageParams ?>"><?= $p ?></a>
+                                        <a class="page-link" href="?<?= $pageParams ?>#recentUploadsSection"><?= $p ?></a>
                                     </li>
                                 <?php endfor; ?>
                                 <li class="page-item <?= $recentUploadsPage >= $recentUploadsTotalPages ? 'disabled' : '' ?>">
                                     <?php $nextPageParams = http_build_query(array_merge($recentUploadsParams, ['recent_page' => min($recentUploadsTotalPages, $recentUploadsPage + 1)])); ?>
-                                    <a class="page-link" href="<?= $recentUploadsPage >= $recentUploadsTotalPages ? '#' : '?' . $nextPageParams ?>" aria-label="Next">
+                                    <a class="page-link" href="<?= $recentUploadsPage >= $recentUploadsTotalPages ? '#' : '?' . $nextPageParams . '#recentUploadsSection' ?>" aria-label="Next">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>

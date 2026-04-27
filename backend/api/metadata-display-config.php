@@ -11,6 +11,10 @@ require_once __DIR__ . '/../core/functions.php';
 
 header('Content-Type: application/json');
 
+http_response_code(410);
+echo json_encode(['success' => false, 'message' => 'Metadata display configuration has been disabled.']);
+exit;
+
 if (!isLoggedIn()) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
